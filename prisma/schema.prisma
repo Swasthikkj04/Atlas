@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+///////////////////////////////////////////////////////////
+// ENUMS
+///////////////////////////////////////////////////////////
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum TriggerType {
+  MANUAL
+  SCHEDULED
+}
+
+enum FindingModule {
+  HTML
+  SSL
+  DNS
+  HTTP
+  TECHNOLOGY
+  PERFORMANCE
+}
+
+enum FindingCategory {
+  CERTIFICATE
+  TLS
+  SECURITY_HEADER
+  REDIRECT
+  DNS_RECORD
+  TECHNOLOGY
+  PERFORMANCE
+  RESPONSE
+  GENERAL
+  CDN
+}
+
+enum ChangeSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ChangeType {
+  ADDED
+  REMOVED
+  MODIFIED
+}
+
+///////////////////////////////////////////////////////////
+// USER
+///////////////////////////////////////////////////////////
+
+model User {
+  id           String @id @default(uuid())
+  fullName     String
+  email        String @unique
+  passwordHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  domains Domain[]
+
+  @@map("users")
+}
+
+///////////////////////////////////////////////////////////
+// DOMAIN
+///////////////////////////////////////////////////////////
+
+model Domain {
+  id                String  @id @default(uuid())
+  userId            String
+  domainName        String
+  monitoringEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  understandingJobs       UnderstandingJob[]
+  infrastructureSnapshots InfrastructureSnapshot[]
+  changeHistory           ChangeHistory[]
+
+  @@unique([userId, domainName])
+  @@index([userId])
+  @@index([domainName])
+  @@map("domains")
+}
+
+///////////////////////////////////////////////////////////
+// UNDERSTANDING JOB
+///////////////////////////////////////////////////////////
+
+model UnderstandingJob {
+  id       String @id @default(uuid())
+  domainId String
+
+  status      JobStatus   @default(PENDING)
+  triggerType TriggerType
+
+  durationMs Int?
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  errorMessage String?
+
+  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  infrastructureSnapshot InfrastructureSnapshot?
+
+  @@index([domainId])
+  @@index([status])
+  @@index([startedAt])
+
+  @@map("understanding_jobs")
+}
+
+///////////////////////////////////////////////////////////
+// SNAPSHOT
+///////////////////////////////////////////////////////////
+
+model InfrastructureSnapshot {
+  id String @id @default(uuid())
+
+  domainId String
+  jobId    String @unique
+
+  responseTimeMs Int
+  httpStatus     Int
+
+  createdAt DateTime @default(now())
+
+  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  job    UnderstandingJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  findings InfrastructureFinding[]
+  brief    InfrastructureBrief?
+
+  previousChanges ChangeHistory[] @relation("PreviousSnapshot")
+  currentChanges  ChangeHistory[] @relation("CurrentSnapshot")
+
+  @@index([domainId])
+  @@index([createdAt])
+
+  @@map("infrastructure_snapshots")
+}
+
+///////////////////////////////////////////////////////////
+// FINDINGS
+///////////////////////////////////////////////////////////
+
+model InfrastructureFinding {
+  id String @id @default(uuid())
+
+  snapshotId String
+
+  module   FindingModule
+  category FindingCategory
+
+  key   String
+  value Json
+
+  snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotId])
+  @@index([module])
+  @@index([category])
+  @@map("infrastructure_findings")
+}
+
+///////////////////////////////////////////////////////////
+// CHANGE HISTORY
+///////////////////////////////////////////////////////////
+
+model ChangeHistory {
+  id String @id @default(uuid())
+
+  domainId String
+
+  previousSnapshotId String
+  currentSnapshotId  String
+
+  module   FindingModule
+  category FindingCategory
+
+  changeType ChangeType
+  severity   ChangeSeverity
+
+  title       String
+  description String
+
+  detectedAt DateTime @default(now())
+
+  domain           Domain                 @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  previousSnapshot InfrastructureSnapshot @relation("PreviousSnapshot", fields: [previousSnapshotId], references: [id], onDelete: Cascade)
+  currentSnapshot  InfrastructureSnapshot @relation("CurrentSnapshot", fields: [currentSnapshotId], references: [id], onDelete: Cascade)
+
+  @@index([domainId, detectedAt])
+  @@index([severity])
+  @@map("change_history")
+}
+
+///////////////////////////////////////////////////////////
+// AI GENERATED SUMMARY
+///////////////////////////////////////////////////////////
+
+model InfrastructureBrief {
+  id String @id @default(uuid())
+
+  snapshotId String @unique
+
+  summary String
+
+  version Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@map("infrastructure_briefs")
+}

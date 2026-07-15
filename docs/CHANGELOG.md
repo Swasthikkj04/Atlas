@@ -318,3 +318,21 @@ Remaining:
 - Environment Finalization
 - First Git Commit
 - Sprint 1 Review
+
+# Changelog
+
+## v0.1.0 – Foundation Complete
+
+### Added
+
+- Atlas monorepo initialized
+- Turborepo workspace
+- Prisma ORM integration
+- PostgreSQL configuration
+- Initial production database schema
+- Initial Prisma migration
+- Documentation-first project structure
+- GitHub repository initialization
+- Project README
+- Security architecture
+- Database architecture

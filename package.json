@@ -18,18 +18,13 @@
     "format": "turbo format"
   },
   "devDependencies": {
-    "prisma": "^6.19.3",
-    "turbo": "^2.10.4",
-    "typescript": "~5.9.3"
+    "turbo": "^2.10.4"
   },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.13.0",
+      "version": "11.13.0",
       "onFail": "download"
     }
-  },
-  "dependencies": {
-    "@prisma/client": "^6.19.3"
   }
 }

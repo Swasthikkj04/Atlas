@@ -423,22 +423,6 @@ The objective is not to build the biggest infrastructure platform.
 
 The objective is to build the most understandable one.
 
-### Registered Users
-
-Registered users can manually trigger an infrastructure understanding for any domain they own.
-
-A manual understanding always performs a fresh infrastructure analysis regardless of previous results.
-
-Each manual understanding creates:
-
-- A new Understanding Job
-- A new Infrastructure Snapshot
-- New Infrastructure Findings
-- Infrastructure Comparison
-- A new Infrastructure Brief
-
-This ensures Atlas continuously builds an accurate historical timeline of infrastructure evolution.
-
 ---
 
 ### Smart Refresh Protection

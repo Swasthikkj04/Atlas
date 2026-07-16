@@ -11,6 +11,7 @@ export class HealthService {
     return {
       status: 'ok',
       service: 'atlas-api',
+      version: process.env.npm_package_version ?? 'unknown',
       database: 'connected',
       timestamp: new Date().toISOString(),
     };

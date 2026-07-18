@@ -633,9 +633,11 @@ A consistent Engineering Decision Record template improves maintainability, disc
 
 ## Purpose
 
-The Engineering Decision Index provides a high-level overview of the significant engineering decisions that define Atlas.
+The Engineering Decision Index provides a centralized view of the significant engineering decisions that shape Atlas.
 
-Individual Engineering Decision Records may be maintained within this document or referenced from dedicated files as the project grows.
+Each Engineering Decision Record documents the reasoning behind an architectural choice and serves as the authoritative reference for future engineering work.
+
+As Atlas evolves, new Engineering Decision Records will be added while preserving the historical context of earlier decisions.
 
 ---
 
@@ -645,68 +647,102 @@ Individual Engineering Decision Records may be maintained within this document o
 |----|-------|--------|
 | EDR-001 | Adopt Documentation-First Development | Accepted |
 | EDR-002 | Adopt Product-First Engineering | Accepted |
-| EDR-003 | Adopt Modular Monolith Architecture | Accepted |
-| EDR-004 | Adopt Clean Architecture Principles | Accepted |
-| EDR-005 | Adopt Repository Pattern | Accepted |
-| EDR-006 | Adopt Multi-Tenant SaaS Architecture | Accepted |
-| EDR-007 | Adopt Security by Default | Accepted |
-| EDR-008 | Adopt PostgreSQL + Prisma | Accepted |
-| EDR-009 | Adopt Versioned API Architecture | Accepted |
-| EDR-010 | Adopt Engineering Standards Governance | Accepted |
+| EDR-003 | Adopt Infrastructure Intelligence Platform | Accepted |
+| EDR-004 | Adopt Modular Monolith Architecture | Accepted |
+| EDR-005 | Adopt Clean Architecture | Accepted |
+| EDR-006 | Adopt Repository Pattern | Accepted |
+| EDR-007 | Adopt Multi-Tenant SaaS Architecture | Accepted |
+| EDR-008 | Adopt Security by Default | Accepted |
+| EDR-009 | Adopt PostgreSQL + Prisma | Accepted |
+| EDR-010 | Adopt Versioned REST API | Accepted |
 
 ---
 
-## Future Decision Areas
+## Sprint 2 Engineering Decisions
 
-Future Engineering Decision Records are expected to include topics such as:
+| ID | Title | Status |
+|----|-------|--------|
+| EDR-011 | Adopt Asynchronous Understanding Jobs | Implemented |
+| EDR-012 | Adopt Background Worker Processing | Implemented |
+| EDR-013 | Adopt Discovery Registry Architecture | Implemented |
+| EDR-014 | Adopt Modular Discovery Framework | Implemented |
+| EDR-015 | Adopt Immutable Infrastructure Snapshots | Implemented |
+| EDR-016 | Adopt Canonical JSON Snapshot Persistence | Implemented |
+| EDR-017 | Adopt Infrastructure Snapshot as Source of Truth | Implemented |
+| EDR-018 | Adopt Infrastructure Intelligence Pipeline | Accepted |
 
-- Understanding Coordinator Architecture
-- Infrastructure Module Framework
-- Finding Lifecycle
-- Finding Categorization
-- Comparison Engine
-- AI Intelligence Layer
-- Event Processing
-- Background Job Execution
-- Caching Strategy
-- Deployment Strategy
-- Organization Management
-- Plugin Architecture
 
-These topics will be documented as engineering decisions are formally reviewed and accepted.
+## Decision Status Definitions
+
+Engineering Decision Records use the following lifecycle states:
+
+| Status | Meaning |
+|---------|---------|
+| **Proposed** | Decision identified but not yet reviewed. |
+| **Under Review** | Architectural review in progress. |
+| **Accepted** | Approved and adopted as the engineering direction. |
+| **Implemented** | Fully implemented in the production codebase. |
+| **Superseded** | Replaced by a newer Engineering Decision Record. |
+| **Archived** | Preserved for historical reference but no longer active. |
+
+The status of an Engineering Decision Record reflects its engineering maturity rather than the maturity of the surrounding feature.
+
+---
+
+## Planned Decision Areas
+
+Future Engineering Decision Records are expected for topics including:
+
+- Infrastructure Findings architecture
+- Change History generation
+- Infrastructure Brief generation
+- Historical comparison engine
+- Recommendation engine
+- AI-assisted Infrastructure Intelligence
+- Workspace architecture
+- Event-driven processing
+- Caching strategy
+- Plugin ecosystem
+- Organization and team management
+- Deployment architecture
+- Observability and monitoring strategy
+
+These decisions will be documented as they progress through the Engineering Decision lifecycle.
 
 ---
 
 ## Decision Numbering
 
-Engineering Decision Records SHOULD use sequential identifiers.
+Engineering Decision Records use sequential identifiers.
 
-Identifiers MUST remain permanent.
+Identifiers:
 
-Numbers SHOULD NOT be reused, even if an Engineering Decision Record is later archived or superseded.
+- MUST remain permanent.
+- MUST NOT be reused.
+- SHOULD preserve historical continuity even when decisions are superseded.
 
 Example:
 
-```
-EDR-011
-
-↓
-
-EDR-012
-
-↓
-
-EDR-013
+```text
+EDR-018
+      ↓
+EDR-019
+      ↓
+EDR-020
 ```
 
-Historical continuity is considered more valuable than sequential completeness.
+Maintaining stable identifiers improves traceability across architecture documents, implementation, pull requests, and release history.
 
 ---
 
 ## Design Summary
 
-The Engineering Decision Index provides a centralized view of Atlas' architectural evolution while preserving the traceability of individual decisions.
+The Engineering Decision Index provides a concise overview of Atlas' architectural evolution while preserving the reasoning behind every significant engineering choice.
 
+As Atlas grows, this index will continue to expand, documenting the decisions that shape the platform and providing a permanent engineering knowledge base.
+
+---
+---
 ---
 # 10. Engineering Decision Governance
 
@@ -851,12 +887,14 @@ Engineering excellence is achieved not only through good implementation, but thr
 | Property | Value |
 |----------|-------|
 | **Document** | 07 – Engineering Decisions |
-| **Version** | 2.0 |
+| **Version** | **2.1** |
 | **Status** | **Approved (Frozen)** |
 | **Classification** | Engineering Decision Record (EDR) Specification |
 | **Owner** | Atlas Architecture Team |
 | **Last Updated** | July 2026 |
-| **Next Review Trigger** | Engineering Governance Evolution |
+| **Review Trigger** | Acceptance of new Engineering Decisions |
 | **Review Process** | Architecture Review Required |
+
+---
 
 ---

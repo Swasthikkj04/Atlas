@@ -45,7 +45,7 @@ CREATE TABLE "understanding_jobs" (
     "id" TEXT NOT NULL,
     "domainId" TEXT NOT NULL,
     "status" "JobStatus" NOT NULL DEFAULT 'PENDING',
-    "triggerType" "TriggerType" NOT NULL,
+    "trigger" "TriggerType" NOT NULL,
     "durationMs" INTEGER,
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "completedAt" TIMESTAMP(3),

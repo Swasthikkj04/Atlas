@@ -1,1133 +1,946 @@
 # 05 – API Architecture
 
-**Document Version:** 2.0
+**Product:** Atlas
 
-**Status:** Under Review
+**Version:** v2.0
 
-**Document Type:** API Architecture Specification
+**Status:** Sprint 2 Complete
+
+**Document Type:** API Architecture
 
 **Owner:** Atlas Architecture Team
 
 **Last Updated:** July 2026
 
-**Review Trigger:** Major API or Architectural Change
+**Review Trigger:** API Contract Changes
 
 ---
 
 # Purpose
 
-This document defines the architectural principles, communication standards, and governance model for all Application Programming Interfaces (APIs) exposed by Atlas.
+This document defines the architectural principles, conventions, contracts, and interaction patterns of the Atlas API.
 
-Rather than documenting individual endpoints, this document establishes the design philosophy and implementation standards that ensure every Atlas API remains secure, consistent, predictable, and maintainable throughout the evolution of the platform.
+The Atlas API serves as the primary interface between clients and the Infrastructure Intelligence Platform. It is responsible for authentication, domain management, asynchronous infrastructure understanding, historical persistence, and future intelligence capabilities.
 
-API specifications generated through OpenAPI (Swagger) are considered implementation artifacts.
-
-This document defines the architectural rules those specifications must follow.
-
----
-
-# Scope
-
-This document applies to every externally exposed API within Atlas, including:
-
-- Public REST APIs
-- Administrative APIs
-- Internal service APIs
-- Future webhook interfaces
-- Future event-driven interfaces
-
-The following topics are documented separately.
-
-| Topic | Document |
-|--------|----------|
-| Product Vision | 01 – Vision |
-| Product Requirements | 02 – Product Requirements |
-| System Architecture | 03 – System Architecture |
-| Database Architecture | 04.1 – Database Architecture |
-| Engineering Decisions | 07 – Decisions |
-| Engineering Standards | 10 – Coding Standards |
-| Security & Trust Architecture | 11 – Security & Trust Architecture |
-
-This document defines **how Atlas communicates**, not **what business features are available**.
+This document describes the architecture of the API rather than individual endpoint implementations.
 
 ---
 
 # API Philosophy
 
-The Atlas API is designed as a stable communication contract between the platform and its consumers.
+Atlas exposes a resource-oriented REST API designed for long-term stability, predictability, and production operation.
 
-Consumers should be able to rely on API behavior without needing knowledge of the platform's internal implementation.
+The API is designed around the following principles:
 
-The API represents the public surface of Atlas.
+- RESTful resource design
+- Stateless communication
+- JWT authentication
+- Versioned endpoints
+- Consistent response contracts
+- Asynchronous execution for long-running work
+- Immutable historical records
+- Multi-tenant isolation
+- Forward-compatible evolution
 
-Internal implementation may evolve freely provided that the public contract remains stable or follows the documented versioning strategy.
-
-API design should prioritize:
-
-- Consistency
-- Predictability
-- Simplicity
-- Security
-- Backward compatibility
-- Long-term maintainability
-
-The API should express business capabilities rather than implementation details.
+The API is considered a stable product contract and evolves through versioning rather than breaking changes.
 
 ---
 
-## API Objectives
+# Architectural Principles
 
-Atlas APIs are designed to be:
+## Resource-Oriented Design
 
-- Consistent
-- Discoverable
-- Secure
-- Versioned
-- Observable
-- Idempotent where appropriate
-- Self-documenting
-- Backward compatible whenever practical
-
-Every API exposed by Atlas should reinforce these objectives.
-
----
-
-# API Design Principles
-
-The following principles govern all Atlas APIs.
-
----
-
-## API-001 — Resource-Oriented Design
-
-APIs SHOULD represent business resources rather than technical operations.
-
-Preferred:
-
-```
-/domains
-```
-
-Avoid:
-
-```
-/getDomainData
-```
-
-Resource-oriented APIs improve consistency and discoverability.
-
----
-
-## API-002 — Consistency
-
-Similar operations MUST behave consistently throughout the platform.
-
-Naming conventions, response structures, error handling, pagination, filtering, and authentication SHOULD follow common patterns.
-
-Consistency is considered a usability feature.
-
----
-
-## API-003 — Stable Contracts
-
-Published API contracts SHOULD remain stable.
-
-Breaking changes MUST undergo architectural review and follow the documented versioning strategy.
-
-Clients should not be forced to change unnecessarily.
-
----
-
-## API-004 — Explicit Communication
-
-APIs MUST communicate intent clearly.
-
-Requests SHOULD be unambiguous.
-
-Responses SHOULD provide sufficient information for clients to understand the outcome of an operation.
-
-Hidden behavior SHOULD be avoided.
-
----
-
-## API-005 — Security by Default
-
-Every protected endpoint MUST enforce authentication and authorization according to the Security & Trust Architecture.
-
-Security requirements MUST remain consistent across all APIs.
-
-Public endpoints SHOULD be explicitly documented.
-
----
-
-## API-006 — Technology Independence
-
-The API contract MUST remain independent of internal implementation technologies.
-
-Consumers should never depend upon:
-
-- Database schema
-- Internal module structure
-- Framework-specific behavior
-- Infrastructure implementation
-
-Implementation details remain private.
-
----
-
-## API-007 — Backward Compatibility
-
-Whenever practical, API evolution SHOULD preserve compatibility with existing clients.
-
-Breaking changes MUST be deliberate, documented, and versioned.
-
----
-
-## API-008 — Documentation First
-
-Public APIs MUST be documented before release.
-
-Documentation forms part of the Definition of Done.
-
-API documentation SHOULD remain synchronized with implementation throughout the product lifecycle.
-
----
-
-# API Governance
-
-The Atlas API is governed using the same engineering discipline applied throughout the platform.
-
-Major API changes SHOULD follow the standard engineering workflow.
-
-```text
-API Proposal
-
-↓
-
-Architecture Discussion
-
-↓
-
-Engineering Decision Record (EDR)
-
-↓
-
-API Documentation
-
-↓
-
-Implementation
-
-↓
-
-Testing
-
-↓
-
-Review
-
-↓
-
-Release
-```
-
-API implementation SHOULD follow approved documentation.
-
-Documentation MUST remain the authoritative source of API behavior.
-
----
-
-## Design Summary
-
-The Atlas API Architecture establishes the communication principles that govern every external interaction with the platform.
-
-Rather than documenting individual endpoints, this specification defines the architectural standards that ensure Atlas APIs remain secure, consistent, stable, and maintainable throughout the evolution of the platform.
-
-These principles provide the foundation upon which detailed API specifications and implementation artifacts are built.
-
----
-
-# 5. API Versioning Strategy
-
-## Purpose
-
-API versioning enables Atlas to evolve without unnecessarily disrupting existing clients.
-
-Versioning provides a structured mechanism for introducing improvements while preserving backward compatibility wherever practical.
-
-Versioning is considered an architectural responsibility rather than an implementation detail.
-
----
-
-## Versioning Principles
-
-Atlas APIs MUST follow a documented versioning strategy.
-
-API versions MUST:
-
-- Be explicit.
-- Be predictable.
-- Be documented.
-- Remain stable throughout their supported lifecycle.
-
-Breaking changes MUST be introduced through a new API version.
-
----
-
-## Versioning Model
-
-Atlas adopts URI-based versioning.
-
-Example:
-
-```
-/api/v1/domains
-```
-
-Future versions will follow the same structure.
-
-```
-/api/v2/domains
-```
-
-Only one major API version should be actively developed unless product requirements dictate otherwise.
-
----
-
-## Backward Compatibility
-
-Whenever practical, changes SHOULD preserve compatibility with existing clients.
-
-Examples of non-breaking changes include:
-
-- Adding optional fields
-- Introducing new endpoints
-- Expanding response metadata
-
-Examples of breaking changes include:
-
-- Removing fields
-- Renaming resources
-- Changing response structures
-- Changing endpoint semantics
-
-Breaking changes MUST undergo architectural review.
-
----
-
-## API Lifecycle
-
-Each API version progresses through the following lifecycle.
-
-```text
-Preview
-
-↓
-
-Stable
-
-↓
-
-Deprecated
-
-↓
-
-Retired
-```
-
-Deprecated versions SHOULD provide adequate migration guidance before retirement.
-
----
-
-## Design Summary
-
-Versioning enables Atlas to evolve predictably while protecting client integrations.
-
----
-
-# 6. Resource Design
-
-## Purpose
-
-Atlas APIs expose business resources rather than implementation details.
-
-Resources represent stable business concepts independent of internal architecture.
-
----
-
-## Resource Principles
-
-Resources SHOULD:
-
-- Represent business entities.
-- Use plural nouns.
-- Remain stable.
-- Avoid implementation terminology.
+Endpoints represent business resources rather than actions.
 
 Examples:
 
 ```
-/domains
 /users
-/workspaces
-/jobs
+/domains
+/understanding/jobs
+/snapshots
+/findings
 ```
 
-Avoid:
+rather than:
 
 ```
-/domainManager
-/getInfrastructureData
-/runAnalyzer
+/createUser
+/startScan
+/runJob
 ```
 
 ---
 
-## Resource Hierarchy
+## Versioning
 
-Hierarchical relationships SHOULD be expressed naturally.
+All endpoints are versioned.
+
+Current version:
+
+```
+/api/v1
+```
+
+Future versions will coexist without breaking existing integrations.
+
+---
+
+## Stateless Communication
+
+Each request contains all information required for execution.
+
+Server-side sessions are not maintained.
+
+Authentication is provided using JWT access tokens.
+
+---
+
+## Asynchronous Processing
+
+Infrastructure understanding may require several seconds depending on network conditions.
+
+Instead of blocking HTTP requests, Atlas uses asynchronous job execution.
+
+```
+Client
+    │
+    ▼
+POST Understanding
+    │
+    ▼
+Job Created
+    │
+    ▼
+202 Accepted
+    │
+    ▼
+Background Worker
+    │
+    ▼
+Understanding Engine
+```
+
+This architecture improves responsiveness while enabling scalable processing.
+
+---
+
+## Immutable Historical Records
+
+Infrastructure observations are never modified.
+
+Each Understanding execution produces a new immutable Infrastructure Snapshot.
+
+Historical knowledge is preserved rather than overwritten.
+
+---
+
+# API Layers
+
+The Atlas backend follows layered architecture.
+
+```
+HTTP Request
+      │
+      ▼
+Controller
+      │
+      ▼
+Application Service
+      │
+      ▼
+Domain Service
+      │
+      ▼
+Repository
+      │
+      ▼
+Database
+```
+
+Responsibilities are clearly separated to preserve maintainability and testability.
+
+---
+
+# Authentication
+
+Authentication is handled using JWT Bearer Tokens.
+
+Workflow:
+
+```
+User
+   │
+   ▼
+Login
+   │
+   ▼
+JWT Issued
+   │
+   ▼
+Client Stores Token
+   │
+   ▼
+Authorization Header
+   │
+   ▼
+Protected Endpoint
+```
+
+Passwords are never stored in plaintext.
+
+Authentication middleware validates:
+
+- JWT signature
+- Token expiration
+- User existence
+- User ownership
+
+---
+
+# Multi-Tenant Security
+
+Every protected resource belongs to a user.
+
+Ownership validation occurs before any resource is accessed.
 
 Example:
 
 ```
-/domains/{domainId}/snapshots
+User A
+    │
+    ├── Domain A
+    └── Domain B
+
+User B
+    │
+    └── Domain C
 ```
 
-Nested resources SHOULD represent ownership rather than arbitrary hierarchy.
+Cross-tenant access is never permitted.
+
+Tenant isolation is enforced in the service layer and repository layer.
 
 ---
 
-## Resource Identity
+# Current API Modules
 
-Every resource SHOULD expose a stable identifier.
+Sprint 2 implements the following API modules.
 
-Identifiers MUST remain immutable.
-
-Internal persistence identifiers SHOULD NOT dictate public API design.
+| Module | Status |
+|---------|--------|
+| Health | ✅ Implemented |
+| Authentication | ✅ Implemented |
+| Users | ✅ Implemented |
+| Domains | ✅ Implemented |
+| Understanding | ✅ Implemented |
+| Background Worker | ✅ Internal |
+| Discovery Framework | ✅ Internal |
+| Snapshots | 🚧 Persistence Implemented |
+| Findings | ⏳ Planned |
+| Briefs | ⏳ Planned |
+| Comparison | ⏳ Planned |
 
 ---
 
-## Design Summary
+# Health Module
 
-Resource-oriented design improves API discoverability and long-term maintainability.
+Purpose:
+
+Provide service health information.
+
+Implemented Endpoint:
+
+```
+GET /api/v1/health
+```
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "atlas-api",
+  "version": "0.2.0",
+  "timestamp": "2026-07-16T11:12:56.325Z"
+}
+```
+
+The endpoint is public and intended for monitoring, orchestration, and deployment verification.
 
 ---
 
-# 7. Request Standards
+# Authentication Module
+
+Purpose:
+
+Manage user identity and authentication.
+
+Implemented Endpoints:
+
+```
+POST /api/v1/auth/register
+
+POST /api/v1/auth/login
+
+GET /api/v1/auth/me
+```
+
+Capabilities:
+
+- User Registration
+- User Login
+- JWT Authentication
+- Password Hashing
+- Current User Retrieval
+- Protected Routes
+
+Authentication is the entry point for all protected Atlas functionality.
+
+---
+
+# Domain Module
+
+Purpose:
+
+Manage infrastructure assets owned by authenticated users.
+
+Implemented Endpoints:
+
+```
+POST /api/v1/domains
+
+GET /api/v1/domains
+```
+
+Capabilities:
+
+- Register Domain
+- List User Domains
+- Ownership Validation
+- Duplicate Prevention
+- Multi-tenant Isolation
+
+Each domain acts as the root entity for Infrastructure Understanding.
+
+---
+
+# Understanding Module
 
 ## Purpose
 
-Consistent request structures improve predictability and simplify client integration.
+Coordinate asynchronous infrastructure understanding requests.
 
-Every request should communicate intent clearly while remaining independent of internal implementation.
+Unlike traditional scanners that perform work during the HTTP request, Atlas separates request acceptance from infrastructure processing.
+
+This design enables reliable execution, improved scalability, and better user experience.
 
 ---
 
-## Request Principles
+## Implemented Endpoints
 
-Requests MUST:
+```
+POST /api/v1/understanding
 
-- Use appropriate HTTP methods.
-- Validate all external input.
-- Follow documented schemas.
-- Remain deterministic.
+GET /api/v1/understanding/jobs
 
-Unexpected request behavior SHOULD be avoided.
+GET /api/v1/understanding/jobs/{jobId}
+```
+
+---
+
+## Capabilities
+
+- Create Understanding Jobs
+- Retrieve Job History
+- Retrieve Job Details
+- Asynchronous Processing
+- Job Status Tracking
+- Historical Execution Records
+
+---
+
+## Understanding Workflow
+
+```
+Client
+    │
+    ▼
+POST Understanding
+    │
+    ▼
+Understanding Job Created
+    │
+    ▼
+HTTP 202 Accepted
+    │
+    ▼
+Background Worker
+    │
+    ▼
+Understanding Engine
+    │
+    ▼
+Discovery Registry
+    │
+    ▼
+Discovery Modules
+    │
+    ▼
+Infrastructure Snapshot
+    │
+    ▼
+Job Completed
+```
+
+The API immediately returns after job creation while processing continues independently.
+
+---
+
+# Background Worker
+
+## Purpose
+
+Execute Understanding Jobs outside the request lifecycle.
+
+The worker continuously polls for pending work, claims jobs atomically, executes infrastructure discovery, and records execution results.
+
+The worker is an internal service and does not expose public REST endpoints.
+
+---
+
+## Worker Lifecycle
+
+```
+Pending
+    │
+    ▼
+Claimed
+    │
+    ▼
+Running
+    │
+    ▼
+Discovery
+    │
+    ▼
+Snapshot Persisted
+    │
+    ▼
+Completed
+```
+
+If execution fails:
+
+```
+Running
+    │
+    ▼
+Failed
+```
+
+The worker records:
+
+- Start Time
+- Completion Time
+- Execution Duration
+- Failure Reason (if applicable)
+- Final Job Status
+
+---
+
+# Discovery Framework
+
+## Purpose
+
+Provide a modular and extensible infrastructure discovery architecture.
+
+Rather than embedding discovery logic inside the Understanding Engine, Atlas delegates infrastructure observation to independently developed discovery modules.
+
+This approach allows new discovery capabilities to be added without modifying the orchestration pipeline.
+
+---
+
+## Discovery Pipeline
+
+```
+Understanding Engine
+        │
+        ▼
+Discovery Registry
+        │
+        ├──────────────┐
+        ▼              ▼
+DNS Discovery     HTTP Discovery
+        │              │
+        └──────┬───────┘
+               ▼
+        SSL Discovery
+               │
+               ▼
+Technology Detection
+               │
+               ▼
+Discovery Snapshot
+```
+
+Each module contributes observations to a shared Discovery Snapshot.
+
+---
+
+## Implemented Discovery Modules
+
+### DNS Discovery
+
+Collects DNS-related infrastructure information.
+
+Examples:
+
+- IP Addresses
+- Name Servers
+- DNS Records
+
+---
+
+### HTTP Discovery
+
+Collects HTTP characteristics.
+
+Examples:
+
+- Response Status
+- Redirect Chain
+- HTTP Headers
+- Server Metadata
+
+---
+
+### SSL Discovery
+
+Collects TLS and certificate information.
+
+Examples:
+
+- Certificate Issuer
+- Expiration Date
+- Supported TLS Versions
+- Certificate Metadata
+
+---
+
+### Technology Detection
+
+Detects technologies powering the target infrastructure.
+
+Examples:
+
+- Web Servers
+- Frameworks
+- CDNs
+- Reverse Proxies
+- Hosting Providers
+
+---
+
+# Infrastructure Snapshot
+
+## Purpose
+
+Persist the complete observed infrastructure state produced by a successful Understanding execution.
+
+Snapshots represent immutable historical records.
+
+They are never modified after creation.
+
+---
+
+## Snapshot Creation
+
+```
+Discovery Modules
+        │
+        ▼
+Discovery Snapshot
+        │
+        ▼
+Infrastructure Snapshot
+        │
+        ▼
+Database
+```
+
+Every successful Understanding execution produces exactly one Infrastructure Snapshot.
+
+---
+
+## Stored Information
+
+An Infrastructure Snapshot includes:
+
+- Domain Reference
+- Understanding Job Reference
+- Discovery Timestamp
+- Canonical Discovery Payload
+- Response Metadata
+- Technology Information
+- DNS Information
+- HTTP Information
+- SSL Information
+
+The snapshot forms the historical memory of Atlas.
+
+---
+
+# Infrastructure Intelligence Pipeline
+
+Sprint 2 establishes the data collection layer that future intelligence capabilities build upon.
+
+```
+Infrastructure Discovery
+        │
+        ▼
+Discovery Snapshot
+        │
+        ▼
+Infrastructure Snapshot
+        │
+        ▼
+Infrastructure Findings
+        │
+        ▼
+Infrastructure Brief
+        │
+        ▼
+Workspace Intelligence
+```
+
+Infrastructure Findings and Infrastructure Brief generation are introduced in Sprint 3.
+
+---
+
+# Current Implementation Status
+
+| Capability | Status |
+|------------|--------|
+| Authentication | ✅ Implemented |
+| Domain Management | ✅ Implemented |
+| Understanding Jobs | ✅ Implemented |
+| Background Worker | ✅ Implemented |
+| Discovery Registry | ✅ Implemented |
+| DNS Discovery | ✅ Implemented |
+| HTTP Discovery | ✅ Implemented |
+| SSL Discovery | ✅ Implemented |
+| Technology Detection | ✅ Implemented |
+| Infrastructure Snapshot Persistence | ✅ Implemented |
+| Infrastructure Findings | ⏳ Planned |
+| Infrastructure Briefs | ⏳ Planned |
+| Snapshot Comparison | ⏳ Planned |
+| Historical Timeline | ⏳ Planned |
+
+---
+# Request Conventions
+
+Atlas APIs follow consistent request conventions to simplify client integration and improve long-term maintainability.
 
 ---
 
 ## HTTP Methods
 
-Atlas follows standard HTTP semantics.
-
 | Method | Purpose |
-|---------|---------|
+|---------|----------|
 | GET | Retrieve resources |
-| POST | Create resources or initiate operations |
-| PUT | Replace resources |
-| PATCH | Partially update resources |
-| DELETE | Remove resources |
+| POST | Create resources or initiate asynchronous operations |
+| PUT | Replace an existing resource |
+| PATCH | Partially update a resource |
+| DELETE | Remove a resource |
 
-HTTP semantics MUST remain consistent across the platform.
+---
+
+## Request Headers
+
+Authenticated requests include:
+
+```http
+Authorization: Bearer <JWT_TOKEN>
+Content-Type: application/json
+Accept: application/json
+```
+
+Public endpoints do not require an Authorization header.
 
 ---
 
 ## Request Validation
 
-Every request MUST undergo validation before business logic executes.
+Incoming requests are validated before entering the application layer.
 
 Validation includes:
 
 - Required fields
 - Data types
-- Format constraints
-- Business-independent validation
+- String length
+- Enum values
+- URL and domain validation
+- Business rule validation
 
-Business validation remains the responsibility of application services.
-
----
-
-## Idempotency
-
-Operations that modify state SHOULD be designed with idempotency where practical.
-
-Idempotent behavior improves reliability during retries and network failures.
-
-Long-running operations SHOULD expose idempotent submission semantics whenever feasible.
+Invalid requests are rejected before any business logic executes.
 
 ---
 
-## Design Summary
+# Response Conventions
 
-Consistent request handling improves reliability, security, and developer experience.
+Atlas returns predictable JSON responses using standard HTTP status codes.
 
----
-
-# 8. Response Standards
-
-## Purpose
-
-Responses provide the public representation of Atlas business operations.
-
-Every response should remain predictable, self-explanatory, and independent of internal implementation.
-
----
-
-## Response Principles
-
-Responses MUST:
-
-- Be consistent.
-- Be documented.
-- Avoid exposing implementation details.
-- Return appropriate HTTP status codes.
-
-Response formats SHOULD remain stable across API versions.
-
----
-
-## Success Responses
-
-Successful responses SHOULD provide:
-
-- Requested data
-- Relevant metadata
-- Links or identifiers where appropriate
-
-Example response structure:
-
-```json
-{
-  "success": true,
-  "data": { },
-  "meta": { }
-}
-```
-
----
-
-## Empty Responses
-
-Operations that do not return business data SHOULD return appropriate HTTP status codes without unnecessary payloads.
-
----
-
-## Metadata
-
-Metadata MAY include:
-
-- Pagination information
-- Processing timestamps
-- Correlation identifiers
-- API version
-- Request identifiers
-
-Metadata SHOULD remain optional unless explicitly required.
-
----
-
-## Design Summary
-
-Consistent responses simplify client development while preserving flexibility for future platform evolution.
-
----
-
-# 9. Error Model
-
-## Purpose
-
-Errors should communicate failures consistently without exposing internal implementation details.
-
-A standardized error model improves developer experience while supporting operational observability.
-
----
-
-## Error Principles
-
-Errors MUST:
-
-- Be predictable.
-- Be documented.
-- Be actionable where appropriate.
-- Protect sensitive information.
-
-Errors MUST NOT expose:
-
-- Stack traces
-- Database details
-- Internal implementation
-- Security-sensitive information
-
----
-
-## Standard Error Structure
-
-Error responses SHOULD follow a consistent structure.
+Successful responses return the requested resource or operation result.
 
 Example:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Requested resource could not be found.",
-    "correlationId": "..."
-  }
+  "id": "job_123",
+  "status": "PENDING",
+  "createdAt": "2026-07-18T08:30:00Z"
 }
 ```
 
-Future versions MAY adopt standardized error specifications where appropriate.
+---
+
+## Asynchronous Operations
+
+Long-running operations return **HTTP 202 Accepted**.
+
+Example:
+
+```json
+{
+  "jobId": "job_123",
+  "status": "PENDING"
+}
+```
+
+Clients should monitor job status using the Understanding Job endpoints.
 
 ---
 
-## HTTP Status Codes
+# Error Handling
 
-HTTP status codes SHOULD accurately represent request outcomes.
+Errors follow a consistent response format.
+
+Example:
+
+```json
+{
+  "statusCode": 404,
+  "error": "Not Found",
+  "message": "Domain not found"
+}
+```
+
+Validation errors provide sufficient detail for client correction while avoiding disclosure of sensitive implementation details.
+
+---
+
+## Common Status Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Successful request |
+| 201 | Resource created |
+| 202 | Accepted for asynchronous processing |
+| 204 | Successful request with no content |
+| 400 | Validation error |
+| 401 | Authentication required |
+| 403 | Forbidden |
+| 404 | Resource not found |
+| 409 | Resource conflict |
+| 422 | Business rule violation |
+| 500 | Internal server error |
+
+---
+
+# Security
+
+The Atlas API follows a security-by-default model.
+
+Current protections include:
+
+- JWT Authentication
+- Password Hashing
+- Route Guards
+- Input Validation
+- Multi-tenant Isolation
+- Ownership Verification
+- Immutable Historical Records
+
+Future releases will extend protection through:
+
+- Rate Limiting
+- Refresh Tokens
+- API Keys
+- Audit Logging
+- Security Monitoring
+
+---
+
+# API Evolution
+
+Atlas APIs evolve through additive versioning.
+
+Breaking changes are avoided within a major API version.
+
+Future functionality will be introduced as additional resources rather than modifying existing contracts.
 
 Examples include:
 
-- 200 OK
-- 201 Created
-- 202 Accepted
-- 204 No Content
-- 400 Bad Request
-- 401 Unauthorized
-- 403 Forbidden
-- 404 Not Found
-- 409 Conflict
-- 422 Unprocessable Entity
-- 500 Internal Server Error
-
-Status codes MUST remain semantically correct.
-
----
-
-## Correlation
-
-Every error response SHOULD include a correlation identifier.
-
-Correlation identifiers improve operational diagnostics and incident investigation.
-
----
-
-## Design Summary
-
-A standardized error model improves consistency, security, and operational visibility across the Atlas platform.
-
----
-
-# 10. Authentication & Authorization
-
-## Purpose
-
-Authentication and authorization protect Atlas APIs by ensuring that only authenticated and authorized principals may perform protected operations.
-
-Authentication establishes identity.
-
-Authorization verifies permission.
-
-Both are mandatory security requirements for protected resources.
-
-Detailed security architecture is defined in **11 – Security & Trust Architecture**.
-
----
-
-## Authentication
-
-Protected endpoints MUST require authenticated identities.
-
-Authentication MUST occur before request processing begins.
-
-Unauthenticated requests MUST be rejected before reaching business logic.
-
-Public endpoints MUST be explicitly documented.
-
----
-
-## Authorization
-
-Authorization MUST verify ownership before business operations execute.
-
-Authorization decisions MUST be based upon the authenticated security context rather than client-supplied identifiers.
-
-Business services remain responsible for enforcing authorization rules appropriate to their business capability.
-
----
-
-## Security Context
-
-Business modules MUST consume the authenticated security context established by the Authentication Layer.
-
-Business modules MUST NOT reconstruct user identity from request payloads, query parameters, headers, or other client-provided information.
-
-Identity is established once and propagated throughout request processing.
-
----
-
-## Design Summary
-
-Authentication establishes trusted identity.
-
-Authorization protects business resources.
-
-Together they form the security foundation of every protected Atlas API.
-
----
-
-# 11. Pagination, Filtering & Sorting
-
-## Purpose
-
-Atlas APIs should remain efficient and predictable regardless of dataset size.
-
-Collection endpoints should provide standardized mechanisms for limiting, filtering, and ordering results.
-
----
-
-## Pagination
-
-Large collections SHOULD support pagination.
-
-Pagination responses SHOULD provide sufficient metadata to enable client navigation.
-
-Example metadata:
-
-- Current page
-- Page size
-- Total records
-- Total pages
-
-Pagination strategy SHOULD remain consistent across the platform.
-
----
-
-## Filtering
-
-Collection resources MAY support filtering using documented query parameters.
-
-Filtering SHOULD represent business concepts rather than database implementation.
-
-Example:
-
 ```
-GET /domains?status=active
+/snapshots
+
+/findings
+
+/briefs
+
+/changes
+
+/recommendations
 ```
 
-Filtering behavior MUST be deterministic and documented.
+This approach preserves backward compatibility for existing clients.
 
 ---
 
-## Sorting
+# Future API Modules
 
-Collections MAY support sorting.
+The following modules are planned beyond Sprint 2.
 
-Sorting SHOULD remain explicit.
+## Infrastructure Findings
 
-Example:
+Purpose:
+
+Expose normalized infrastructure observations.
+
+Example endpoints:
 
 ```
-GET /domains?sort=name
+GET /api/v1/findings
+
+GET /api/v1/findings/{findingId}
 ```
 
-Default ordering SHOULD remain stable and documented.
+---
+
+## Infrastructure Briefs
+
+Purpose:
+
+Provide concise human-readable summaries of infrastructure state and changes.
+
+Example endpoints:
+
+```
+GET /api/v1/briefs
+
+GET /api/v1/briefs/{briefId}
+```
 
 ---
 
-## Search
+## Historical Comparison
 
-Future API versions MAY expose dedicated search capabilities where business requirements justify additional complexity.
+Purpose:
 
-Search behavior SHOULD remain independent of underlying persistence technologies.
+Compare historical Infrastructure Snapshots and identify meaningful changes.
 
----
+Example endpoints:
 
-## Design Summary
+```
+GET /api/v1/compare
 
-Standardized pagination, filtering, and sorting improve scalability while maintaining a predictable developer experience.
-
----
-
-# 12. Long-Running Operations
-
-## Purpose
-
-Certain Atlas operations require significant processing time and therefore cannot be completed within a standard synchronous request-response lifecycle.
-
-Examples include infrastructure understanding, large-scale analysis, and future AI-assisted workflows.
-
-These operations follow an asynchronous execution model.
+GET /api/v1/changes
+```
 
 ---
 
-## Architectural Principle
+## Recommendations
 
-Long-running operations MUST NOT block client requests unnecessarily.
+Purpose:
 
-Instead, clients receive acknowledgement that processing has begun while work continues independently.
+Provide actionable guidance based on historical infrastructure understanding.
 
-This approach improves scalability, reliability, and user experience.
+Example endpoints:
+
+```
+GET /api/v1/recommendations
+```
 
 ---
 
-## Standard Execution Model
+# API Lifecycle
 
-Long-running operations follow the standard lifecycle.
+The Atlas API follows a predictable execution model.
 
-```text
+```
 Client Request
-
-↓
-
-Validation
-
-↓
-
+        │
+        ▼
 Authentication
+        │
+        ▼
+Validation
+        │
+        ▼
+Controller
+        │
+        ▼
+Application Service
+        │
+        ▼
+Domain Service
+        │
+        ▼
+Repository
+        │
+        ▼
+Database
+        │
+        ▼
+JSON Response
+```
 
-↓
+For asynchronous operations:
 
-Authorization
-
-↓
-
-Job Creation
-
-↓
-
+```
+Client
+    │
+    ▼
+Create Understanding Job
+    │
+    ▼
 202 Accepted
-
-↓
-
-Background Processing
-
-↓
-
-Completion
-
-↓
-
-Result Available
+    │
+    ▼
+Background Worker
+    │
+    ▼
+Discovery Pipeline
+    │
+    ▼
+Infrastructure Snapshot
+    │
+    ▼
+Job Completed
 ```
 
-The initial request acknowledges receipt rather than waiting for processing to complete.
+This architecture separates request handling from infrastructure execution while preserving reliability and scalability.
 
 ---
 
-## Job Resources
+# Summary
 
-Long-running operations SHOULD expose a job resource representing processing state.
+The Atlas API is designed as the stable contract between clients and the Infrastructure Intelligence Platform.
 
-Typical lifecycle:
+Sprint 2 establishes the complete backend execution pipeline, including authentication, domain management, asynchronous Understanding jobs, modular discovery, and immutable Infrastructure Snapshot persistence.
 
-```text
-Queued
-
-↓
-
-Running
-
-↓
-
-Completed
-```
-
-Possible terminal states include:
-
-- Completed
-- Failed
-- Cancelled
-
-Job state transitions SHOULD remain observable.
-
----
-
-## Idempotent Submission
-
-Clients SHOULD be able to safely retry long-running requests where practical.
-
-Duplicate submissions SHOULD NOT produce unintended duplicate processing.
-
-Idempotency strategies remain implementation-specific.
-
----
-
-## Partial Failure
-
-Background processing SHOULD tolerate partial failures whenever practical.
-
-Failure of an individual processing component SHOULD NOT invalidate the entire operation unless required by business rules.
-
-Partial completion is preferable to complete failure where meaningful results remain available.
-
----
-
-## Result Retrieval
-
-Completed operations SHOULD expose results through standard resource endpoints.
-
-Example workflow:
-
-```
-POST /domains/{id}/understand
-
-↓
-
-202 Accepted
-
-↓
-
-GET /jobs/{jobId}
-
-↓
-
-Completed
-
-↓
-
-GET /domains/{id}/brief
-```
-
-Clients interact with business resources rather than internal processing mechanisms.
-
----
-
-## Design Summary
-
-Asynchronous execution enables Atlas to perform complex infrastructure intelligence while maintaining responsive APIs and supporting future distributed processing architectures.
-
----
-
-# 13. API Documentation
-
-## Purpose
-
-API documentation forms part of the public contract between Atlas and its consumers.
-
-Documentation is considered an engineering artifact rather than supplementary material.
-
----
-
-## Documentation Principles
-
-Public APIs MUST be documented before release.
-
-Documentation MUST remain synchronized with implementation.
-
-Undocumented public endpoints SHOULD NOT be considered production-ready.
-
----
-
-## OpenAPI Specification
-
-Atlas adopts the OpenAPI Specification as the canonical machine-readable API description.
-
-Generated OpenAPI documentation SHOULD accurately reflect the implemented API contract.
-
-Manual modifications to generated specifications SHOULD be avoided.
-
----
-
-## Interactive Documentation
-
-Interactive API documentation SHOULD be available during development and administrative environments.
-
-Production exposure SHOULD follow organizational security policies.
-
----
-
-## Documentation Quality
-
-API documentation SHOULD include:
-
-- Endpoint purpose
-- Authentication requirements
-- Request schema
-- Response schema
-- Error responses
-- Example requests
-- Example responses
-
-Documentation should enable consumers to integrate successfully without relying on implementation knowledge.
-
----
-
-## Design Summary
-
-Comprehensive API documentation improves developer experience while ensuring that API contracts remain transparent, discoverable, and maintainable.
-
----
-
-# 14. API Governance
-
-## Purpose
-
-API Governance defines how Atlas APIs evolve while preserving consistency, stability, and long-term maintainability.
-
-Every API exposed by Atlas is considered part of the product contract.
-
-Changes to public APIs must therefore follow the same engineering discipline applied to architecture, security, and implementation.
-
----
-
-## Governance Principles
-
-Atlas APIs MUST be:
-
-- Intentional
-- Consistent
-- Versioned
-- Reviewed
-- Documented
-- Testable
-
-API evolution MUST occur through approved engineering decisions rather than implementation convenience.
-
----
-
-## API Review Process
-
-Significant API changes SHOULD follow the standard engineering workflow.
-
-```text
-API Proposal
-
-↓
-
-Architecture Discussion
-
-↓
-
-API Review
-
-↓
-
-Engineering Decision Record (EDR)
-
-↓
-
-Documentation Update
-
-↓
-
-Implementation
-
-↓
-
-Testing
-
-↓
-
-Release
-```
-
-API contracts SHOULD be approved before implementation begins.
-
----
-
-## Review Triggers
-
-Architectural API review SHOULD be performed when introducing:
-
-- Breaking API changes
-- New public resources
-- Authentication changes
-- Authorization changes
-- Long-running workflows
-- External integrations
-- Webhooks
-- Event-driven communication
-- Public SDK support
-
-These changes affect the public contract of Atlas.
-
----
-
-## API Compatibility
-
-Public APIs SHOULD evolve conservatively.
-
-Breaking changes MUST:
-
-- Be versioned.
-- Be documented.
-- Include migration guidance.
-- Be announced before retirement where practical.
-
-Stable APIs are considered product commitments.
-
----
-
-## Design Summary
-
-API governance ensures that Atlas evolves predictably while maintaining trust with API consumers.
-
----
-
-# 15. Future API Evolution
-
-Atlas is intentionally designed to support future communication capabilities without requiring fundamental redesign.
-
-Potential future enhancements include:
-
-- Webhooks
-- Server-Sent Events (SSE)
-- WebSocket APIs
-- GraphQL Gateway
-- Public SDKs
-- Event-driven integrations
-- Organization APIs
-- Plugin APIs
-- Public Developer Portal
-
-Future capabilities SHOULD integrate into the existing API architecture while preserving the principles defined within this document.
-
-New communication mechanisms MUST complement rather than replace the canonical REST API unless approved through an Engineering Decision Record.
-
----
-
-# 16. API Summary
-
-The Atlas API Architecture defines the communication principles that govern every interaction between the platform and its consumers.
-
-Atlas APIs are designed around:
-
-- Resource-oriented design
-- Stable contracts
-- Consistent request and response models
-- Security by default
-- Versioned evolution
-- Asynchronous processing for long-running operations
-- Comprehensive documentation
-- Engineering governance
-
-These principles ensure that Atlas APIs remain predictable, maintainable, and resilient as the platform evolves.
-
-The API is more than an interface.
-
-It is a long-term product contract between Atlas and its consumers.
-
-Every future API should strengthen that contract through consistency, clarity, and disciplined engineering.
+Future releases extend this foundation with Infrastructure Findings, Infrastructure Briefs, historical comparison, and intelligent recommendations without introducing breaking API changes.
 
 ---
 
@@ -1136,12 +949,12 @@ Every future API should strengthen that contract through consistency, clarity, a
 | Property | Value |
 |----------|-------|
 | **Document** | 05 – API Architecture |
-| **Version** | 2.0 |
+| **Version** | **2.0** |
 | **Status** | **Approved (Frozen)** |
-| **Classification** | API Architecture Specification |
+| **Classification** | Canonical Architecture Document |
 | **Owner** | Atlas Architecture Team |
 | **Last Updated** | July 2026 |
-| **Next Review Trigger** | Major API or Architectural Change |
-| **Review Process** | Engineering Decision Record (EDR) Required |
+| **Next Review Trigger** | API Contract Changes |
+| **Review Process** | Architecture Review Required |
 
 ---

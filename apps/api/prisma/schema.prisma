@@ -110,7 +110,7 @@ model UnderstandingJob {
   domainId String
 
   status      JobStatus   @default(PENDING)
-  triggerType TriggerType
+  trigger TriggerType
 
   durationMs Int?
 
@@ -142,6 +142,8 @@ model InfrastructureSnapshot {
 
   responseTimeMs Int
   httpStatus     Int
+
+  payload Json
 
   createdAt DateTime @default(now())
 

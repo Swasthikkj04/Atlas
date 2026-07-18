@@ -1,59 +1,118 @@
-# 06 - Development-Roadmap.md
-
----
-## Current Sprint Status
-
-| Sprint | Status |
-|---------|--------|
-| Sprint 0 | ✅ Completed |
-| Sprint 1 | 🚧 In Progress |
-| Sprint 2 | ⏳ Planned |
-| Sprint 3 | ⏳ Planned |
-| Sprint 4 | ⏳ Planned |
-| Sprint 5 | ⏳ Planned |
-| Sprint 6 | ⏳ Planned |
-# Atlas Development Roadmap
+# 06 – Development Roadmap
 
 **Product:** Atlas
 
-**Version:** v0.1.0
+**Version:** v2.0
 
-**Status:** Sprint Planning
+**Status:** Sprint 2 Complete
 
-**Project Duration (V1):** 1 Month
+**Document Type:** Product Development Roadmap
 
-**Development Model:** Agile Sprint
+**Owner:** Atlas Architecture Team
+
+**Last Updated:** July 2026
+
+**Review Trigger:** Sprint Completion or Major Product Direction Change
+
+---
+
+# Purpose
+
+This document defines the planned evolution of Atlas from an engineering prototype into a production-grade Infrastructure Intelligence Platform.
+
+Unlike project task lists or sprint boards, this roadmap communicates the strategic development direction of Atlas. It describes how product capabilities are introduced incrementally while preserving architectural quality, production readiness, and long-term maintainability.
+
+Every sprint should produce a working, testable, and deployable product increment.
+
+The roadmap serves as the bridge between the Product Requirements, System Architecture, Engineering Decisions, and implementation.
 
 ---
 
 # Roadmap Philosophy
 
-Atlas will be developed incrementally.
+Atlas is developed using a documentation-first, production-first engineering process.
 
-Each sprint must produce a working product that can be demonstrated, tested, and improved.
+Each sprint should satisfy four objectives:
 
-The objective is **continuous progress**, not perfect software.
+- Deliver measurable product value.
+- Strengthen the architectural foundation.
+- Maintain production quality.
+- Prepare the platform for future evolution.
 
-Every sprint ends with:
+Rather than maximizing feature count, Atlas prioritizes sustainable engineering and long-term product quality.
 
-* A working build
-* Updated documentation
-* Git commits
-* Testing
-* Deployment
+Every sprint concludes with:
+
+- Working software
+- Updated documentation
+- Architecture review
+- Testing and QA
+- Deployable build
+
+No sprint is considered complete until documentation and implementation remain synchronized.
+
+---
+
+# Development Principles
+
+Atlas follows these guiding principles throughout every sprint.
+
+## Product Before Technology
+
+Every implementation decision must strengthen Atlas as an Infrastructure Intelligence Platform.
+
+Technology serves the product rather than driving product direction.
+
+---
+
+## Documentation First
+
+Architecture and product decisions are documented before implementation.
+
+Approved documentation remains the canonical source of truth.
+
+---
+
+## Production First
+
+Every completed sprint should leave Atlas in a deployable state.
+
+Temporary implementations, shortcuts, and experimental code should not remain in production branches.
+
+---
+
+## Continuous Evolution
+
+Atlas evolves through small, well-defined milestones rather than large rewrites.
+
+Each sprint extends existing architecture while preserving architectural consistency.
+
+---
+
+# Current Sprint Status
+
+| Sprint | Status |
+|---------|--------|
+| Sprint 0 | ✅ Completed |
+| Sprint 1 | ✅ Completed |
+| Sprint 2 | ✅ Completed |
+| Sprint 3 | 🚧 Planned |
+| Sprint 4 | ⏳ Planned |
+| Sprint 5 | ⏳ Planned |
+| Sprint 6 | ⏳ Planned |
 
 ---
 
 # Version Roadmap
 
-| Version | Goal                              | Status    |
-| ------- | --------------------------------- | --------- |
-| v0.1    | Product Discovery & Documentation | ✅ Current |
-| v0.2 | Foundation & Project Setup         | 🚧 In Progress |
-| v0.3    | Authentication & Workspace        | Planned   |
-| v0.4    | Understanding Engine              | Planned   |
-| v0.5    | Historical Intelligence           | Planned   |
-| v1.0    | Public MVP Release                | Planned   |
+| Version | Goal | Status |
+|---------|------|--------|
+| **v0.1** | Product Discovery & Documentation | ✅ Completed |
+| **v0.2** | Backend Foundation & Understanding Engine | ✅ Completed |
+| **v0.3** | Infrastructure Intelligence | 🚧 Planned |
+| **v0.4** | Workspace Experience | Planned |
+| **v0.5** | Historical Intelligence | Planned |
+| **v1.0** | Public MVP Release | Planned |
 
 ---
 
@@ -61,171 +120,522 @@ Every sprint ends with:
 
 ## Product Discovery
 
-Objective
+### Status
 
-Transform Atlas from an idea into a documented product.
+✅ Completed
 
-Deliverables
+### Objective
 
-* Vision
-* PRD
-* System Architecture
-* Database Design
-* API Specification
-* Development Roadmap
-* Design Bible
-* Engineering Decisions
+Transform Atlas from an idea into a well-defined software product before implementation begins.
 
-Status
+### Delivered
 
-Completed
+- Product Vision
+- Product Requirements Document
+- System Architecture
+- Database Design
+- API Architecture
+- Development Roadmap
+- Engineering Decisions
+- Design Bible
+- Security Architecture
+- Coding Standards
+
+### Outcome
+
+Atlas was formally established as an **Infrastructure Intelligence Platform** rather than a traditional infrastructure scanner or monitoring dashboard.
+
+Core product philosophy was frozen:
+
+> **Know what changed. Understand why.**
 
 ---
 
 # Sprint 1
 
-## Foundation
+## Engineering Foundation
 
-Objective
+### Status
 
-Build the engineering foundation.
+✅ Completed
 
-Tasks
+### Objective
 
-* Create GitHub repository
-* Configure project structure
-* Setup React
-* Setup Node.js
-* Configure PostgreSQL
-* Dockerize development environment
-* Environment configuration
-* CI pipeline
-* Initial deployment
+Build the production engineering foundation required for future product development.
 
-Deliverable
+### Delivered
 
-Atlas boots successfully in development.
+#### Development Environment
+
+- Ubuntu development environment
+- Node.js LTS
+- pnpm
+- Docker
+- Docker Compose
+- GitHub SSH configuration
+
+#### Repository
+
+- GitHub repository
+- Monorepo configuration
+- Turborepo workspace
+
+#### Frontend
+
+- React
+- Vite
+- TypeScript
+
+#### Backend
+
+- NestJS
+- TypeScript
+- Health API
+- Global validation
+- Configuration module
+
+#### Database
+
+- PostgreSQL
+- Prisma ORM
+- Initial Prisma schema
+- Initial migration
+- Prisma Client
+
+#### Engineering
+
+- Documentation-first workflow
+- Production repository structure
+- Clean Architecture foundation
+- Modular Monolith foundation
+
+### Deliverable
+
+Atlas successfully booted as a production-oriented monorepo containing:
+
+- React frontend
+- NestJS backend
+- PostgreSQL database
+- Prisma ORM
+- Health API
+- Production-ready project structure
+
+Sprint 1 established the engineering platform upon which all future capabilities are built.
 
 ---
 
 # Sprint 2
 
-## Authentication & Workspace
+## Backend Foundation & Understanding Engine
 
-Objective
+### Status
 
-Create the first usable Atlas experience.
+✅ Completed
 
-Features
+### Objective
 
-* User Registration
-* Login
-* JWT Authentication
-* Guest Mode
-* Workspace
-* Add Domain
-* Remove Domain
+Transform Atlas from an authenticated web application into a functioning Infrastructure Understanding platform.
 
-Deliverable
+Sprint 2 focused on establishing the complete backend execution pipeline, asynchronous processing architecture, discovery framework, and immutable historical persistence.
 
-Users can create an account or use Atlas as a guest.
+### Delivered
+
+## Authentication
+
+- User Registration
+- User Login
+- JWT Authentication
+- Protected API Endpoints
+- Current User Endpoint
+- Password Hashing
+- Authentication Guards
+
+---
+
+## Domain Management
+
+- Add Domain
+- List Owned Domains
+- Domain Ownership Validation
+- Duplicate Domain Prevention
+- Multi-tenant Ownership Enforcement
+
+---
+
+## Understanding Jobs
+
+- Understanding Job Creation
+- Understanding Job Retrieval
+- Domain Job History
+- Job Status Tracking
+- Background Job Processing
+- Atomic Job Claiming
+- Asynchronous Execution Pipeline
+
+---
+
+## Background Worker
+
+Implemented a production-style background worker capable of:
+
+- Polling pending jobs
+- Claiming jobs atomically
+- Executing Understanding requests
+- Completing jobs
+- Recording execution duration
+- Handling failures safely
+
+---
+
+## Discovery Framework
+
+Implemented Atlas' extensible discovery architecture.
+
+### Discovery Registry
+
+- Discovery Module Registration
+- Ordered Discovery Pipeline
+- Module Orchestration
+
+### Discovery Modules
+
+Implemented:
+
+- DNS Discovery
+- HTTP Discovery
+- SSL Discovery
+- Technology Detection
+
+The architecture now supports future discovery modules without requiring changes to the Understanding Engine.
+
+---
+
+## Understanding Engine
+
+Implemented the production Understanding execution pipeline.
+
+```
+Understanding Request
+        │
+        ▼
+Background Worker
+        │
+        ▼
+Understanding Engine
+        │
+        ▼
+Discovery Registry
+        │
+        ▼
+Discovery Modules
+        │
+        ▼
+Discovery Snapshot
+        │
+        ▼
+Infrastructure Snapshot
+        │
+        ▼
+Job Completion
+```
+
+---
+## Infrastructure Snapshot Persistence
+
+Implemented Atlas' immutable persistence model.
+
+### Discovery Snapshot
+
+Every completed Understanding produces an in-memory `DiscoverySnapshot` representing the complete observed infrastructure state.
+
+### Infrastructure Snapshot
+
+Every completed Understanding persists an immutable `InfrastructureSnapshot` containing:
+
+- Domain reference
+- Understanding Job reference
+- Response metadata
+- HTTP metadata
+- Canonical discovery payload (JSON)
+- Historical timestamp
+
+The Infrastructure Snapshot is considered the permanent historical memory of Atlas.
+
+---
+
+## Quality Assurance
+
+Sprint 2 concluded with comprehensive manual end-to-end validation.
+
+Verified capabilities include:
+
+### Authentication
+
+- User Registration
+- User Login
+- Protected Endpoints
+- JWT Validation
+
+### Domain Management
+
+- Domain Creation
+- Duplicate Prevention
+- Ownership Enforcement
+
+### Understanding Pipeline
+
+- Job Creation
+- Background Worker
+- Discovery Execution
+- Snapshot Persistence
+- Job Completion
+
+### Persistence
+
+Verified:
+
+- InfrastructureSnapshot generation
+- Immutable persistence
+- Historical storage
+- End-to-end execution pipeline
+
+### Deliverable
+
+Atlas can now:
+
+- Authenticate users.
+- Manage owned domains.
+- Execute asynchronous Understanding jobs.
+- Collect infrastructure observations.
+- Persist immutable historical snapshots.
+- Maintain production-quality execution workflows.
+
+Sprint 2 established the production backend foundation of Atlas.
 
 ---
 
 # Sprint 3
 
-## Understanding Engine
+## Infrastructure Intelligence
 
-Objective
+### Status
 
-Build Atlas' core capability.
+🚧 Planned
 
-Modules
+### Objective
 
-* HTML
-* SSL
-* DNS
-* HTTP Headers
-* Technology Detection
+Transform raw infrastructure observations into meaningful intelligence.
 
-Features
+Sprint 3 introduces Atlas' intelligence layer.
 
-* Understanding Jobs
-* Snapshot Storage
-* Progress Tracking
+Rather than collecting infrastructure data, Atlas begins interpreting, comparing, and explaining infrastructure evolution.
 
-Deliverable
+### Planned Deliverables
 
-Atlas understands a website and stores its first historical snapshot.
+## Infrastructure Findings
+
+Generate normalized findings from Infrastructure Snapshots.
+
+Examples include:
+
+- Technology Detection
+- Missing Security Headers
+- TLS Configuration
+- DNS Characteristics
+- Infrastructure Risks
+- Positive Observations
+
+Infrastructure Findings become the normalized intelligence layer of Atlas.
+
+---
+
+## Infrastructure Brief
+
+Generate human-readable summaries from Infrastructure Findings.
+
+Example:
+
+> While you were away...
+
+> HTTP/3 has been enabled.
+
+> Cloudflare continues protecting this domain.
+
+> TLS configuration remains healthy.
+
+> One recommended improvement:
+> Enable HSTS.
+
+Infrastructure Briefs become Atlas' primary communication mechanism.
+
+---
+
+## Snapshot Comparison
+
+Introduce historical comparison between Infrastructure Snapshots.
+
+Examples:
+
+- Technology Added
+- Technology Removed
+- TLS Version Changed
+- DNS Updated
+- CDN Changed
+- Performance Differences
+
+Atlas begins understanding infrastructure evolution rather than isolated observations.
+
+---
+
+## Change Detection
+
+Generate persistent Change History records describing meaningful infrastructure evolution.
+
+Examples include:
+
+- HTTP/3 Enabled
+- Cloudflare Added
+- Certificate Renewed
+- Security Header Removed
+- DNS Provider Changed
+
+---
+
+## Snapshot Retrieval API
+
+Introduce APIs for historical infrastructure retrieval.
+
+Examples:
+
+```
+GET /domains/{domainId}/snapshots
+
+GET /snapshots/{snapshotId}
+```
+
+These endpoints expose Atlas' historical memory to the Workspace and future integrations.
+
+---
+
+### Deliverable
+
+Atlas evolves from infrastructure observation into infrastructure intelligence by transforming historical snapshots into meaningful understanding.
 
 ---
 
 # Sprint 4
 
-## Infrastructure Intelligence
+## Workspace Experience
 
-Objective
+### Status
 
-Transform raw snapshots into meaningful understanding.
+⏳ Planned
 
-Features
+### Objective
 
-* Snapshot Comparison
-* Change Detection
-* Infrastructure Timeline
-* Infrastructure Brief
+Build the first complete Atlas user experience.
 
-Deliverable
+Sprint 4 focuses on presenting infrastructure intelligence through a calm, human-centered workspace.
 
-Atlas explains what changed between two understandings.
+### Planned Deliverables
+
+- Workspace Home
+- Domain Overview
+- Infrastructure Timeline
+- Snapshot Viewer
+- Infrastructure Brief Viewer
+- Historical Comparison Viewer
+- Understanding Progress
+- Loading Experience
+- Empty States
+- Error Experience
+
+The Workspace becomes the primary interface through which users interact with Atlas.
+
+### Deliverable
+
+Atlas feels like an intelligent assistant rather than a technical dashboard.
 
 ---
 
 # Sprint 5
 
-## Workspace Experience
+## Platform Maturity
 
-Objective
+### Status
 
-Deliver the complete Atlas experience.
+⏳ Planned
 
-Features
+### Objective
 
-* Timeline
-* Domain Overview
-* Daily Infrastructure Brief
-* Workspace Improvements
-* Loading Experience
-* Empty States
-* Error Handling
+Strengthen Atlas through automation, monitoring, and user experience improvements.
 
-Deliverable
+### Planned Deliverables
 
-Atlas feels like a polished product rather than a technical prototype.
+- Scheduled Understanding
+- Monitoring Configuration
+- Infrastructure Notifications
+- Daily Infrastructure Brief
+- Improved Timeline
+- Recommendation Engine
+- Performance Improvements
+- Operational Observability
+- Production Monitoring
+- Reliability Improvements
+
+### Deliverable
+
+Atlas operates continuously while providing meaningful infrastructure awareness with minimal user effort.
 
 ---
 
 # Sprint 6
 
-## Testing & Stabilization
+## Stabilization & Release Preparation
 
-Objective
+### Status
 
-Prepare Atlas for public release.
+⏳ Planned
 
-Tasks
+### Objective
 
-* Unit Testing
-* API Testing
-* UI Testing
-* Performance Improvements
-* Bug Fixes
-* Security Review
-* Documentation Updates
+Prepare Atlas for its first public release.
 
-Deliverable
+### Planned Deliverables
 
-Stable Release Candidate.
+#### Engineering
+
+- Unit Testing
+- Integration Testing
+- End-to-End Testing
+- Performance Testing
+- Security Testing
+
+#### Operations
+
+- Production Deployment
+- Monitoring
+- Logging
+- Backup Strategy
+- Disaster Recovery
+
+#### Documentation
+
+- Documentation Review
+- API Documentation
+- Deployment Guides
+- Contributor Guides
+
+#### Quality
+
+- Bug Fixes
+- Performance Optimization
+- Security Hardening
+- Release Validation
+
+### Deliverable
+
+Atlas becomes production-ready and suitable for public release.
 
 ---
 
@@ -233,117 +643,152 @@ Stable Release Candidate.
 
 ## Public MVP
 
-Objective
+### Objective
 
-Launch Atlas publicly.
+Release the first public version of Atlas.
 
-Features
+### Core Capabilities
 
-* Guest Understanding
-* User Workspace
-* Domain Monitoring
-* Infrastructure Timeline
-* Change Detection
-* Daily Infrastructure Brief
+- Guest Understanding
+- User Accounts
+- Domain Management
+- Historical Infrastructure Snapshots
+- Infrastructure Timeline
+- Infrastructure Findings
+- Infrastructure Briefs
+- Change Detection
+- Workspace Experience
 
-Success Criteria
+### Success Criteria
 
 Users can:
 
-* Understand public websites
-* Track infrastructure changes
-* Return to meaningful daily insights
-* Trust Atlas as their Infrastructure Intelligence Assistant
+- Understand public infrastructure.
+- Preserve historical knowledge.
+- Track infrastructure evolution.
+- Receive meaningful Infrastructure Briefs.
+- Trust Atlas to quietly observe and explain infrastructure changes.
+
+Atlas fulfills its promise:
+
+> **Know what changed. Understand why.**
+---
+# Future Roadmap
+
+Atlas is intentionally designed to evolve without requiring architectural redesign.
+
+Future releases will strengthen Atlas' position as an Infrastructure Intelligence Platform while preserving the architectural principles established in Version 1.
 
 ---
 
-# Future Roadmap
-
 ## Version 1.1
 
-Product Improvements
+### Product Enhancements
 
-* Performance Scanner
-* Security Scanner
-* Better Comparison Engine
-* Improved Timeline
+- Improved Infrastructure Findings
+- Advanced Technology Detection
+- Security Header Analysis
+- Performance Intelligence
+- Infrastructure Health Scoring
+- Enhanced Historical Comparison
 
 ---
 
 ## Version 1.2
 
-Productivity
+### Productivity
 
-* Email Notifications
-* Scheduled Understandings
-* Custom Monitoring Frequency
-* Domain Organization
+- Email Notifications
+- Scheduled Infrastructure Briefs
+- Configurable Monitoring Frequency
+- Domain Organization
+- Saved Filters
+- Workspace Customization
 
 ---
 
 ## Version 2.0
 
-Team Collaboration
+### Team Collaboration
 
-* Multiple Users
-* Shared Workspaces
-* Team Roles
-* Activity Feed
+- Organizations
+- Teams
+- Shared Workspaces
+- Role-Based Access Control
+- Activity Timeline
+- Shared Infrastructure Ownership
 
 ---
 
 ## Version 2.5
 
-Infrastructure Intelligence
+### AI Infrastructure Intelligence
 
-* AI-generated Explanations
-* Predictive Insights
-* Infrastructure Recommendations
-* Root Cause Suggestions
+- AI-generated Infrastructure Briefs
+- Root Cause Suggestions
+- Historical Trend Analysis
+- Infrastructure Recommendations
+- Predictive Infrastructure Insights
+- Natural Language Infrastructure Search
 
 ---
 
 ## Version 3.0
 
-Atlas Platform
+### Atlas Platform
 
-* Plugin Architecture
-* Marketplace
-* Public APIs
-* Third-party Integrations
+Atlas evolves into an extensible Infrastructure Intelligence Platform.
+
+Potential capabilities include:
+
+- Plugin Architecture
+- Marketplace
+- Public APIs
+- Webhooks
+- Event Streaming
+- Third-party Integrations
+- Enterprise Extensions
+- Organization Intelligence
 
 ---
 
 # Engineering Standards
 
-Every sprint must satisfy the following.
+Every sprint must satisfy Atlas engineering standards.
 
-## Code
+## Architecture
 
-* Clean Architecture
-* TypeScript
-* Modular Design
-* Documentation
+- Documentation First
+- Product First
+- Production First
+- Security by Default
+- Modular Monolith
+- Clean Architecture
+- Repository Pattern
+- Feature-First Organization
 
 ---
 
-## Git
+## Code Quality
 
-Every feature must have:
+Every feature should:
 
-* Separate branch
-* Pull Request
-* Meaningful commits
+- Build successfully
+- Pass testing
+- Follow Coding Standards
+- Respect architectural boundaries
+- Preserve module ownership
+- Maintain tenant isolation
 
-Example
+---
 
-```text
-feat: implement guest understanding
+## Documentation
 
-fix: improve timeline rendering
+Documentation forms part of the Definition of Done.
 
-docs: update API specification
-```
+Every significant engineering change should update the appropriate documentation.
+
+Documentation remains synchronized with implementation.
 
 ---
 
@@ -351,117 +796,257 @@ docs: update API specification
 
 Every sprint should include:
 
-* Backend Tests
-* Frontend Tests
-* Manual Verification
+- Manual Verification
+- Integration Testing
+- API Testing
+- Regression Testing where applicable
+
+Future releases will expand automated testing coverage.
 
 ---
 
 ## Deployment
 
-Every sprint should be deployable.
+Every completed sprint should remain deployable.
 
-Deployment environments
+Deployment environments include:
 
-* Development
-* Staging
-* Production
+- Development
+- Staging
+- Production
+
+Deployment quality is considered part of production readiness.
 
 ---
 
 # Definition of Done
 
-A feature is considered complete only when:
+A feature is considered complete only when all applicable requirements have been satisfied.
 
-* Requirements are implemented.
-* Code is reviewed.
-* Tests pass.
-* Documentation is updated.
-* Application builds successfully.
-* Feature is deployable.
+## Product
+
+- Requirements implemented
+- Acceptance criteria satisfied
+
+---
+
+## Engineering
+
+- Builds successfully
+- Production quality
+- Architecture respected
+- Security reviewed
+
+---
+
+## Testing
+
+- Manual QA completed
+- Integration verified
+- Critical workflows validated
+
+---
+
+## Documentation
+
+- Documentation updated
+- API documentation updated where required
+- Changelog updated
+- Engineering Decisions updated where applicable
+
+---
+
+## Operations
+
+- Logging implemented
+- Error handling verified
+- Deployable build produced
+
+Only after satisfying these requirements should a feature be considered complete.
+
+---
+
+# Current Implementation Status
+
+## Completed
+
+### Platform Foundation
+
+- Development Environment
+- Monorepo
+- Turborepo
+- React Frontend
+- NestJS Backend
+- PostgreSQL
+- Prisma ORM
+
+---
+
+### Authentication
+
+- User Registration
+- User Login
+- JWT Authentication
+- Protected Endpoints
+- Current User Endpoint
+
+---
+
+### Domain Management
+
+- Domain Registration
+- Domain Ownership
+- Multi-tenant Validation
+
+---
+
+### Understanding Engine
+
+- Understanding Jobs
+- Background Worker
+- Atomic Job Claiming
+- Job Lifecycle
+- Discovery Framework
+
+---
+
+### Discovery Modules
+
+- DNS Discovery
+- HTTP Discovery
+- SSL Discovery
+- Technology Detection
+
+---
+
+### Historical Memory
+
+- Discovery Snapshot
+- Infrastructure Snapshot Persistence
+- Immutable JSON Payload
+- Historical Snapshot Storage
+
+---
+
+### Quality Assurance
+
+- End-to-End API Validation
+- Authentication Testing
+- Domain Management Testing
+- Worker Validation
+- Snapshot Persistence Validation
+
+---
+
+## Planned
+
+### Infrastructure Intelligence
+
+- Infrastructure Findings
+- Infrastructure Brief Generation
+- Snapshot Comparison
+- Change Detection
+- Historical Timeline
+
+---
+
+### Workspace
+
+- Workspace UI
+- Timeline
+- Snapshot Viewer
+- Infrastructure Brief Viewer
+
+---
+
+### Platform
+
+- Scheduled Understanding
+- Notifications
+- AI Intelligence
+- Team Collaboration
+- Enterprise Features
 
 ---
 
 # Risks
 
-Potential challenges
+Potential engineering challenges include:
 
-* Scope creep
-* UI complexity
-* Scanner reliability
-* Performance bottlenecks
-* Third-party dependency changes
+- Infrastructure variability
+- Third-party dependency changes
+- Performance at scale
+- Distributed processing
+- Long-term historical storage
+- Future AI integration
 
-Mitigation
+These risks are mitigated through:
 
-* Keep MVP focused.
-* Prioritize architecture over shortcuts.
-* Build reusable modules.
-* Test continuously.
-
----
-
-# Long-Term Vision
-
-Atlas will evolve from an Infrastructure Intelligence Assistant into a complete Infrastructure Intelligence Platform.
-
-Every release should strengthen one promise:
-
-> **Know what changed. Understand why.**
-
-Future features will expand Atlas without compromising its philosophy of simplicity, clarity, and meaningful understanding.
+- Documentation-first engineering
+- Modular architecture
+- Immutable historical storage
+- Continuous testing
+- Incremental architectural evolution
 
 ---
 
 # Roadmap Summary
 
-The roadmap is intentionally iterative.
+Atlas is being developed through disciplined, incremental engineering rather than large feature drops.
 
-Each sprint delivers a working product while laying the foundation for future capabilities.
+Each sprint strengthens one of four platform capabilities:
 
-Atlas is not built through one large release.
+1. Foundation
+2. Understanding
+3. Intelligence
+4. Experience
 
-It grows through continuous improvement, disciplined engineering, and thoughtful product decisions.
+The platform evolves through a predictable intelligence pipeline:
 
-## Foundation
+```text
+Infrastructure Discovery
+        │
+        ▼
+Historical Snapshots
+        │
+        ▼
+Infrastructure Findings
+        │
+        ▼
+Historical Comparison
+        │
+        ▼
+Infrastructure Briefs
+        │
+        ▼
+Workspace Intelligence
+```
 
-### Objective
+This progression reflects Atlas' core philosophy.
 
-Build the engineering foundation for Atlas.
+Atlas does not simply collect infrastructure data.
 
-### Progress
+Atlas remembers.
 
-#### Completed
+Atlas understands.
 
-- [x] Create GitHub repository
-- [x] Configure development environment
-- [x] Configure pnpm workspace (Monorepo)
-- [x] Configure Turborepo
-- [x] Bootstrap React + Vite frontend
-- [x] Bootstrap Express + TypeScript backend
-- [x] Implement health check endpoint (`GET /health`)
-- [x] Configure Docker Compose
-- [x] Configure PostgreSQL 17
-- [x] Install and configure Prisma ORM
-- [x] Generate Prisma Client
-- [x] Standardize project toolchain
+Atlas explains.
 
-#### Remaining
+Every completed sprint moves Atlas closer to becoming a complete Infrastructure Intelligence Platform while preserving the architectural principles established by its canonical engineering documentation.
 
-- [ ] Design initial database schema
-- [ ] Create first Prisma migration
-- [ ] Configure environment variables
-- [ ] Create first Git commit
-- [ ] Sprint 1 review
-- [ ] Sprint 1 completion
+---
 
-### Current Deliverable
+# Document Status
 
-Atlas successfully boots in development with:
+| Property | Value |
+|----------|-------|
+| **Document** | 06 – Development Roadmap |
+| **Version** | **2.0** |
+| **Status** | **Approved (Frozen)** |
+| **Classification** | Product Development Roadmap |
+| **Owner** | Atlas Architecture Team |
+| **Last Updated** | July 2026 |
+| **Next Review Trigger** | Sprint Completion or Major Product Direction Change |
+| **Review Process** | Architecture Review Required |
 
-- React frontend
-- Express backend
-- Dockerized PostgreSQL
-- Prisma ORM
-
-Sprint 1 remains in progress.
+---

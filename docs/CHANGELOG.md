@@ -1,34 +1,122 @@
 # CHANGELOG
 
-All notable changes to Atlas will be documented in this file.
+All notable changes to Atlas are documented in this file.
 
-The format is inspired by **Keep a Changelog** and follows semantic versioning where practical.
+This project follows the principles of **Keep a Changelog** and uses **Semantic Versioning** where practical.
 
 ---
 
 # [Unreleased]
 
-### Added
+## Planned
 
-* Future features under active development.
+### Infrastructure Intelligence
 
-### Changed
-
-* Improvements awaiting release.
-
-### Fixed
-
-* Pending bug fixes.
+- Infrastructure Findings generation
+- Infrastructure Brief generation
+- Snapshot comparison engine
+- Historical change detection
+- Snapshot retrieval APIs
+- Historical timeline
+- Workspace experience
 
 ---
 
+# [0.2.0] - 2026-07-18
+
+## 🚀 Sprint 2 — Backend Foundation & Understanding Engine
+
+This release completes Sprint 2 and establishes the production-ready backend foundation for Atlas.
+
+Atlas now supports authenticated users, multi-tenant domain management, asynchronous infrastructure understanding, modular discovery, and immutable Infrastructure Snapshot persistence.
+
+This release establishes the historical data collection platform that future Infrastructure Intelligence features will build upon.
+
+---
+
+## Added
+
+### Authentication
+
+- User registration
+- User login
+- JWT authentication
+- Protected API endpoints
+- Current authenticated user endpoint
+- Password hashing
+
+---
+
+### Domain Management
+
+- Domain registration
+- Domain ownership validation
+- Duplicate domain prevention
+- Multi-tenant ownership enforcement
+
+---
+
+### Understanding Engine
+
+- Asynchronous Understanding Job architecture
+- Understanding Job creation
+- Understanding Job retrieval
+- Domain-specific job history
+- Production job lifecycle
+
+Supported job states:
+
+- `PENDING`
+- `RUNNING`
+- `COMPLETED`
+- `FAILED`
+
+---
+
+### Background Processing
+
+- Background Understanding Worker
+- Continuous job polling
+- Atomic job claiming
+- Execution duration tracking
+- Completion timestamps
+- Failure recording
+
+---
+
+### Discovery Framework
+
+Implemented a modular Discovery Framework including:
+
+- Discovery Registry
+- Ordered discovery pipeline
+- Extensible Discovery Module architecture
+
+Implemented discovery modules:
+
+- DNS Discovery
+- HTTP Discovery
+- SSL Discovery
+- Technology Detection
+
+---
+
+### Infrastructure Persistence
+
+- Immutable Infrastructure Snapshot persistence
+- Canonical JSON payload storage
+- Response metadata persistence
+- Understanding Job linkage
+- Historical infrastructure storage
+
+---
 # [0.1.0] - 2026-07-13
 
 ## 🎉 Sprint 0 — Product Discovery
 
-This marks the birth of Atlas as a product.
+This release marks the birth of Atlas as a product.
 
-The focus of this release was defining the vision, philosophy, architecture, and engineering foundations before writing production code.
+Sprint 0 focused on defining the product vision, engineering philosophy, architecture, and documentation before implementation began.
 
 ---
 
@@ -36,303 +124,341 @@ The focus of this release was defining the vision, philosophy, architecture, and
 
 ### Product Foundation
 
-* Defined Atlas as an **Infrastructure Intelligence Assistant**.
-* Established the core promise:
+- Defined Atlas as an **Infrastructure Intelligence Platform**.
+- Established the core promise:
 
 > **Know what changed. Understand why.**
 
-* Identified the primary target users:
-
-  * Software Engineers
-  * DevOps Engineers
-  * Engineering Managers
-  * Technical Leads
+- Identified the primary target users:
+  - Software Engineers
+  - DevOps Engineers
+  - Engineering Managers
+  - Technical Leads
 
 ---
 
 ### Product Philosophy
 
-* Atlas delivers understanding instead of raw infrastructure data.
-* Atlas focuses on meaningful changes rather than continuous monitoring.
-* Defined "Quiet Intelligence" as the product identity.
-* Introduced the principle:
-
-> **Silence is the default. Insight is the exception.**
-
----
-
-### User Experience
-
-* Guest Mode concept.
-* Workspace-first experience.
-* Dashboard-free philosophy.
-* Progressive understanding flow.
-* Human-centered product language.
-* Infrastructure Brief concept.
-* Timeline-first history view.
+- Infrastructure Intelligence over infrastructure scanning
+- Quiet Intelligence as the product identity
+- Workspace-first experience
+- Historical understanding over one-time analysis
+- Human-centered insights
+- Progressive disclosure
+- Infrastructure Brief concept
+- Timeline-first history
 
 ---
 
-### Product Growth Strategy
+### Product Architecture
 
-Established a product-led onboarding flow.
+Designed the initial production architecture including:
 
-Users:
-
-1. Experience Atlas.
-2. Receive value.
-3. Create an account only if they want Atlas to remember their infrastructure.
-
-This became Atlas' onboarding philosophy.
-
----
-
-### Engineering Architecture
-
-Designed the first Atlas architecture.
-
-Core components include:
-
-* React Frontend
-* Node.js Backend
-* Scan Manager
-* Independent Infrastructure Modules
-* PostgreSQL
-* Historical Snapshot Engine
-* Comparison Engine
-
-Architecture selected:
-
-**Modular Monolith**
+- React Frontend
+- NestJS Backend
+- PostgreSQL
+- Prisma ORM
+- Modular Monolith architecture
+- Repository Pattern
+- Clean Architecture
+- Multi-tenant design
+- Infrastructure Understanding pipeline
 
 ---
 
-### Infrastructure Modules
+### Core Platform Design
 
-Initial Version 1 modules:
+Defined the core Atlas domain model:
 
-* HTML
-* DNS
-* SSL
-* HTTP Headers
-* Technology Detection
+- Users
+- Domains
+- Understanding Jobs
+- Infrastructure Snapshots
+- Infrastructure Findings
+- Change History
+- Infrastructure Briefs
 
-Future modules documented for later versions.
-
----
-
-### Database Model
-
-Designed Atlas around historical knowledge.
-
-Core entities:
-
-* Users
-* Domains
-* Understanding Jobs
-* Infrastructure Snapshots
-* Infrastructure Findings
-* Change History
-* Infrastructure Briefs
-
-Snapshots are immutable.
+Established immutable snapshots as the foundation of Atlas' historical memory.
 
 ---
 
-### API
+### API Design
 
-Designed REST API Version 1.
+Designed the first REST API covering:
 
-Included:
-
-* Authentication
-* Guest Understanding
-* Workspace
-* Domains
-* Timeline
-* Understanding Jobs
-* Snapshot Retrieval
-* Change Detection
+- Authentication
+- Domain Management
+- Understanding Jobs
+- Workspace
+- Snapshot Retrieval
+- Historical Change Analysis
 
 ---
 
 ### Documentation
 
-Created:
+Created the canonical engineering documentation:
 
-* 01-Vision.md
-* 02-Product-Requirements.md
-* 03-System-Architecture.md
-* 04-Database-Design.md
-* 05-API-Specification.md
-* 06-Development-Roadmap.md
-* 07-Decisions.md
-* 08-Design-Bible.md
-* CHANGELOG.md
-
----
-
-## Product Decisions
-
-Major decisions accepted during Sprint 0:
-
-* Atlas is an assistant, not a dashboard.
-* Workspace replaces Dashboard.
-* Understanding replaces Scan.
-* Accounts exist for memory, not access.
-* Every feature must earn its place.
-* Motion has meaning.
-* Progressive disclosure.
-* Human language first.
-* Platform before features.
+- Development Environment
+- Vision
+- Product Requirements
+- System Architecture
+- Database Architecture
+- API Architecture
+- Roadmap
+- Engineering Decisions
+- Design Bible
+- Coding Standards
+- Security & Trust Architecture
+- Contributing Guide
+- Changelog
 
 ---
 
-## Future
+## Engineering Decisions
 
-Planned after Sprint 0:
+Established the foundational engineering principles:
 
-* Repository setup
-* Project structure
-* React application
-* Backend API
-* PostgreSQL implementation
-* Docker development environment
-* CI/CD pipeline
-* First production deployment
+- Documentation-first development
+- Product-first engineering
+- Security by default
+- Infrastructure Intelligence over infrastructure scanning
+- Modular Monolith architecture
+- Clean Architecture
+- Repository Pattern
+- SOLID principles
+- Multi-tenant platform design
 
 ---
 
-## Closing Note
+## Release Summary
 
 Version **0.1.0** contains no production code.
 
-Instead, it establishes the vision, engineering principles, product philosophy, and technical foundation that will guide every future release of Atlas.
+Instead, it establishes the product vision, engineering standards, architectural foundation, and documentation that guide every future release of Atlas.
 
-This version marks the official beginning of the Atlas journey.
-
-# [0.2.0] - 2026-07-14
-
-## 🚀 Sprint 1 — Foundation (In Progress)
-
-This release marks the transition of Atlas from a documented product into a working software project.
-
-Sprint 1 focuses on establishing the engineering foundation required for future feature development.
+This release represents the official beginning of the Atlas project.
 
 ---
-
-## Added
-
-### Repository & Workspace
-
-* Initialized the Atlas GitHub repository.
-* Configured a pnpm workspace (monorepo).
-* Added Turborepo for workspace orchestration.
-* Standardized the repository structure for frontend, backend, and shared packages.
-
----
-
-### Frontend
-
-* Bootstrapped the React + Vite + TypeScript application.
-* Verified the frontend development server.
-* Established the initial frontend application structure.
-
----
-
-### Backend
-
-* Bootstrapped the Express + TypeScript API.
-* Implemented the first API endpoint:
-
-```
-GET /health
-```
-
-* Verified successful API startup.
-* Verified successful health response.
-
----
-
-### Database
-
-* Configured Docker Compose for local development.
-* Added PostgreSQL 17 as the development database.
-* Successfully started the PostgreSQL container.
-
----
-
-### Prisma
-
-* Installed Prisma ORM.
-* Standardized on Prisma 6.19.3.
-* Generated the Prisma Client.
-* Prepared the project for database schema implementation.
-
----
-
-### Engineering
-
-* Standardized the backend folder structure.
-* Established the initial development workflow.
-* Locked the project toolchain for stable development.
-
----
-
 ## Changed
 
-* Standardized TypeScript to version 5.9.3 across the entire workspace.
-* Standardized Prisma to version 6.19.3.
-* Adopted Docker-managed PostgreSQL for local development.
+- Transitioned infrastructure understanding from synchronous execution to asynchronous background processing.
+- Standardized infrastructure discovery through the Discovery Registry architecture.
+- Established Infrastructure Snapshots as immutable historical records.
+- Adopted canonical JSON payloads as the source of truth for infrastructure observations.
+- Refined the Understanding pipeline to support future Infrastructure Intelligence capabilities.
 
 ---
 
 ## Fixed
 
-* Resolved pnpm workspace configuration issues.
-* Resolved TypeScript module configuration issues.
-* Resolved Prisma 7 compatibility issues by pinning Prisma 6.
-* Resolved Docker PostgreSQL port conflict.
-* Resolved Prisma client generation issues.
+- Resolved Prisma schema inconsistencies.
+- Resolved database migration synchronization issues.
+- Corrected Prisma Client generation inconsistencies.
+- Improved worker polling and job claiming reliability.
+- Corrected Infrastructure Snapshot persistence workflow.
+- Eliminated duplicate discovery execution scenarios.
+- Verified end-to-end execution of the Understanding pipeline.
 
 ---
 
-## Current Status
+## Verified
 
-Sprint 1 remains in progress.
+Completed manual end-to-end validation for:
 
-Completed:
+- User Registration
+- User Login
+- JWT Authentication
+- Domain Registration
+- Domain Ownership Enforcement
+- Understanding Job Creation
+- Background Worker Execution
+- Discovery Pipeline
+- Infrastructure Snapshot Persistence
+- PostgreSQL Data Integrity
+
+---
+
+## Current Platform Status
+
+### Completed
+
+- Authentication
+- Domain Management
+- Understanding Jobs
+- Background Worker
+- Discovery Registry
+- DNS Discovery
+- HTTP Discovery
+- SSL Discovery
+- Technology Detection
+- Infrastructure Snapshot Persistence
+
+### Planned
+
+- Infrastructure Findings
+- Change History
+- Infrastructure Briefs
+- Snapshot Retrieval APIs
+- Historical Comparison Engine
+- Workspace Experience
+
+---
+
+## Release Summary
+
+Atlas has evolved from an architectural vision into a production-ready backend platform capable of authenticating users, managing domains, executing asynchronous infrastructure discovery, and preserving immutable historical infrastructure snapshots.
+
+Version **0.2.0** establishes the engineering foundation required for Atlas' next phase: **Infrastructure Intelligence**.
+
+---
+
+# [0.1.0] - 2026-07-13
+
+## 🎉 Sprint 0 — Product Discovery
+
+This release marks the birth of Atlas as a product.
+
+Sprint 0 focused on defining the product vision, engineering philosophy, architecture, and documentation before production implementation began.
+
+---
+
+## Added
+
+### Product Foundation
+
+- Defined Atlas as an **Infrastructure Intelligence Platform**.
+- Established the core product promise:
+
+> **Know what changed. Understand why.**
+
+- Identified the primary target users:
+  - Software Engineers
+  - DevOps Engineers
+  - Engineering Managers
+  - Technical Leads
+
+---
+
+### Product Philosophy
+
+Established the guiding principles of Atlas:
+
+- Infrastructure Intelligence over infrastructure scanning
+- Quiet Intelligence
+- Workspace-first experience
+- Historical understanding
+- Progressive disclosure
+- Human-centered insights
+- Timeline-first experience
+- Infrastructure Brief concept
+
+---
+
+### Engineering Architecture
+
+Designed the production architecture including:
+
+- React frontend
+- NestJS backend
+- PostgreSQL
+- Prisma ORM
+- Modular Monolith architecture
+- Clean Architecture
+- Repository Pattern
+- Multi-tenant platform
+
+---
+
+### Core Domain Model
+
+Designed the foundational data model consisting of:
+
+- Users
+- Domains
+- Understanding Jobs
+- Infrastructure Snapshots
+- Infrastructure Findings
+- Change History
+- Infrastructure Briefs
+
+Established immutable Infrastructure Snapshots as the foundation of Atlas' historical memory.
+
+---
+
+### API Design
+
+Designed the initial REST API including:
+
+- Authentication
+- Domain Management
+- Understanding Jobs
+- Workspace
+- Infrastructure Snapshots
+- Historical Change Analysis
+
+---
+
+### Documentation
+
+Created the canonical engineering documentation:
 
 - Development Environment
-- Repository Setup
-- Monorepo
-- Frontend
-- Backend
-- Docker PostgreSQL
-- Prisma Installation
+- Vision
+- Product Requirements
+- System Architecture
+- Database Architecture
+- API Architecture
+- Roadmap
+- Engineering Decisions
+- Design Bible
+- Coding Standards
+- Security & Trust Architecture
+- Contributing Guide
+- Changelog
 
-Remaining:
+---
 
-- Database Schema
-- Initial Migration
-- Environment Finalization
-- First Git Commit
-- Sprint 1 Review
+## Engineering Decisions
 
-# Changelog
+Established the engineering principles that continue to guide Atlas development:
 
-## v0.1.0 – Foundation Complete
+- Documentation-first development
+- Product-first engineering
+- Security by default
+- Infrastructure Intelligence over infrastructure scanning
+- Modular Monolith architecture
+- Clean Architecture
+- Repository Pattern
+- SOLID design principles
+- Multi-tenant platform design
+- Historical infrastructure understanding
 
-### Added
+---
 
-- Atlas monorepo initialized
-- Turborepo workspace
-- Prisma ORM integration
-- PostgreSQL configuration
-- Initial production database schema
-- Initial Prisma migration
-- Documentation-first project structure
-- GitHub repository initialization
-- Project README
-- Security architecture
-- Database architecture
+## Release Summary
+
+Version **0.1.0** contains no production code.
+
+Instead, it establishes the product vision, engineering standards, architectural foundation, and canonical documentation that guide every future release of Atlas.
+
+Sprint 0 concludes with Atlas transitioning from an idea into a fully specified software platform, providing the blueprint for all subsequent implementation.
+
+---
+
+## Looking Ahead
+
+The next release introduces the first production implementation of Atlas, including:
+
+- Monorepo workspace
+- NestJS backend
+- React frontend
+- PostgreSQL
+- Prisma ORM
+- Authentication
+- Domain management
+- Understanding Jobs
+- Discovery Framework
+- Infrastructure Snapshot persistence
+
+These capabilities form the foundation for Atlas' evolution into a production-ready Infrastructure Intelligence Platform.

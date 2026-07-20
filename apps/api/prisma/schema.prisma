@@ -45,6 +45,14 @@ enum FindingCategory {
   CDN
 }
 
+enum Severity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 enum ChangeSeverity {
   LOW
   MEDIUM
@@ -171,20 +179,25 @@ model InfrastructureFinding {
 
   snapshotId String
 
-  module   FindingModule
+  ruleId String
+
+  title String
+
+  description String
+
+  severity Severity
+
   category FindingCategory
 
-  key   String
-  value Json
+  recommendations Json
+
+  createdAt DateTime @default(now())
 
   snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@index([snapshotId])
-  @@index([module])
-  @@index([category])
   @@map("infrastructure_findings")
 }
-
 ///////////////////////////////////////////////////////////
 // CHANGE HISTORY
 ///////////////////////////////////////////////////////////

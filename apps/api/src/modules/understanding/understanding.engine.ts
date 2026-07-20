@@ -3,12 +3,19 @@ import { Injectable } from '@nestjs/common';
 import { DiscoverySnapshot } from '../../infrastructure/discovery/contracts/discovery-snapshot.interface';
 import { DiscoveryRegistryService } from '../../infrastructure/discovery/registry/discovery-registry.service';
 import { InfrastructureSnapshotService } from '../infrastructure-snapshots/services/infrastructure-snapshot.service';
+import { FindingRuleEngineService } from '../findings/services/finding-rule-engine.service';
+import { FindingContext } from '../findings/contracts/finding-context.interface';
+// TODO: Ensure this path correctly matches your project structure
+import { InfrastructureFindingService } from '../infrastructure-findings/services/infrastructure-finding.service';
+
 
 @Injectable()
 export class UnderstandingEngine {
   constructor(
     private readonly discoveryRegistry: DiscoveryRegistryService,
     private readonly snapshotService: InfrastructureSnapshotService,
+    private readonly findingRuleEngine: FindingRuleEngineService,
+    private readonly infrastructureFindingService: InfrastructureFindingService,
   ) {}
 
   async execute(
@@ -18,10 +25,25 @@ export class UnderstandingEngine {
   ): Promise<void> {
     const snapshot = await this.collectDiscovery(domainName);
 
-    await this.snapshotService.saveSnapshot(
+    const context: FindingContext = {
+      snapshot,
+    };
+
+    const findings = await this.findingRuleEngine.evaluate(context);
+
+    if (findings.length > 0) {
+      console.log(`Generated ${findings.length} finding(s).`);
+    }
+
+    const savedSnapshot = await this.snapshotService.saveSnapshot(
       domainId,
       jobId,
       snapshot,
+    );
+
+    await this.infrastructureFindingService.saveFindings(
+      savedSnapshot.id,
+      findings,
     );
   }
 

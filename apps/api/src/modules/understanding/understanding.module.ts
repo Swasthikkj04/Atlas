@@ -13,6 +13,8 @@ import { UnderstandingRepository } from './repositories/understanding.repository
 import { HttpModule } from '../../infrastructure/discovery/http/http.module';
 import { DiscoveryModule } from '../../infrastructure/discovery/discovery.module';
 import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infrastructure-snapshots.module';
+import { FindingsModule } from '../findings/findings.module';
+import { InfrastructureFindingsModule } from '../infrastructure-findings/infrastructure-findings.module';
 @Module({
   imports: [
     PrismaModule,
@@ -21,6 +23,8 @@ import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infra
     HttpModule,
     DiscoveryModule,
     InfrastructureSnapshotsModule,
+    FindingsModule,
+    InfrastructureFindingsModule,
   ],
   controllers: [UnderstandingController],
   providers: [

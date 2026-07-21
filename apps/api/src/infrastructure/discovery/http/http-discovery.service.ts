@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+import * as https from 'node:https';
+import axios, { AxiosError } from 'axios';
 import { DiscoveryModule } from '../contracts/discovery-module.interface';
 import { DiscoveryCollector } from '../collector/discovery-collector.interface';
 
@@ -20,30 +21,48 @@ export interface HttpDiscoveryResult {
 
   redirects: string[];
 
+  redirectCount: number;
+
   error: string | null;
 }
 
 @Injectable()
 export class HttpDiscoveryService
-  implements DiscoveryModule, DiscoveryCollector<unknown>
+  implements
+    DiscoveryModule<HttpDiscoveryResult>,
+    DiscoveryCollector<HttpDiscoveryResult>
 {
   readonly name = 'http';
+
+  private readonly httpsAgent = new https.Agent({
+    keepAlive: true,
+  });
 
   async discover(domainName: string): Promise<HttpDiscoveryResult> {
     const url = `https://${domainName}`;
     const startedAt = Date.now();
 
     try {
-      const response = await axios.get(url, {
-        maxRedirects: 10,
-        timeout: 10000,
-        validateStatus: () => true,
-      });
-
+      const response = await this.executeRequest(url);
       const responseTimeMs = Date.now() - startedAt;
 
       const finalUrl =
         response.request?.res?.responseUrl ?? url;
+
+      let protocol: 'http' | 'https' | null = null;
+      try {
+        const parsed = new URL(finalUrl);
+        protocol = parsed.protocol === 'https:' ? 'https' : 'http';
+      } catch {
+        protocol = finalUrl.startsWith('https') ? 'https' : 'http';
+      }
+
+      const normalizedHeaders = Object.fromEntries(
+        Object.entries(response.headers).map(([key, value]) => [
+          key.toLowerCase(),
+          Array.isArray(value) ? value.join(', ') : String(value),
+        ]),
+      );
 
       return {
         reachable: true,
@@ -52,22 +71,27 @@ export class HttpDiscoveryService
 
         finalUrl,
 
-        protocol: finalUrl.startsWith('https')
-          ? 'https'
-          : 'http',
+        protocol,
 
         statusCode: response.status,
 
         responseTimeMs,
 
-        headers: response.headers as Record<string, string>,
+        headers: normalizedHeaders,
 
-        redirects: [],
+        redirects: finalUrl !== url ? [finalUrl] : [],
+
+        redirectCount: finalUrl !== url ? 1 : 0,
 
         error: null,
       };
     } catch (error) {
       const responseTimeMs = Date.now() - startedAt;
+      const axiosError = error as AxiosError;
+
+      const errorMessage = axiosError.code
+        ? `${axiosError.code}: ${axiosError.message}`
+        : axiosError.message || 'Unknown error';
 
       return {
         reachable: false,
@@ -86,15 +110,31 @@ export class HttpDiscoveryService
 
         redirects: [],
 
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Unknown error',
+        redirectCount: 0,
+
+        error: errorMessage,
       };
     }
   }
 
-  async collect(domainName: string): Promise<unknown> {
+  async collect(domainName: string): Promise<HttpDiscoveryResult> {
     return this.discover(domainName);
+  }
+
+  private async executeRequest(url: string, retries = 1) {
+    try {
+      return await axios.get(url, {
+        httpsAgent: this.httpsAgent,
+        maxRedirects: 10,
+        timeout: 10000,
+        validateStatus: () => true,
+      });
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.code === 'ECONNRESET' && retries > 0) {
+        return this.executeRequest(url, retries - 1);
+      }
+      throw error;
+    }
   }
 }

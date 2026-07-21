@@ -15,6 +15,10 @@ export interface SslDiscoveryResult {
 
   cipher?: string;
 
+  authorized?: boolean;
+
+  authorizationError?: string;
+
   certificate?: {
     subject: string;
     issuer: string;
@@ -23,6 +27,10 @@ export interface SslDiscoveryResult {
     validTo: string;
 
     serialNumber: string;
+
+    subjectAltName?: string;
+
+    fingerprint256?: string;
   };
 
   error: string | null;
@@ -30,7 +38,9 @@ export interface SslDiscoveryResult {
 
 @Injectable()
 export class SslDiscoveryService
-  implements DiscoveryModule<SslDiscoveryResult>, DiscoveryCollector<unknown>
+  implements
+    DiscoveryModule<SslDiscoveryResult>,
+    DiscoveryCollector<SslDiscoveryResult>
 {
   readonly name = 'ssl';
 
@@ -57,12 +67,20 @@ export class SslDiscoveryService
           const cert = socket.getPeerCertificate();
           const responseTimeMs = Date.now() - startedAt;
 
+          // Check if Node trusted the certificate chain
+          const authorized = socket.authorized;
+          const authorizationError = socket.authorizationError
+            ? String(socket.authorizationError)
+            : undefined;
+
           resolve({
             reachable: true,
             supported: true,
             responseTimeMs,
             protocol: socket.getProtocol() ?? undefined,
             cipher: socket.getCipher()?.name,
+            authorized,
+            authorizationError,
             certificate: {
               subject: Array.isArray(cert.subject?.CN)
                 ? cert.subject.CN.join(', ')
@@ -73,6 +91,8 @@ export class SslDiscoveryService
               validFrom: cert.valid_from,
               validTo: cert.valid_to,
               serialNumber: cert.serialNumber,
+              subjectAltName: cert.subjectaltname,
+              fingerprint256: cert.fingerprint256,
             },
             error: null,
           });
@@ -93,7 +113,7 @@ export class SslDiscoveryService
           reachable: false,
           supported: false,
           responseTimeMs: Date.now() - startedAt,
-          error: 'TIMEOUT',
+          error: 'ETIMEDOUT: Connection timed out',
         });
       });
 
@@ -103,24 +123,30 @@ export class SslDiscoveryService
 
         socket.destroy();
 
-        // If the connection was refused or could not resolve host, it is unreachable.
-        // If it connected but failed handshaking, it's reachable but unsupported.
-        const isUnreachable = 
-          error?.code === 'ECONNREFUSED' || 
-          error?.code === 'ENOTFOUND' || 
-          error?.code === 'ETIMEDOUT';
+        const errorCode = error?.code;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const formattedError = errorCode ? `${errorCode}: ${errorMessage}` : errorMessage;
+
+        // Transport/Network level connection failures
+        const isNetworkFailure =
+          errorCode === 'ECONNREFUSED' ||
+          errorCode === 'ENOTFOUND' ||
+          errorCode === 'ETIMEDOUT' ||
+          errorCode === 'ECONNRESET' ||
+          errorCode === 'EHOSTUNREACH' ||
+          errorCode === 'ENETUNREACH';
 
         resolve({
-          reachable: !isUnreachable,
+          reachable: !isNetworkFailure,
           supported: false,
           responseTimeMs: Date.now() - startedAt,
-          error: error instanceof Error ? error.message : String(error),
+          error: formattedError,
         });
       });
     });
   }
 
-  async collect(domainName: string): Promise<unknown> {
+  async collect(domainName: string): Promise<SslDiscoveryResult> {
     return this.discover(domainName);
   }
 }

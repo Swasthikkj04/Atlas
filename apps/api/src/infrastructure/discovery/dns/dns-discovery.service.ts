@@ -10,22 +10,26 @@ export interface DnsDiscoveryResult {
   ns: string[];
   cname: string[];
   txt: string[][];
+  dmarc: string[][];
 }
 
 @Injectable()
 export class DnsDiscoveryService
-  implements DiscoveryModule, DiscoveryCollector<unknown>
+  implements
+    DiscoveryModule<DnsDiscoveryResult>,
+    DiscoveryCollector<DnsDiscoveryResult>
 {
   readonly name = 'dns';
 
   async discover(domainName: string): Promise<DnsDiscoveryResult> {
-    const [a, aaaa, mx, ns, cname, txt] = await Promise.all([
+    const [a, aaaa, mx, ns, cname, txt, dmarc] = await Promise.all([
       this.safeLookup(() => dns.resolve4(domainName), []),
       this.safeLookup(() => dns.resolve6(domainName), []),
       this.safeLookup(() => dns.resolveMx(domainName), []),
       this.safeLookup(() => dns.resolveNs(domainName), []),
       this.safeLookup(() => dns.resolveCname(domainName), []),
       this.safeLookup(() => dns.resolveTxt(domainName), []),
+      this.safeLookup(() => dns.resolveTxt(`_dmarc.${domainName}`), []),
     ]);
 
     return {
@@ -35,10 +39,11 @@ export class DnsDiscoveryService
       ns,
       cname,
       txt,
+      dmarc,
     };
   }
 
-  async collect(domainName: string): Promise<unknown> {
+  async collect(domainName: string): Promise<DnsDiscoveryResult> {
     return this.discover(domainName);
   }
 

@@ -8,7 +8,6 @@ import { FindingContext } from '../findings/contracts/finding-context.interface'
 // TODO: Ensure this path correctly matches your project structure
 import { InfrastructureFindingService } from '../infrastructure-findings/services/infrastructure-finding.service';
 
-
 @Injectable()
 export class UnderstandingEngine {
   constructor(
@@ -25,7 +24,15 @@ export class UnderstandingEngine {
   ): Promise<void> {
     const snapshot = await this.collectDiscovery(domainName);
 
+    const savedSnapshot = await this.snapshotService.saveSnapshot(
+      domainId,
+      jobId,
+      snapshot,
+    );
+
     const context: FindingContext = {
+      domainId,
+      snapshotId: savedSnapshot.id,
       snapshot,
     };
 
@@ -34,12 +41,6 @@ export class UnderstandingEngine {
     if (findings.length > 0) {
       console.log(`Generated ${findings.length} finding(s).`);
     }
-
-    const savedSnapshot = await this.snapshotService.saveSnapshot(
-      domainId,
-      jobId,
-      snapshot,
-    );
 
     await this.infrastructureFindingService.saveFindings(
       savedSnapshot.id,

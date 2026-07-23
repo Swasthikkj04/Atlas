@@ -12,6 +12,7 @@ export class SingleNameserverRule implements FindingRule {
 
   readonly name = 'Single Name Server';
 
+  readonly category = FindingCategory.DNS_RECORD;
   async evaluate(
     context: FindingContext,
   ): Promise<FindingResult[]> {

@@ -11,6 +11,7 @@ export class SelfSignedCertificateRule implements FindingRule {
   readonly id = 'ssl.self-signed';
 
   readonly name = 'Self-Signed Certificate';
+  readonly category = FindingCategory.CERTIFICATE;
 
   private readonly selfSignedErrors = new Set([
     'DEPTH_ZERO_SELF_SIGNED_CERT',

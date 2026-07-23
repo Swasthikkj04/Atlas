@@ -11,6 +11,7 @@ export class MissingIpv6Rule implements FindingRule {
   readonly id = 'dns.missing-ipv6';
 
   readonly name = 'Missing IPv6 Support';
+  readonly category = FindingCategory.DNS_RECORD;
 
   async evaluate(
     context: FindingContext,

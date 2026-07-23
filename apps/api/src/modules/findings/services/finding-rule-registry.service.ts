@@ -20,6 +20,7 @@ import { MissingReferrerPolicyRule } from '../rules/infrastructure/http/missing-
 import { ServerHeaderExposedRule } from '../rules/infrastructure/http/server-header-exposed.rule';
 import { SlowResponseRule } from '../rules/infrastructure/http/slow-response.rule';
 import { HttpServiceUnreachableRule } from '../rules/infrastructure/http/http-service-unreachable.rule';
+
 @Injectable()
 export class FindingRuleRegistryService {
   constructor(
@@ -44,8 +45,32 @@ export class FindingRuleRegistryService {
     private readonly httpServiceUnreachableRule: HttpServiceUnreachableRule,
   ) {}
 
+  private validateRules(rules: FindingRule[]): void {
+    const ids = new Set<string>();
+
+    for (const rule of rules) {
+      if (!rule.id) {
+        throw new Error('Finding rule missing id');
+      }
+
+      if (!rule.name) {
+        throw new Error(`Finding rule ${rule.id} missing name`);
+      }
+
+      if (!rule.category) {
+        throw new Error(`Finding rule ${rule.id} missing category`);
+      }
+
+      if (ids.has(rule.id)) {
+        throw new Error(`Duplicate finding rule id: ${rule.id}`);
+      }
+
+      ids.add(rule.id);
+    }
+  }
+
   getRules(): FindingRule[] {
-    return [
+    const rules: FindingRule[] = [
       this.atlasHealthRule,
       this.certificateExpiryRule,
       this.sslUnsupportedRule,
@@ -66,5 +91,9 @@ export class FindingRuleRegistryService {
       this.SlowResponseRule,
       this.httpServiceUnreachableRule,
     ];
+
+    this.validateRules(rules);
+
+    return rules;
   }
 }

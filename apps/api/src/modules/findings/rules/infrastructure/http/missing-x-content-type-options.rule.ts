@@ -11,6 +11,7 @@ export class MissingXContentTypeOptionsRule implements FindingRule {
   readonly id = 'http.missing-x-content-type-options';
 
   readonly name = 'Missing X-Content-Type-Options Header';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

@@ -11,6 +11,8 @@ import { HealthModule } from './modules/health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { UnderstandingModule } from './modules/understanding/understanding.module';
 import { DiscoveryModule } from './infrastructure/discovery/discovery.module';
+import { InfrastructureSnapshotsModule } from './modules/infrastructure-snapshots/infrastructure-snapshots.module';
+import { InfrastructureBriefModule } from './modules/infrastructure-brief/infrastructure-brief.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,7 +27,9 @@ import { DiscoveryModule } from './infrastructure/discovery/discovery.module';
     DomainsModule,
     HealthModule,
     UnderstandingModule,
-    DiscoveryModule
+    DiscoveryModule,
+    InfrastructureSnapshotsModule,
+    InfrastructureBriefModule,
   ],
 })
 export class AppModule {}

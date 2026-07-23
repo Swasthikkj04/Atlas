@@ -11,6 +11,7 @@ export class MissingDmarcRule implements FindingRule {
   readonly id = 'dns.missing-dmarc';
 
   readonly name = 'Missing DMARC Record';
+  readonly category = FindingCategory.DNS_RECORD;
 
   async evaluate(
     context: FindingContext,

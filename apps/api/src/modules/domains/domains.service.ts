@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { DomainsRepository } from './repositories/domains.repository';
 
 interface CreateDomainData {

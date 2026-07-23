@@ -4,6 +4,10 @@ import * as tls from 'node:tls';
 import { DiscoveryModule } from '../contracts/discovery-module.interface';
 import { DiscoveryCollector } from '../collector/discovery-collector.interface';
 
+interface SocketError extends Error {
+  code?: string;
+}
+
 export interface SslDiscoveryResult {
   reachable: boolean;
 
@@ -117,7 +121,7 @@ export class SslDiscoveryService
         });
       });
 
-      socket.on('error', (error: any) => {
+      socket.on('error', (error: SocketError) => {
         if (isSettled) return;
         isSettled = true;
 

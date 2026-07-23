@@ -11,6 +11,7 @@ export class SslUnsupportedRule implements FindingRule {
   readonly id = 'ssl.unsupported';
 
   readonly name = 'SSL Unsupported';
+  readonly category = FindingCategory.TLS;
 
   async evaluate(
     context: FindingContext,

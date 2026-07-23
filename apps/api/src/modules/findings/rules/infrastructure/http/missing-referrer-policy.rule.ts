@@ -11,6 +11,7 @@ export class MissingReferrerPolicyRule implements FindingRule {
   readonly id = 'http.missing-referrer-policy';
 
   readonly name = 'Missing Referrer-Policy Header';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

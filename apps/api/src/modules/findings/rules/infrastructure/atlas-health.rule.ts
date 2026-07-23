@@ -12,6 +12,7 @@ export class AtlasHealthRule implements FindingRule {
   readonly id = 'atlas-health';
 
   readonly name = 'Atlas Health';
+  readonly category = FindingCategory.GENERAL;
 
   constructor(
     private readonly factory: FindingFactory,

@@ -11,6 +11,8 @@ export class HttpServiceUnreachableRule implements FindingRule {
   readonly id = 'http.service-unreachable';
 
   readonly name = 'HTTP Service Unreachable';
+  readonly category = FindingCategory.RESPONSE;
+
 
   async evaluate(
     context: FindingContext,

@@ -239,7 +239,13 @@ model InfrastructureBrief {
 
   snapshotId String @unique
 
+  overallHealth String
+
   summary String
+
+  highlights Json
+
+  recommendations Json
 
   version Int @default(1)
 

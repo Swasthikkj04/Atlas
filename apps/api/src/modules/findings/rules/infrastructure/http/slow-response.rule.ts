@@ -13,6 +13,7 @@ export class SlowResponseRule implements FindingRule {
   readonly id = 'http.slow-response';
 
   readonly name = 'Slow HTTP Response';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

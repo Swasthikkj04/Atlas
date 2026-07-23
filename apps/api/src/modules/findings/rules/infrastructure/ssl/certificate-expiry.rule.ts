@@ -6,6 +6,7 @@ import { FindingRule } from '../../../contracts/finding-rule.interface';
 import { FindingCategory } from '../../../enums/finding-category.enum';
 import { Severity } from '../../../enums/severity.enum';
 import { daysUntil } from '../../shared/date.utils';
+
 const HIGH_THRESHOLD_DAYS = 15;
 const MEDIUM_THRESHOLD_DAYS = 30;
 
@@ -14,6 +15,8 @@ export class CertificateExpiryRule implements FindingRule {
   readonly id = 'ssl.certificate-expiry';
 
   readonly name = 'SSL Certificate Expiry';
+
+  readonly category = FindingCategory.CERTIFICATE;
 
   async evaluate(
     context: FindingContext,

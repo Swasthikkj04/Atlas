@@ -11,6 +11,7 @@ export class WeakTlsVersionRule implements FindingRule {
   readonly id = 'ssl.weak-tls-version';
 
   readonly name = 'Weak TLS Version';
+  readonly category = FindingCategory.TLS;
 
   async evaluate(
     context: FindingContext,

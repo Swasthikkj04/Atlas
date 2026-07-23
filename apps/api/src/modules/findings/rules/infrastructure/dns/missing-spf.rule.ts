@@ -6,11 +6,13 @@ import { FindingRule } from '../../../contracts/finding-rule.interface';
 import { FindingCategory } from '../../../enums/finding-category.enum';
 import { Severity } from '../../../enums/severity.enum';
 
+
 @Injectable()
 export class MissingSpfRule implements FindingRule {
   readonly id = 'dns.missing-spf';
 
   readonly name = 'Missing SPF Record';
+  readonly category = FindingCategory.DNS_RECORD;
 
   async evaluate(
     context: FindingContext,

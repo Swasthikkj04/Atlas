@@ -11,6 +11,7 @@ export class ServerHeaderExposedRule implements FindingRule {
   readonly id = 'http.server-header-exposed';
 
   readonly name = 'Server Header Exposed';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

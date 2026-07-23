@@ -462,3 +462,38 @@ The next release introduces the first production implementation of Atlas, includ
 - Infrastructure Snapshot persistence
 
 These capabilities form the foundation for Atlas' evolution into a production-ready Infrastructure Intelligence Platform.
+
+### Discovery Validation
+
+- Added dedicated DMARC discovery using `_dmarc.<domain>` lookups.
+- Improved DMARC detection accuracy by separating DMARC discovery from apex TXT records.
+
+### Discovery Engine
+
+- Refined DNS discovery to expose dedicated DMARC records.
+- Updated the Missing DMARC rule to evaluate dedicated DMARC records instead of apex TXT records.
+
+### End-to-End Validation
+
+Validated the Discovery & Rule Engine against real-world and test infrastructure:
+
+- google.com
+- github.com
+- badssl.com
+- expired.badssl.com
+
+Verified:
+
+- DNS discovery
+- HTTP discovery
+- SSL discovery
+- Security header detection
+- Certificate expiry detection
+- Infrastructure snapshot persistence
+- Findings generation
+- Background worker execution
+
+### Accuracy Improvements
+
+- Eliminated false-positive DMARC findings caused by apex TXT record inspection.
+- Improved DNS rule accuracy through dedicated DMARC discovery.

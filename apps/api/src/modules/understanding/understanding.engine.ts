@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { DiscoverySnapshot } from '../../infrastructure/discovery/contracts/discovery-snapshot.interface';
 import { DiscoveryRegistryService } from '../../infrastructure/discovery/registry/discovery-registry.service';
@@ -10,6 +10,10 @@ import { InfrastructureFindingService } from '../infrastructure-findings/service
 
 @Injectable()
 export class UnderstandingEngine {
+  private readonly logger = new Logger(
+    UnderstandingEngine.name,
+  );
+
   constructor(
     private readonly discoveryRegistry: DiscoveryRegistryService,
     private readonly snapshotService: InfrastructureSnapshotService,
@@ -39,7 +43,9 @@ export class UnderstandingEngine {
     const findings = await this.findingRuleEngine.evaluate(context);
 
     if (findings.length > 0) {
-      console.log(`Generated ${findings.length} finding(s).`);
+      this.logger.debug(
+        `Generated ${findings.length} finding(s) for snapshot ${savedSnapshot.id}.`,
+      );
     }
 
     await this.infrastructureFindingService.saveFindings(

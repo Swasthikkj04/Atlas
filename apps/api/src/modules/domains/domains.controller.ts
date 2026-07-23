@@ -10,10 +10,15 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 
+import { AuthenticatedUser } from '../../common/interfaces/authenticated-user-interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { CreateDomainDto } from './dto/create-domain.dto';
 import { DomainsService } from './domains.service';
+
+type AuthenticatedRequest = Request & {
+  user: AuthenticatedUser;
+};
 
 @Controller('domains')
 @UseGuards(JwtAuthGuard)
@@ -24,30 +29,32 @@ export class DomainsController {
 
   @Post()
   create(
-    @Req() request: Request,
-    @Body() dto: CreateDomainDto,
+    @Req() request: AuthenticatedRequest,
+    @Body() createDomainDto: CreateDomainDto,
   ) {
     return this.domainsService.create({
-      userId: (request.user as any).id,
-      domainName: dto.domainName,
+      userId: request.user.id,
+      domainName: createDomainDto.domainName,
     });
   }
 
   @Get()
-  findAll(@Req() request: Request) {
+  findAll(
+    @Req() request: AuthenticatedRequest,
+  ) {
     return this.domainsService.findByUser(
-      (request.user as any).id,
+      request.user.id,
     );
   }
 
   @Delete(':id')
   remove(
-    @Req() request: Request,
+    @Req() request: AuthenticatedRequest,
     @Param('id') id: string,
   ) {
     return this.domainsService.delete(
+      request.user.id,
       id,
-      (request.user as any).id,
     );
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FindingResult } from '../../findings/contracts/finding-result.interface';
 import { InfrastructureFindingRepository } from '../repositories/infrastructure-finding.repository';
+import { FindingMapper } from '../mappers/finding.mapper';
 
 @Injectable()
 export class InfrastructureFindingService {
@@ -24,8 +25,31 @@ export class InfrastructureFindingService {
         description: finding.description,
         severity: finding.severity,
         category: finding.category,
-        recommendations: finding.recommendations,
+        recommendations: JSON.parse(
+          JSON.stringify(finding.recommendations),
+        ),
       })),
     );
+  }
+
+  async getFindingsBySnapshot(
+    snapshotId: string,
+    page: number,
+    limit: number,
+  ) {
+    const [findings, total] = await Promise.all([
+      this.repository.findBySnapshot(snapshotId, page, limit),
+      this.repository.countBySnapshot(snapshotId),
+    ]);
+
+    return {
+      data: findings.map((finding) => FindingMapper.toDto(finding)),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 }

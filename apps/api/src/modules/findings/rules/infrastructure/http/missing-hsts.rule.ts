@@ -11,6 +11,7 @@ export class MissingHstsRule implements FindingRule {
   readonly id = 'http.missing-hsts';
 
   readonly name = 'Missing HSTS Header';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

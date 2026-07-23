@@ -11,6 +11,7 @@ export class MissingContentSecurityPolicyRule implements FindingRule {
   readonly id = 'http.missing-content-security-policy';
 
   readonly name = 'Missing Content Security Policy';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

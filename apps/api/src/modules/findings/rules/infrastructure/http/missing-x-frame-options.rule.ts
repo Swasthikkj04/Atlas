@@ -11,6 +11,7 @@ export class MissingXFrameOptionsRule implements FindingRule {
   readonly id = 'http.missing-x-frame-options';
 
   readonly name = 'Missing X-Frame-Options Header';
+  readonly category = FindingCategory.SECURITY_HEADER;
 
   async evaluate(
     context: FindingContext,

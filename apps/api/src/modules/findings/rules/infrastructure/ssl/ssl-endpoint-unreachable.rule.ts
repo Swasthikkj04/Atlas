@@ -11,6 +11,7 @@ export class SslEndpointUnreachableRule implements FindingRule {
   readonly id = 'ssl.endpoint-unreachable';
 
   readonly name = 'SSL Endpoint Unreachable';
+  readonly category = FindingCategory.TLS;
 
   async evaluate(
     context: FindingContext,

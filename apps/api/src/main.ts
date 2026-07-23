@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
@@ -27,7 +27,9 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`🚀 Atlas API running on http://localhost:${port}/api/v1`);
+  Logger.log(
+    `🚀 Atlas API running on http://localhost:${port}/api/v1`,
+  );
 }
 
 void bootstrap();

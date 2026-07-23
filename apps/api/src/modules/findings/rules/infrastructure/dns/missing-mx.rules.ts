@@ -11,6 +11,7 @@ export class MissingMxRule implements FindingRule {
   readonly id = 'dns.missing-mx';
 
   readonly name = 'Missing MX Record';
+  readonly category = FindingCategory.DNS_RECORD;
 
   async evaluate(
     context: FindingContext,

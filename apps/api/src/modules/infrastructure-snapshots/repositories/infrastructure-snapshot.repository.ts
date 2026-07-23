@@ -13,4 +13,37 @@ export class InfrastructureSnapshotRepository {
       data,
     });
   }
+
+  async findById(snapshotId: string) {
+    return this.prisma.infrastructureSnapshot.findUnique({
+      where: {
+        id: snapshotId,
+      },
+    });
+  }
+
+  async findByDomain(
+    domainId: string,
+    page: number,
+    limit: number,
+  ) {
+    return this.prisma.infrastructureSnapshot.findMany({
+      where: {
+        domainId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
+  async countByDomain(domainId: string) {
+    return this.prisma.infrastructureSnapshot.count({
+      where: {
+        domainId,
+      },
+    });
+  }
 }

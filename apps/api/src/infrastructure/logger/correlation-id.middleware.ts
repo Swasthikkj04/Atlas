@@ -14,7 +14,13 @@ export class CorrelationIdMiddleware implements NestMiddleware {
         ? inboundCorrelationId.trim()
         : `corr_${randomUUID().replace(/-/g, '')}`;
 
-    const requestId = `req_${randomUUID().replace(/-/g, '')}`;
+    const inboundRequestId =
+      req.headers['x-request-id'] || req.headers['request-id'];
+
+    const requestId =
+      typeof inboundRequestId === 'string' && inboundRequestId.trim()
+        ? inboundRequestId.trim()
+        : `req_${randomUUID().replace(/-/g, '')}`;
 
     res.setHeader('X-Correlation-ID', correlationId);
     res.setHeader('X-Request-ID', requestId);

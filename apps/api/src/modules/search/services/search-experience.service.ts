@@ -14,9 +14,10 @@ export class SearchExperienceService {
     userId: string,
     queryDto: SearchQueryDto,
   ): Promise<SearchResponseDto> {
+    const searchTerm = queryDto.q || queryDto.query || '';
     const rawResults = await this.searchQueryService.executeSearch(
       userId,
-      queryDto.q,
+      searchTerm,
     );
 
     // Sort by relevance score descending
@@ -26,7 +27,7 @@ export class SearchExperienceService {
     const sliced = rawResults.slice(0, limit);
 
     return {
-      query: queryDto.q,
+      query: searchTerm,
       total: rawResults.length,
       data: sliced,
     };

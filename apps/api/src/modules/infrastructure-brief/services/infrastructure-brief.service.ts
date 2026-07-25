@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { InfrastructureSnapshotService } from '../../infrastructure-snapshots/services/infrastructure-snapshot.service';
@@ -33,6 +33,10 @@ export class InfrastructureBriefService {
       await this.repository.findBySnapshot(
         snapshotId,
       );
+
+    if (!brief) {
+      throw new NotFoundException('Infrastructure brief not found.');
+    }
 
     this.logger.debug(
       `Retrieved infrastructure brief for snapshot ${snapshotId}`,
@@ -76,7 +80,7 @@ export class InfrastructureBriefService {
       );
 
     if (!snapshot) {
-      throw new Error('Snapshot not found');
+      throw new NotFoundException('Snapshot not found.');
     }
 
     const findingsResponse =

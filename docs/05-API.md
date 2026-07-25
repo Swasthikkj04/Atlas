@@ -2,15 +2,15 @@
 
 **Product:** Atlas
 
-**Version:** v2.0
+**Version:** v1.0.0-backend
 
-**Status:** Sprint 2 Complete
+**Status:** Sprint 4.6C Backend Production Certified & Frozen
 
 **Document Type:** API Architecture
 
 **Owner:** Atlas Architecture Team
 
-**Last Updated:** July 2026
+**Last Updated:** July 25, 2026
 
 **Review Trigger:** API Contract Changes
 
@@ -286,6 +286,40 @@ POST /api/v1/auth/login
 GET /api/v1/auth/me
 ```
 
+### POST /api/v1/auth/register
+
+**Description:**
+Registers a new user account with full name, email, and password.
+
+**Request Body (`RegisterDto`):**
+```json
+{
+  "fullName": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "password": "SuperSecurePassword123!"
+}
+```
+
+**Success Response (`201 Created` - `RegisterResponseDto`):**
+```json
+{
+  "message": "User registered successfully",
+  "user": {
+    "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "fullName": "Jane Doe",
+    "email": "jane.doe@example.com",
+    "createdAt": "2026-07-25T19:46:15.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Validation failure (invalid email, password < 8 characters, fullName < 2 characters, or missing fields).
+- `409 Conflict`: Email is already registered.
+- `429 Too Many Requests`: Rate limit exceeded (5 requests / hour).
+
+*Note: Registration does not issue JWT access/refresh tokens or automatically log the user in. The user must authenticate via `POST /api/v1/auth/login` to obtain access tokens.*
+
 Capabilities:
 
 - User Registration
@@ -298,6 +332,21 @@ Capabilities:
 Authentication is the entry point for all protected Atlas functionality.
 
 ---
+
+# API Improvement Register
+
+The API Improvement Register records foundational upgrades, contract hardenings, and non-breaking enhancements to the Atlas API surface.
+
+| Entry ID | Endpoint(s) | Modification Summary | Previous Contract | Hardened Contract | Rationale & Security Safeguards | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **AIR-001** | `POST /api/v1/auth/register` | Structured success response payload | `201 Created` with empty body (`void`) | `201 Created` returning `RegisterResponseDto` (`message`, `user: { id, fullName, email, createdAt }`) | Confirms registration and returns non-sensitive user identity. Excludes `passwordHash` and prevents auto-login token leaks. | **Completed** |
+| **AIR-002** | `/snapshots/:snapshotId/brief`<br>`/domains/:domainId/snapshots`<br>`/findings/snapshots/:snapshotId/findings` | Multi-tenant security guard hardening | Unprotected public routes | Enforced `@UseGuards(JwtAuthGuard)` and `@ApiBearerAuth()` across all Tier B controllers | Prevents unauthenticated access to internal infrastructure snapshots, briefs, and findings. | **Completed** |
+| **AIR-003** | `POST /api/v1/domains`<br>`POST /api/v1/domains/:domainId/understand`<br>`POST /api/v1/snapshots/:snapshotId/brief` | RFC 7231 `Location` header emission | Missing `Location` header on resource creation | Emits standard `Location` response header (e.g., `Location: /api/v1/domains/:id`) | Complies with REST standards and improves API discoverability for client consumers. | **Completed** |
+| **AIR-004** | `POST /api/v1/domains/:domainId/understand` | Asynchronous status code semantic alignment | `201 Created` on background job trigger | `@HttpCode(HttpStatus.ACCEPTED)` (`202 Accepted`) | Correctly signals that background discovery processing is queued asynchronously rather than completed synchronously. | **Completed** |
+| **AIR-005** | `DomainsController`<br>`UnderstandingController`<br>`InfrastructureBriefController`<br>`SnapshotController` | OpenAPI / Swagger specification backfill | Undocumented API routes | Added `@ApiTags`, `@ApiOperation`, `@ApiParam`, `@ApiResponse` across all controllers | Provides 100% Swagger UI testability and accurate API documentation at `/api/docs`. | **Completed** |
+
+---
+
 
 # Domain Module
 
@@ -722,63 +771,77 @@ Clients should monitor job status using the Understanding Job endpoints.
 
 ---
 
-# Error Handling
+# Error Handling & Canonical Error Specification
 
-Errors follow a consistent response format.
+All error responses across the Atlas API surface strictly conform to a single canonical error payload format (`ApiErrorResponseDto`). Centralized exception catching, correlation ID tracing, validation error formatting, and database error translation are handled globally by `AllExceptionsFilter`.
 
-Example:
+### Canonical Error Payload Contract (`ApiErrorResponseDto`)
 
 ```json
 {
-  "statusCode": 404,
-  "error": "Not Found",
-  "message": "Domain not found"
+  "statusCode": 400,
+  "error": "Bad Request",
+  "code": "BAD_REQUEST",
+  "message": "email must be an email; password must be longer than or equal to 8 characters",
+  "details": [
+    "email must be an email",
+    "password must be longer than or equal to 8 characters"
+  ],
+  "correlationId": "corr_8e9d451b9a5b4ea7ba09b42617961a17",
+  "timestamp": "2026-07-25T20:10:45.000Z"
 }
 ```
 
-Validation errors provide sufficient detail for client correction while avoiding disclosure of sensitive implementation details.
+### Field Definitions
+
+| Field | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `statusCode` | `number` | Standard HTTP status code | `400` |
+| `error` | `string` | Human-readable HTTP status phrase | `"Bad Request"` |
+| `code` | `string` | Deterministic machine-readable SNAKE_CASE error code | `"BAD_REQUEST"` |
+| `message` | `string` | Human-readable error explanation message | `"Validation failed: email must be a valid email address"` |
+| `details` | `array / object` *(optional)* | Detailed validation constraints or contextual metadata | `["email must be an email"]` |
+| `correlationId` | `string` | Unique request correlation ID for cross-system telemetry & logs | `"corr_8e9d451b9a5b4ea7ba09b42617961a17"` |
+| `timestamp` | `string` | ISO-8601 UTC timestamp of error occurrence | `"2026-07-25T20:10:45.000Z"` |
 
 ---
 
-## Common Status Codes
+### Canonical Error Category Mapping
 
-| Code | Meaning |
-|------|---------|
-| 200 | Successful request |
-| 201 | Resource created |
-| 202 | Accepted for asynchronous processing |
-| 204 | Successful request with no content |
-| 400 | Validation error |
-| 401 | Authentication required |
-| 403 | Forbidden |
-| 404 | Resource not found |
-| 409 | Resource conflict |
-| 422 | Business rule violation |
-| 500 | Internal server error |
+| HTTP Status | Category | Machine Error Code (`code`) | Trigger Condition | Canonical Message Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **400** | Validation Failure | `BAD_REQUEST` / `DATABASE_VALIDATION_ERROR` | `ValidationPipe` DTO failure or malformed input payload | `"email must be an email; password must be at least 8 characters"` |
+| **401** | Authentication Failure | `UNAUTHORIZED` | Invalid, expired, or missing JWT Bearer token or invalid login credentials | `"Invalid email or password."` / `"Unauthorized access."` |
+| **403** | Authorization Failure | `FORBIDDEN` | Authenticated user attempting cross-tenant resource access | `"Cross-tenant access denied."` |
+| **404** | Resource Not Found | `NOT_FOUND` / `RESOURCE_NOT_FOUND` | Target domain, snapshot, finding, or timeline event does not exist (or Prisma P2025) | `"The requested resource was not found."` |
+| **409** | Resource Conflict | `CONFLICT` / `RESOURCE_EXISTS_CONFLICT` | Duplicate user registration or duplicate domain ownership (or Prisma P2002) | `"Email is already registered."` |
+| **429** | Rate Limiting | `TOO_MANY_REQUESTS` | Rate limit threshold exceeded (e.g. >5 registration requests/hr) | `"Rate limit exceeded. Please try again later."` |
+| **500** | Internal Error | `INTERNAL_SERVER_ERROR` | Unhandled runtime exception or infrastructure failure | `"An unexpected server error occurred."` |
 
 ---
 
-# Security
+---
 
-The Atlas API follows a security-by-default model.
+# Security & Bootstrap Hardening Specification
 
-Current protections include:
+The Atlas API follows a defense-in-depth security model enforced at application bootstrap (`main.ts`), middleware execution (`SecurityHeadersMiddleware`, `CorrelationIdMiddleware`), global exception filters (`AllExceptionsFilter`), and route guards (`JwtAuthGuard`).
 
-- JWT Authentication
-- Password Hashing
-- Route Guards
-- Input Validation
-- Multi-tenant Isolation
-- Ownership Verification
-- Immutable Historical Records
+### Application Bootstrap Hardening (`main.ts`)
+- **Express Server Fingerprint Suppression**: `app.getHttpAdapter().getInstance().disable('x-powered-by')` explicitly disables the `X-Powered-By: Express` header to prevent technology fingerprinting by unauthorized scanners.
 
-Future releases will extend protection through:
+### Security Response Headers Matrix
 
-- Rate Limiting
-- Refresh Tokens
-- API Keys
-- Audit Logging
-- Security Monitoring
+| Header Name | Enforcement Strategy | Value / Policy Specification | Rationale & Protection |
+| :--- | :--- | :--- | :--- |
+| **`X-Powered-By`** | Stripped / Disabled | *(Removed)* | Prevents server technology fingerprinting. |
+| **`Strict-Transport-Security`** (HSTS) | Production / HTTPS Requests | `max-age=31536000; includeSubDomains; preload` | Forces HTTPS transport for 1 year with subdomains & preload registration. |
+| **`Content-Security-Policy`** (CSP) | All Routes (Env / Prod) | Non-docs: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none';`<br>Swagger Docs (`/api/docs`): Allows inline UI rendering. | Restricts script/style execution and prevents XSS and data injection attacks. |
+| **`X-Frame-Options`** | Global Middleware | `DENY` | Prevents clickjacking attacks via `<iframe>` embedding. |
+| **`X-Content-Type-Options`** | Global Middleware | `nosniff` | Prevents MIME type sniffing. |
+| **`Referrer-Policy`** | Global Middleware | `strict-origin-when-cross-origin` | Protects privacy by stripping referrer path details on cross-origin requests. |
+| **`Permissions-Policy`** | Global Middleware | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()` | Disables sensitive browser API access. |
+| **`X-Correlation-ID`** | Global Middleware / Filter | `corr_<uuid>` (or client-propagated `X-Correlation-ID`) | Enables end-to-end request tracing across microservices, logs, and telemetry. |
+| **`X-Request-ID`** | Global Middleware / Filter | `req_<uuid>` (or client-propagated `X-Request-ID`) | Unique per-request execution identifier. |
 
 ---
 

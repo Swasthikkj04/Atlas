@@ -17,6 +17,6 @@ import { StructuredLoggerService } from './structured-logger.service';
 })
 export class LoggerModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer.apply(CorrelationIdMiddleware).forRoutes('{*path}');
   }
 }

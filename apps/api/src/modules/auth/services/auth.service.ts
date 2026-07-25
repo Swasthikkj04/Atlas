@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { RegisterResponseDto } from '../dto/register-response.dto';
 
 import { UsersService } from '../../users/users.service';
 
@@ -23,7 +24,7 @@ export class AuthService {
 
   async register(
     registerDto: RegisterDto,
-  ): Promise<void> {
+  ): Promise<RegisterResponseDto> {
     const existingUser = await this.usersService.findByEmail(
       registerDto.email,
     );
@@ -36,11 +37,21 @@ export class AuthService {
       registerDto.password,
     );
 
-    await this.usersService.create({
+    const user = await this.usersService.create({
       fullName: registerDto.fullName,
       email: registerDto.email,
       passwordHash,
     });
+
+    return {
+      message: 'User registered successfully',
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+    };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {

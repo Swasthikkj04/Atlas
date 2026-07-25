@@ -92,6 +92,24 @@ export class FindingController {
   }
 
   @Get('/snapshots/:snapshotId/findings')
+  @ApiOperation({
+    summary: 'Get findings associated with a snapshot',
+    description:
+      'Retrieves a paginated list of findings associated with a specific snapshot ID.',
+  })
+  @ApiParam({
+    name: 'snapshotId',
+    description: 'Infrastructure Snapshot ID',
+    example: 'snp-3d91d72d-5f86-4e4c-b9ef-65e4e6b1b5b1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Findings for snapshot retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized access.',
+  })
   async getFindingsBySnapshot(
     @Param('snapshotId') snapshotId: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,

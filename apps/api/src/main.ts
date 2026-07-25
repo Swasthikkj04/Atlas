@@ -13,6 +13,9 @@ async function bootstrap() {
   const logger = app.get(StructuredLoggerService);
   app.useLogger(logger);
 
+  // Hardening: Disable X-Powered-By header at Express engine level
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
+
   const config = app.get(ConfigService);
 
   // Configuration

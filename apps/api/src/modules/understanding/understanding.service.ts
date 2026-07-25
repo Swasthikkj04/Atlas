@@ -3,13 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { TriggerType, UnderstandingJob } from '@prisma/client';
 
 import { DomainsService } from '../domains/domains.service';
+import { InfrastructureFindingService } from '../infrastructure-findings/services/infrastructure-finding.service';
+import { InfrastructureSnapshotService } from '../infrastructure-snapshots/services/infrastructure-snapshot.service';
 
 import { UnderstandingRepository } from './repositories/understanding.repository';
-
 import { UnderstandingEngine } from './understanding.engine';
 
 @Injectable()
@@ -17,6 +17,8 @@ export class UnderstandingService {
   constructor(
     private readonly understandingRepository: UnderstandingRepository,
     private readonly domainsService: DomainsService,
+    private readonly snapshotService: InfrastructureSnapshotService,
+    private readonly findingService: InfrastructureFindingService,
     private readonly understandingEngine: UnderstandingEngine,
   ) {}
 
@@ -124,4 +126,13 @@ export class UnderstandingService {
       job.domain.domainName,
     );
   }
+
+  async countRunningJobs(
+    userId: string,
+  ): Promise<number> {
+    return this.understandingRepository.countRunningJobs(
+      userId,
+    );
+  }
+
 }

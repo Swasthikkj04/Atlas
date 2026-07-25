@@ -12,7 +12,6 @@ export class FindingMapper {
       description: finding.description,
       severity: finding.severity,
       category: finding.category,
-      recommendations: finding.recommendations,
       createdAt: finding.createdAt,
     };
   }

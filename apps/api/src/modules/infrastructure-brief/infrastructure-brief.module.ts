@@ -5,9 +5,9 @@ import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infra
 import { InfrastructureFindingsModule } from '../infrastructure-findings/infrastructure-findings.module';
 
 import { InfrastructureBriefController } from './controllers/infrastructure-brief.controller';
+import { InfrastructureBriefBuilder } from './builders/infrastructure-brief.builder';
 import { InfrastructureBriefRepository } from './repositories/infrastructure-brief.repository';
 import { InfrastructureBriefService } from './services/infrastructure-brief.service';
-import { InfrastructureBriefBuilder } from './builders/infrastructure-brief.builder';
 
 @Module({
   imports: [

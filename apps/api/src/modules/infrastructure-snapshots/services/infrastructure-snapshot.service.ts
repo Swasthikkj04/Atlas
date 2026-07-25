@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InfrastructureSnapshotRepository } from '../repositories/infrastructure-snapshot.repository';
-import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/discovery-snapshot.interface';
-import { SnapshotMapper } from '../mappers/snapshot.mapper';
 import { Prisma } from '@prisma/client';
+
+import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/discovery-snapshot.interface';
+
+import { SnapshotMapper } from '../mappers/snapshot.mapper';
+import { InfrastructureSnapshotRepository } from '../repositories/infrastructure-snapshot.repository';
 
 @Injectable()
 export class InfrastructureSnapshotService {
@@ -63,5 +65,35 @@ export class InfrastructureSnapshotService {
         pages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getLatestByDomain(domainId: string) {
+    return this.snapshotRepository.findLatestByDomain(
+      domainId,
+    );
+  }
+
+  async countByDomain(
+    domainId: string,
+  ): Promise<number> {
+    return this.snapshotRepository.countByDomain(
+      domainId,
+    );
+  }
+
+  async countByUser(
+    userId: string,
+  ): Promise<number> {
+    return this.snapshotRepository.countByUser(
+      userId,
+    );
+  }
+
+  async findLatestScanByUser(
+    userId: string,
+  ): Promise<Date | null> {
+    return this.snapshotRepository.findLatestScanByUser(
+      userId,
+    );
   }
 }

@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+
+import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class InfrastructureSnapshotRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
   async create(
     data: Prisma.InfrastructureSnapshotCreateInput,
@@ -39,11 +42,57 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
+  async findLatestByDomain(
+    domainId: string,
+  ) {
+    return this.prisma.infrastructureSnapshot.findFirst({
+      where: {
+        domainId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
   async countByDomain(domainId: string) {
     return this.prisma.infrastructureSnapshot.count({
       where: {
         domainId,
       },
     });
+  }
+
+  async countByUser(
+    userId: string,
+  ): Promise<number> {
+    return this.prisma.infrastructureSnapshot.count({
+      where: {
+        domain: {
+          userId,
+        },
+      },
+    });
+  }
+
+  async findLatestScanByUser(
+    userId: string,
+  ): Promise<Date | null> {
+    const snapshot =
+      await this.prisma.infrastructureSnapshot.findFirst({
+        where: {
+          domain: {
+            userId,
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          createdAt: true,
+        },
+      });
+
+    return snapshot?.createdAt ?? null;
   }
 }

@@ -57,4 +57,14 @@ export class DomainsRepository {
       },
     });
   }
+
+  async countActiveByUser(
+    userId: string,
+  ): Promise<number> {
+    return this.prisma.domain.count({
+      where: {
+        userId,
+      },
+    });
+  }
 }

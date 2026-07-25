@@ -1,10 +1,12 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// Prisma Schema for Atlas System
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 ///////////////////////////////////////////////////////////
@@ -21,12 +23,13 @@ enum JobStatus {
 enum TriggerType {
   MANUAL
   SCHEDULED
+  EVENT
 }
 
 enum FindingModule {
   HTML
-  SSL
   DNS
+  SSL
   HTTP
   TECHNOLOGY
   PERFORMANCE
@@ -66,14 +69,25 @@ enum ChangeType {
   MODIFIED
 }
 
+enum EvidenceCategory {
+  HTTP_RESPONSE
+  HTTP_HEADERS
+  HTTP_BODY
+  REDIRECT_CHAIN
+  DNS_RESPONSE
+  TLS_CERTIFICATE
+  TECHNOLOGY_SIGNATURE
+  COLLECTOR_METADATA
+}
+
 ///////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////
 
 model User {
   id           String @id @default(uuid())
-  fullName     String
   email        String @unique
+  fullName     String
   passwordHash String
 
   createdAt DateTime @default(now())
@@ -102,6 +116,8 @@ model Domain {
   understandingJobs       UnderstandingJob[]
   infrastructureSnapshots InfrastructureSnapshot[]
   changeHistory           ChangeHistory[]
+  verifications           InfrastructureVerification[]
+  rawEvidences            RawEvidence[]
 
   @@unique([userId, domainName])
   @@index([userId])
@@ -117,12 +133,12 @@ model UnderstandingJob {
   id       String @id @default(uuid())
   domainId String
 
-  status      JobStatus   @default(PENDING)
+  status  JobStatus   @default(PENDING)
   trigger TriggerType
 
   durationMs Int?
 
-  startedAt   DateTime @default(now())
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 
   errorMessage String?
@@ -130,11 +146,11 @@ model UnderstandingJob {
   domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
 
   infrastructureSnapshot InfrastructureSnapshot?
+  verifications          InfrastructureVerification[]
 
   @@index([domainId])
   @@index([status])
   @@index([startedAt])
-
   @@map("understanding_jobs")
 }
 
@@ -155,19 +171,50 @@ model InfrastructureSnapshot {
 
   createdAt DateTime @default(now())
 
-  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  domain Domain           @relation(fields: [domainId], references: [id], onDelete: Cascade)
   job    UnderstandingJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   findings InfrastructureFinding[]
   brief    InfrastructureBrief?
 
-  previousChanges ChangeHistory[] @relation("PreviousSnapshot")
-  currentChanges  ChangeHistory[] @relation("CurrentSnapshot")
+  previousChanges ChangeHistory[]              @relation("PreviousSnapshot")
+  currentChanges  ChangeHistory[]              @relation("CurrentSnapshot")
+  verifications   InfrastructureVerification[]
+  rawEvidences    RawEvidence[]
 
   @@index([domainId])
   @@index([createdAt])
-
   @@map("infrastructure_snapshots")
+}
+
+///////////////////////////////////////////////////////////
+// INFRASTRUCTURE VERIFICATION
+///////////////////////////////////////////////////////////
+
+model InfrastructureVerification {
+  id String @id @default(uuid())
+
+  domainId   String
+  jobId      String
+  snapshotId String
+
+  changeDetected  Boolean
+  snapshotCreated Boolean
+
+  startedAt   DateTime
+  completedAt DateTime
+  durationMs  Int
+
+  createdAt DateTime @default(now())
+
+  domain   Domain                 @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  job      UnderstandingJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([domainId, createdAt])
+  @@index([jobId])
+  @@index([snapshotId])
+  @@map("infrastructure_verifications")
 }
 
 ///////////////////////////////////////////////////////////
@@ -181,23 +228,23 @@ model InfrastructureFinding {
 
   ruleId String
 
-  title String
-
-  description String
-
+  module   FindingModule     @default(HTTP)
+  category FindingCategory
   severity Severity
 
-  category FindingCategory
-
-  recommendations Json
+  title       String
+  description String
 
   createdAt DateTime @default(now())
 
   snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@index([snapshotId])
+  @@index([severity])
+  @@index([module])
   @@map("infrastructure_findings")
 }
+
 ///////////////////////////////////////////////////////////
 // CHANGE HISTORY
 ///////////////////////////////////////////////////////////
@@ -254,4 +301,45 @@ model InfrastructureBrief {
   snapshot InfrastructureSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@map("infrastructure_briefs")
+}
+
+///////////////////////////////////////////////////////////
+// EVIDENCE ARCHITECTURE (ADR-005)
+///////////////////////////////////////////////////////////
+
+model RawEvidence {
+  id                  String           @id @default(uuid())
+  domainId            String
+  snapshotId          String?
+  collectorName       String
+  collectorVersion    String
+  category            EvidenceCategory @default(HTTP_RESPONSE)
+  payloadType         String
+  target              String
+  capturedAt          DateTime         @default(now())
+  payload             String
+  sizeBytes           Int
+  compressedSizeBytes Int?
+  compressionType     String?          @default("NONE")
+  compressionVersion  String?          @default("1.0")
+  hashSha256          String
+  schemaVersion       Int              @default(1)
+
+  // Provenance fields
+  requestMethod     String?
+  responseStatus    Int?
+  redirectIndex     Int?
+  sourceEndpoint    String?
+  targetEndpoint    String?
+  protocolVersion   String?
+  transportProtocol String?
+
+  domain   Domain                  @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  snapshot InfrastructureSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+
+  @@index([domainId, capturedAt])
+  @@index([snapshotId])
+  @@index([collectorName])
+  @@index([category])
+  @@map("raw_evidence")
 }

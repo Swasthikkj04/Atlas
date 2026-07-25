@@ -9,7 +9,7 @@ export class FindingDto {
 
   category: string;
 
-  recommendations: unknown;
+  recommendations?: unknown;
 
   createdAt: Date;
 }

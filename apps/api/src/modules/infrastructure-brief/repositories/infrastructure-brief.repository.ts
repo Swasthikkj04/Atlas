@@ -17,10 +17,32 @@ export class InfrastructureBriefRepository {
     });
   }
 
-  async findBySnapshot(snapshotId: string) {
+  async findBySnapshot(
+    snapshotId: string,
+  ) {
     return this.prisma.infrastructureBrief.findUnique({
       where: {
         snapshotId,
+      },
+    });
+  }
+
+  async findLatestByDomain(
+    domainId: string,
+  ) {
+    return this.prisma.infrastructureBrief.findFirst({
+      where: {
+        snapshot: {
+          domainId,
+        },
+      },
+      include: {
+        snapshot: true,
+      },
+      orderBy: {
+        snapshot: {
+          createdAt: 'desc',
+        },
       },
     });
   }

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InfrastructureSnapshotRepository } from '../repositories/infrastructure-snapshot.repository';
-import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/discovery-snapshot.interface';
-import { SnapshotMapper } from '../mappers/snapshot.mapper';
 import { Prisma } from '@prisma/client';
+
+import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/discovery-snapshot.interface';
+
+import { SnapshotMapper } from '../mappers/snapshot.mapper';
+import { InfrastructureSnapshotRepository } from '../repositories/infrastructure-snapshot.repository';
 
 @Injectable()
 export class InfrastructureSnapshotService {
@@ -28,12 +30,16 @@ export class InfrastructureSnapshotService {
       },
       responseTimeMs: snapshot.http?.responseTimeMs ?? 0,
       httpStatus: snapshot.http?.statusCode ?? 0,
-      payload: snapshot as unknown as Prisma.InputJsonValue,
+      payload:
+        snapshot as unknown as Prisma.InputJsonValue,
     });
   }
 
   async getSnapshotById(snapshotId: string) {
-    const snapshot = await this.snapshotRepository.findById(snapshotId);
+    const snapshot =
+      await this.snapshotRepository.findById(
+        snapshotId,
+      );
 
     if (!snapshot) {
       return null;
@@ -48,12 +54,20 @@ export class InfrastructureSnapshotService {
     limit: number,
   ) {
     const [snapshots, total] = await Promise.all([
-      this.snapshotRepository.findByDomain(domainId, page, limit),
-      this.snapshotRepository.countByDomain(domainId),
+      this.snapshotRepository.findByDomain(
+        domainId,
+        page,
+        limit,
+      ),
+      this.snapshotRepository.countByDomain(
+        domainId,
+      ),
     ]);
 
     return {
-      data: snapshots.map(SnapshotMapper.toListDto),
+      data: snapshots.map((snapshot) =>
+        SnapshotMapper.toListDto(snapshot),
+      ),
       pagination: {
         page,
         limit,
@@ -61,5 +75,29 @@ export class InfrastructureSnapshotService {
         pages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getLatestByDomain(
+    domainId: string,
+  ) {
+    return this.snapshotRepository.findLatestByDomain(
+      domainId,
+    );
+  }
+
+  async countByUser(
+    userId: string,
+  ): Promise<number> {
+    return this.snapshotRepository.countByUser(
+      userId,
+    );
+  }
+
+  async findLatestScanByUser(
+    userId: string,
+  ): Promise<Date | null> {
+    return this.snapshotRepository.findLatestScanByUser(
+      userId,
+    );
   }
 }

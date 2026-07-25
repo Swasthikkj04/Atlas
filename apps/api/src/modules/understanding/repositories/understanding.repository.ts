@@ -123,4 +123,22 @@ export class UnderstandingRepository {
       },
     });
   }
+
+  async countRunningJobs(
+    userId: string,
+  ): Promise<number> {
+    return this.prisma.understandingJob.count({
+      where: {
+        domain: {
+          userId,
+        },
+        status: {
+          in: [
+            JobStatus.PENDING,
+            JobStatus.RUNNING,
+          ],
+        },
+      },
+    });
+  }
 }

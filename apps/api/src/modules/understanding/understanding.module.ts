@@ -10,11 +10,17 @@ import { UnderstandingService } from './understanding.service';
 import { UnderstandingWorker } from './understanding.worker';
 import { UnderstandingEngine } from './understanding.engine';
 import { UnderstandingRepository } from './repositories/understanding.repository';
+import { InfrastructureVerificationRepository } from './repositories/infrastructure-verification.repository';
+import { InfrastructureVerificationService } from './services/infrastructure-verification.service';
+import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
 import { HttpModule } from '../../infrastructure/discovery/http/http.module';
 import { DiscoveryModule } from '../../infrastructure/discovery/discovery.module';
 import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infrastructure-snapshots.module';
 import { FindingsModule } from '../findings/findings.module';
 import { InfrastructureFindingsModule } from '../infrastructure-findings/infrastructure-findings.module';
+import { InfrastructureBriefModule } from '../infrastructure-brief/infrastructure-brief.module';
+import { WorkerReliabilityService } from './services/worker-reliability.service';
+
 @Module({
   imports: [
     PrismaModule,
@@ -25,14 +31,25 @@ import { InfrastructureFindingsModule } from '../infrastructure-findings/infrast
     InfrastructureSnapshotsModule,
     FindingsModule,
     InfrastructureFindingsModule,
+    InfrastructureBriefModule,
   ],
   controllers: [UnderstandingController],
   providers: [
     UnderstandingService,
     UnderstandingRepository,
+    InfrastructureVerificationRepository,
+    InfrastructureVerificationService,
+    SnapshotEqualityEngine,
+    WorkerReliabilityService,
     UnderstandingWorker,
     UnderstandingEngine,
   ],
-  exports: [UnderstandingService],
+  exports: [
+    UnderstandingService,
+    InfrastructureVerificationRepository,
+    InfrastructureVerificationService,
+    SnapshotEqualityEngine,
+    WorkerReliabilityService,
+  ],
 })
 export class UnderstandingModule {}

@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { InfrastructureBriefRepository } from '../repositories/infrastructure-brief.repository';
+
 import { InfrastructureSnapshotService } from '../../infrastructure-snapshots/services/infrastructure-snapshot.service';
 import { InfrastructureFindingService } from '../../infrastructure-findings/services/infrastructure-finding.service';
+
 import { InfrastructureBriefBuilder } from '../builders/infrastructure-brief.builder';
+import { InfrastructureBriefRepository } from '../repositories/infrastructure-brief.repository';
 
 @Injectable()
 export class InfrastructureBriefService {
@@ -18,19 +20,33 @@ export class InfrastructureBriefService {
     private readonly briefBuilder: InfrastructureBriefBuilder,
   ) {}
 
-  private toJson(value: unknown): Prisma.InputJsonValue {
+  private toJson(
+    value: unknown,
+  ): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(value));
   }
 
-  async getBySnapshot(snapshotId: string) {
+  async getBySnapshot(
+    snapshotId: string,
+  ) {
     const brief =
-      await this.repository.findBySnapshot(snapshotId);
+      await this.repository.findBySnapshot(
+        snapshotId,
+      );
 
     this.logger.debug(
       `Retrieved infrastructure brief for snapshot ${snapshotId}`,
     );
 
     return brief;
+  }
+
+  async getLatestByDomain(
+    domainId: string,
+  ) {
+    return this.repository.findLatestByDomain(
+      domainId,
+    );
   }
 
   async create(
@@ -55,7 +71,9 @@ export class InfrastructureBriefService {
 
   async generate(snapshotId: string) {
     const snapshot =
-      await this.snapshotService.getSnapshotById(snapshotId);
+      await this.snapshotService.getSnapshotById(
+        snapshotId,
+      );
 
     if (!snapshot) {
       throw new Error('Snapshot not found');

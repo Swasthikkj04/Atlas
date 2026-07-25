@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { DomainsRepository } from './repositories/domains.repository';
 
 interface CreateDomainData {
@@ -33,7 +34,27 @@ export class DomainsService {
   }
 
   async findByUser(userId: string) {
-    return this.domainsRepository.findByUser(userId);
+    return this.domainsRepository.findByUser(
+      userId,
+    );
+  }
+
+  async findById(
+    userId: string,
+    domainId: string,
+  ) {
+    const domain =
+      await this.domainsRepository.findById(
+        domainId,
+      );
+
+    if (!domain || domain.userId !== userId) {
+      throw new NotFoundException(
+        'Domain not found.',
+      );
+    }
+
+    return domain;
   }
 
   async delete(
@@ -50,5 +71,24 @@ export class DomainsService {
     }
 
     await this.domainsRepository.delete(id);
+  }
+
+  async countByUser(
+    userId: string,
+  ): Promise<number> {
+    const domains =
+      await this.domainsRepository.findByUser(
+        userId,
+      );
+
+    return domains.length;
+  }
+
+  async countActiveByUser(
+    userId: string,
+  ): Promise<number> {
+    return this.domainsRepository.countActiveByUser(
+      userId,
+    );
   }
 }

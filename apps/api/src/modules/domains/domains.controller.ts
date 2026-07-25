@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Req,
   UseGuards,
@@ -50,7 +51,7 @@ export class DomainsController {
   @Delete(':id')
   remove(
     @Req() request: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.domainsService.delete(
       request.user.id,

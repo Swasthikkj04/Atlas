@@ -687,6 +687,16 @@ Engineering Decision Records use the following lifecycle states:
 
 The status of an Engineering Decision Record reflects its engineering maturity rather than the maturity of the surrounding feature.
 
+## Sprint 3.5.1 Engineering Decisions
+## Sprint 3.5.1 Engineering Decisions
+
+| ID | Title | Status |
+|----|-------|--------|
+| EDR-019 | Adopt Deterministic Rule Engine Execution | Implemented |
+| EDR-020 | Adopt Structured Application Logging | Implemented |
+| EDR-021 | Adopt Type-Safe Backend Engineering Standards | Implemented |
+| EDR-022 | Adopt Sensitive Data Logging Restrictions | Implemented |
+
 ---
 
 ## Planned Decision Areas

@@ -9,10 +9,24 @@ export class ApiClient {
     this.baseUrl = config.baseUrl || '';
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${endpoint}`);
+  async get<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${endpoint}`, { signal });
     if (!res.ok) {
       throw new Error(`API Error ${res.status}: ${res.statusText}`);
+    }
+    return res.json() as Promise<T>;
+  }
+
+  async post<T, B = unknown>(endpoint: string, body: B, signal?: AbortSignal): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.message || `API Error ${res.status}: ${res.statusText}`);
     }
     return res.json() as Promise<T>;
   }

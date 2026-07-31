@@ -27,6 +27,7 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { SearchModule } from './modules/search/search.module';
 import { ExplorerModule } from './modules/explorer/explorer.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { GuestModule } from './modules/guest/guest.module';
 
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -70,6 +71,7 @@ import { validateEnvironment } from './config/env.validation';
     SearchModule,
     ExplorerModule,
     QueueModule,
+    GuestModule,
   ],
   providers: [
     {

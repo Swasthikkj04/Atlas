@@ -32,3 +32,68 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* Guest Experience (GX) Keyframe Animations & Utilities */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes expandFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes nodePulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.35); }
+}
+
+.gx-node-pulse {
+  animation: nodePulse 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@media (max-width: 767px) {
+  .gx-header-status-text {
+    display: none;
+  }
+  .gx-continuity-dock {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+

@@ -20,6 +20,13 @@ enum JobStatus {
   FAILED
 }
 
+enum GuestSessionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CONVERTED
+}
+
 enum TriggerType {
   MANUAL
   SCHEDULED
@@ -343,3 +350,22 @@ model RawEvidence {
   @@index([category])
   @@map("raw_evidence")
 }
+
+///////////////////////////////////////////////////////////
+// GUEST EXPERIENCE SESSION (GP-001)
+///////////////////////////////////////////////////////////
+
+model GuestSession {
+  id                 String             @id @default(uuid())
+  sessionToken       String             @unique
+  status             GuestSessionStatus @default(ACTIVE)
+  understandingJobId String?
+  expiresAt          DateTime
+  lastSeenAt         DateTime           @updatedAt
+  createdAt          DateTime           @default(now())
+
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@map("guest_sessions")
+}
+

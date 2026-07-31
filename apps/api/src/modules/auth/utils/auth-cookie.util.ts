@@ -1,4 +1,5 @@
 import type { CookieOptions, Response } from 'express';
+import { clearCsrfCookie, setCsrfCookie } from './csrf.util';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -37,9 +38,11 @@ export function setAuthCookies(
 ): void {
   res.cookie(ACCESS_COOKIE_NAME, accessToken, getAccessCookieOptions());
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, getRefreshCookieOptions());
+  setCsrfCookie(res);
 }
 
 export function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_COOKIE_NAME, { path: '/' });
   res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/v1/auth/refresh' });
+  clearCsrfCookie(res);
 }

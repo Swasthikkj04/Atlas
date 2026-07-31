@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { StructuredLoggerService } from './infrastructure/logger/structured-logger.service';
@@ -13,6 +14,34 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = app.get(StructuredLoggerService);
   app.useLogger(logger);
+
+  // Hardening Scope 4: Enterprise Security Headers via Helmet
+  app.use(
+    helmet({
+      hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+      frameguard: {
+        action: 'deny',
+      },
+      xContentTypeOptions: true,
+      referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin',
+      },
+      contentSecurityPolicy: false, // Allowed for Swagger UI rendering
+    }),
+  );
+
+  // Custom Permissions-Policy header
+  app.use((req: any, res: any, next: () => void) => {
+    res.setHeader(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()',
+    );
+    next();
+  });
 
   // Hardening: Disable X-Powered-By header at Express engine level
   app.getHttpAdapter().getInstance().disable('x-powered-by');
@@ -54,7 +83,7 @@ async function bootstrap() {
     .setDescription('Atlas Infrastructure Intelligence Platform API')
     .setVersion('1.0')
     .addBearerAuth()
-    .addCookieAuth('access_token')
+    .addCookieAuth('nebula_access_token')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

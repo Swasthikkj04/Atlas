@@ -29,9 +29,10 @@ import { ExplorerModule } from './modules/explorer/explorer.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { GuestModule } from './modules/guest/guest.module';
 
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { CsrfGuard } from './common/guards/csrf.guard';
 
 import { RateLimitingModule } from './infrastructure/rate-limiting/rate-limiting.module';
 
@@ -77,6 +78,10 @@ import { validateEnvironment } from './config/env.validation';
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
     },
   ],
 })

@@ -20,6 +20,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         process.env.GOOGLE_CALLBACK_URL ||
         'http://localhost:3000/api/v1/auth/google/callback',
       scope: ['openid', 'email', 'profile'],
+      state: true,
     });
   }
 

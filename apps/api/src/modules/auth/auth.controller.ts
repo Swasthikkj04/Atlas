@@ -48,6 +48,7 @@ import {
   REFRESH_COOKIE_NAME,
   setAuthCookies,
 } from './utils/auth-cookie.util';
+import { setCsrfCookie } from './utils/csrf.util';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -119,6 +120,22 @@ export class AuthController {
     return result;
   }
 
+  @Get('csrf')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get CSRF double-submit token',
+    description:
+      'Issues a readable CSRF token cookie for frontend clients to attach as X-CSRF-Token on state-changing requests.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'CSRF token cookie issued successfully.',
+  })
+  getCsrfToken(@Res({ passthrough: true }) res: Response): { csrfToken: string } {
+    const token = setCsrfCookie(res);
+    return { csrfToken: token };
+  }
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
@@ -134,6 +151,7 @@ export class AuthController {
     // Passport redirects to Google
   }
 
+  @RateLimit({ limit: 10, windowSeconds: 900, name: 'auth_google_callback' })
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
@@ -178,6 +196,7 @@ export class AuthController {
     // Passport redirects to GitHub
   }
 
+  @RateLimit({ limit: 10, windowSeconds: 900, name: 'auth_github_callback' })
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
   @ApiOperation({

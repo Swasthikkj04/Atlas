@@ -71,10 +71,19 @@ export class GuestConversionService {
     });
 
     // 4. Issue JWT Tokens via AuthService
-    const authResult = await this.authService.login({
-      email: dto.email,
-      password: dto.password,
-    });
+    const authResult = await this.authService.login(
+      {
+        email: dto.email,
+        password: dto.password,
+      },
+      {
+        browser: 'Guest Client',
+        operatingSystem: 'Web',
+        deviceType: 'Desktop',
+        deviceName: 'Guest Account Conversion',
+        ipAddress: '127.0.0.1',
+      },
+    );
 
     // 5. Materialize Customer-Owned Domain
     const targetDomainName = job.domain.domainName;

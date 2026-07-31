@@ -20,6 +20,18 @@ enum JobStatus {
   FAILED
 }
 
+enum UserAccountStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  LOCKED
+  SUSPENDED
+  DELETED
+}
+
+enum OAuthProvider {
+  GOOGLE
+}
+
 enum GuestSessionStatus {
   ACTIVE
   COMPLETED
@@ -92,15 +104,24 @@ enum EvidenceCategory {
 ///////////////////////////////////////////////////////////
 
 model User {
-  id           String @id @default(uuid())
-  email        String @unique
-  fullName     String
-  passwordHash String
+  id                 String            @id @default(uuid())
+  email              String            @unique
+  fullName           String
+  passwordHash       String?
+  avatarUrl          String?
+  lastLoginAt        DateTime?
+  status             UserAccountStatus @default(PENDING_VERIFICATION)
+  emailVerifiedAt    DateTime?
+  tokenInvalidatedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  domains Domain[]
+  domains             Domain[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  sessions            UserSession[]
+  oauthAccounts       OAuthAccount[]
 
   @@map("users")
 }
@@ -368,4 +389,92 @@ model GuestSession {
   @@index([expiresAt])
   @@map("guest_sessions")
 }
+
+///////////////////////////////////////////////////////////
+// EMAIL VERIFICATION TOKEN (AUTH-001)
+///////////////////////////////////////////////////////////
+
+model VerificationToken {
+  id         String    @id @default(uuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("verification_tokens")
+}
+
+///////////////////////////////////////////////////////////
+// PASSWORD RESET TOKEN (AUTH-002)
+///////////////////////////////////////////////////////////
+
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+///////////////////////////////////////////////////////////
+// STATEFUL USER SESSION PLATFORM (AUTH-003)
+///////////////////////////////////////////////////////////
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String    @unique
+  deviceName       String?
+  deviceType       String?
+  browser          String?
+  operatingSystem  String?
+  ipAddress        String?
+  userAgent        String?
+  lastActivityAt   DateTime
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@map("user_sessions")
+}
+
+///////////////////////////////////////////////////////////
+// OAUTH PROVIDER ACCOUNT (AUTH-004)
+///////////////////////////////////////////////////////////
+
+model OAuthAccount {
+  id             String        @id @default(uuid())
+  userId         String
+  provider       OAuthProvider
+  providerUserId String
+  providerEmail  String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+
+
+
 

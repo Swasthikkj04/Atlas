@@ -141,10 +141,15 @@ describe('GuestConversionService', () => {
       email: 'jane@example.com',
       password: 'password123',
     });
-    expect(authService.login).toHaveBeenCalledWith({
-      email: 'jane@example.com',
-      password: 'password123',
-    });
+    expect(authService.login).toHaveBeenCalledWith(
+      {
+        email: 'jane@example.com',
+        password: 'password123',
+      },
+      expect.objectContaining({
+        browser: 'Guest Client',
+      }),
+    );
     expect(materializer.materializeUserDomain).toHaveBeenCalledWith(
       'usr-100',
       'github.com',

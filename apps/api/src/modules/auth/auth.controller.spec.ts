@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-
 import { AuthController } from './auth.controller';
 import { AuthService } from './services/auth.service';
+import { GoogleAuthService } from './services/google-auth.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -16,6 +16,12 @@ describe('AuthController', () => {
           useValue: {
             register: jest.fn(),
             login: jest.fn(),
+          },
+        },
+        {
+          provide: GoogleAuthService,
+          useValue: {
+            resolveAndAuthenticateGoogleUser: jest.fn(),
           },
         },
       ],

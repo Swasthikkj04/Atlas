@@ -10,7 +10,10 @@ export class ApiClient {
   }
 
   async get<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${endpoint}`, { signal });
+    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      signal,
+      credentials: 'include',
+    });
     if (!res.ok) {
       throw new Error(`API Error ${res.status}: ${res.statusText}`);
     }
@@ -23,6 +26,20 @@ export class ApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal,
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.message || `API Error ${res.status}: ${res.statusText}`);
+    }
+    return res.json() as Promise<T>;
+  }
+
+  async delete<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'DELETE',
+      signal,
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);

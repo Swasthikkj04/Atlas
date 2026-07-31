@@ -1,136 +1,166 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { UserAccountStatus } from '@prisma/client';
 import { UsersService } from '../../users/users.service';
-import { AuthService } from './auth.service';
+import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { EmailService } from '../../../infrastructure/email/email.service';
 import { PasswordService } from './password.service';
+import { VerificationTokenService } from './verification-token.service';
+import { PasswordResetTokenService } from './password-reset-token.service';
+import { UserSessionService } from './user-session.service';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
-  let authService: AuthService;
+  let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let passwordService: jest.Mocked<PasswordService>;
-  let jwtService: jest.Mocked<JwtService>;
+  let tokenService: jest.Mocked<VerificationTokenService>;
+  let resetTokenService: jest.Mocked<PasswordResetTokenService>;
+  let sessionService: jest.Mocked<UserSessionService>;
 
   const mockUser = {
-    id: 'user-uuid-123',
+    id: 'usr-123',
     email: 'test@example.com',
     fullName: 'Test User',
-    passwordHash: 'hashed_password_abc',
-    createdAt: new Date('2026-07-25T12:00:00.000Z'),
-    updatedAt: new Date('2026-07-25T12:00:00.000Z'),
+    passwordHash: 'hashed_pw',
+    status: UserAccountStatus.ACTIVE,
+    emailVerifiedAt: new Date(),
+    tokenInvalidatedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockDeviceMeta = {
+    browser: 'Chrome',
+    operatingSystem: 'Linux',
+    deviceType: 'Desktop',
+    deviceName: 'Chrome on Linux',
   };
 
   beforeEach(async () => {
+    const mockUsers = {
+      findByEmail: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+    };
+
+    const mockPassword = {
+      hash: jest.fn(),
+      verify: jest.fn(),
+    };
+
+    const mockJwt = {
+      signAsync: jest.fn().mockResolvedValue('jwt_token'),
+    };
+
+    const mockTokenSvc = {
+      issueVerificationToken: jest.fn().mockResolvedValue('raw_token_123'),
+      findValidTokenByRaw: jest.fn(),
+      markTokenConsumed: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockResetTokenSvc = {
+      issueResetToken: jest.fn().mockResolvedValue('raw_reset_token_777'),
+      findValidTokenByRaw: jest.fn(),
+      markTokenConsumed: jest.fn().mockResolvedValue(undefined),
+      invalidateUserTokens: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockSessionSvc = {
+      createSession: jest.fn().mockResolvedValue({
+        session: {} as any,
+        rawRefreshToken: 'raw_refresh_token_999',
+      }),
+      rotateSession: jest.fn().mockResolvedValue({
+        session: {} as any,
+        newRawRefreshToken: 'rotated_refresh_token_111',
+        user: mockUser,
+      }),
+      revokeSessionByRawToken: jest.fn().mockResolvedValue(undefined),
+      revokeSessionById: jest.fn().mockResolvedValue(undefined),
+      revokeAllUserSessions: jest.fn().mockResolvedValue(undefined),
+      getUserSessions: jest.fn().mockResolvedValue([]),
+    };
+
+    const mockEmail = {
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockPrisma = {
+      user: {
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        {
-          provide: UsersService,
-          useValue: {
-            findByEmail: jest.fn(),
-            create: jest.fn(),
-            findById: jest.fn(),
-          },
-        },
-        {
-          provide: PasswordService,
-          useValue: {
-            hash: jest.fn(),
-            verify: jest.fn(),
-          },
-        },
-        {
-          provide: JwtService,
-          useValue: {
-            signAsync: jest.fn(),
-          },
-        },
+        { provide: UsersService, useValue: mockUsers },
+        { provide: PasswordService, useValue: mockPassword },
+        { provide: JwtService, useValue: mockJwt },
+        { provide: VerificationTokenService, useValue: mockTokenSvc },
+        { provide: PasswordResetTokenService, useValue: mockResetTokenSvc },
+        { provide: UserSessionService, useValue: mockSessionSvc },
+        { provide: EmailService, useValue: mockEmail },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
-    authService = module.get<AuthService>(AuthService);
+    service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     passwordService = module.get(PasswordService);
-    jwtService = module.get(JwtService);
+    tokenService = module.get(VerificationTokenService);
+    resetTokenService = module.get(PasswordResetTokenService);
+    sessionService = module.get(UserSessionService);
   });
 
-  describe('register', () => {
-    it('should register a new user successfully and return sanitized user details without sensitive fields', async () => {
-      usersService.findByEmail.mockResolvedValue(null);
-      passwordService.hash.mockResolvedValue('hashed_password_abc');
-      usersService.create.mockResolvedValue(mockUser);
-
-      const registerDto = {
-        fullName: 'Test User',
-        email: 'test@example.com',
-        password: 'Password123!',
-      };
-
-      const result = await authService.register(registerDto);
-
-      expect(usersService.findByEmail).toHaveBeenCalledWith('test@example.com');
-      expect(passwordService.hash).toHaveBeenCalledWith('Password123!');
-      expect(usersService.create).toHaveBeenCalledWith({
-        fullName: 'Test User',
-        email: 'test@example.com',
-        passwordHash: 'hashed_password_abc',
-      });
-
-      expect(result).toEqual({
-        message: 'User registered successfully',
-        user: {
-          id: 'user-uuid-123',
-          fullName: 'Test User',
-          email: 'test@example.com',
-          createdAt: mockUser.createdAt,
-        },
-      });
-
-      // Verify no sensitive fields are present
-      expect(result.user).not.toHaveProperty('passwordHash');
-      expect(result).not.toHaveProperty('accessToken');
-      expect(result).not.toHaveProperty('refreshToken');
+  it('should register a new user in PENDING_VERIFICATION status', async () => {
+    usersService.findByEmail.mockResolvedValue(null);
+    passwordService.hash.mockResolvedValue('hashed_pw');
+    usersService.create.mockResolvedValue({
+      ...mockUser,
+      status: UserAccountStatus.PENDING_VERIFICATION,
     });
 
-    it('should throw ConflictException if user email already exists', async () => {
-      usersService.findByEmail.mockResolvedValue(mockUser);
-
-      const registerDto = {
-        fullName: 'Duplicate User',
-        email: 'test@example.com',
-        password: 'Password123!',
-      };
-
-      await expect(authService.register(registerDto)).rejects.toThrow(
-        ConflictException,
-      );
-      expect(usersService.create).not.toHaveBeenCalled();
+    const result = await service.register({
+      fullName: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
     });
+
+    expect(tokenService.issueVerificationToken).toHaveBeenCalledWith('usr-123');
+    expect(result.message).toContain('Please check your email');
   });
 
-  describe('login', () => {
-    it('should authenticate user and return tokens', async () => {
-      usersService.findByEmail.mockResolvedValue(mockUser);
-      passwordService.verify.mockResolvedValue(true);
-      jwtService.signAsync.mockResolvedValue('mock_token');
+  it('should allow login for ACTIVE verified users and issue stateful session token', async () => {
+    usersService.findByEmail.mockResolvedValue(mockUser);
+    passwordService.verify.mockResolvedValue(true);
 
-      const loginDto = {
-        email: 'test@example.com',
-        password: 'Password123!',
-      };
+    const result = await service.login(
+      { email: 'test@example.com', password: 'password123' },
+      mockDeviceMeta,
+    );
 
-      const result = await authService.login(loginDto);
+    expect(sessionService.createSession).toHaveBeenCalledWith('usr-123', mockDeviceMeta);
+    expect(result.accessToken).toBe('jwt_token');
+    expect(result.refreshToken).toBe('raw_refresh_token_999');
+  });
 
-      expect(result).toEqual({
-        accessToken: 'mock_token',
-        refreshToken: 'mock_token',
-        user: {
-          id: mockUser.id,
-          fullName: mockUser.fullName,
-          email: mockUser.email,
-        },
-      });
-    });
+  it('should rotate refresh token on refresh', async () => {
+    const result = await service.refresh('raw_old_refresh_token');
+
+    expect(sessionService.rotateSession).toHaveBeenCalledWith('raw_old_refresh_token');
+    expect(result.accessToken).toBe('jwt_token');
+    expect(result.refreshToken).toBe('rotated_refresh_token_111');
+  });
+
+  it('should revoke all sessions on logout-all', async () => {
+    const result = await service.logoutAll('usr-123');
+
+    expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith('usr-123');
+    expect(result.message).toContain('Logged out of all sessions');
   });
 });

@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { StructuredLoggerService } from './infrastructure/logger/structured-logger.service';
@@ -16,10 +17,20 @@ async function bootstrap() {
   // Hardening: Disable X-Powered-By header at Express engine level
   app.getHttpAdapter().getInstance().disable('x-powered-by');
 
-  const config = app.get(ConfigService);
+  // Cookie Parser Middleware for HTTP-Only Session Cookies
+  app.use(cookieParser());
 
-  // Configuration
-  app.enableCors();
+  const config = app.get(ConfigService);
+  const frontendUrl =
+    config.get<string>('FRONTEND_URL') ||
+    config.get<string>('APP_URL') ||
+    'http://localhost:5173';
+
+  // Enable CORS with Credentials for HTTP-Only Cookies
+  app.enableCors({
+    origin: [frontendUrl, 'http://localhost:5173'],
+    credentials: true,
+  });
 
   app.setGlobalPrefix('api/v1');
 
@@ -43,6 +54,7 @@ async function bootstrap() {
     .setDescription('Atlas Infrastructure Intelligence Platform API')
     .setVersion('1.0')
     .addBearerAuth()
+    .addCookieAuth('access_token')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

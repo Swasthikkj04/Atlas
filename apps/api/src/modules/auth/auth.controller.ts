@@ -41,6 +41,7 @@ import { UserSessionResponseDto } from './dto/session-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './services/auth.service';
 import { GoogleAuthService } from './services/google-auth.service';
+import { GitHubAuthService } from './services/github-auth.service';
 import { parseUserAgent } from './utils/user-agent.parser';
 import {
   clearAuthCookies,
@@ -54,6 +55,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly googleAuthService: GoogleAuthService,
+    private readonly githubAuthService: GitHubAuthService,
   ) {}
 
   @RateLimit({ limit: 5, windowSeconds: 3600, name: 'auth_register' })
@@ -90,7 +92,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Authenticate user',
     description:
-      'Authenticates user credentials, creates stateful session, sets HTTP-Only security cookies (nebula_access_token & nebula_refresh_token), and returns payload.',
+      'Authenticates user credentials, creates stateful session, sets HTTP-Only security cookies, and returns payload.',
   })
   @ApiResponse({
     status: 200,
@@ -161,13 +163,57 @@ export class AuthController {
     return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
+  @Get('github')
+  @UseGuards(AuthGuard('github'))
+  @ApiOperation({
+    summary: 'Initiate GitHub OAuth login',
+    description:
+      'Redirects user to GitHub OAuth consent page requesting read:user and user:email scopes.',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to GitHub OAuth consent page.',
+  })
+  async githubAuth() {
+    // Passport redirects to GitHub
+  }
+
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
+  @ApiOperation({
+    summary: 'GitHub OAuth authentication callback',
+    description:
+      'Processes GitHub identity profile, verifies primary email, resolves Nebula user, creates stateful session, sets HTTP-Only cookies, and redirects to /auth/callback.',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Sets HTTP-only session cookies and redirects frontend.',
+  })
+  async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const githubProfile = req.user as any;
+    const userAgent = req.headers['user-agent'];
+    const clientIp = req.ip || req.socket.remoteAddress;
+    const deviceMeta = parseUserAgent(userAgent, clientIp);
+
+    const { accessToken, refreshToken } =
+      await this.githubAuthService.resolveAndAuthenticateGitHubUser(
+        githubProfile,
+        deviceMeta,
+      );
+
+    setAuthCookies(res, accessToken, refreshToken);
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/auth/callback`);
+  }
+
   @RateLimit({ limit: 30, windowSeconds: 3600, name: 'auth_refresh' })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Rotate refresh token and issue new access token',
     description:
-      'Reads nebula_refresh_token cookie or body, rotates session, sets new HTTP-Only cookies, and returns updated tokens.',
+      'Reads refresh token cookie or body, rotates session, sets new HTTP-Only cookies, and returns updated tokens.',
   })
   @ApiResponse({
     status: 200,

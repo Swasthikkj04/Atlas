@@ -13,9 +13,11 @@ import { PasswordResetTokenService } from './services/password-reset-token.servi
 import { UserSessionService } from './services/user-session.service';
 import { OAuthAccountService } from './services/oauth-account.service';
 import { GoogleAuthService } from './services/google-auth.service';
+import { GitHubAuthService } from './services/github-auth.service';
 import { OAuthIdentityResolver } from './resolvers/oauth-identity.resolver';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { GitHubStrategy } from './strategies/github.strategy';
 
 @Module({
   imports: [
@@ -39,12 +41,14 @@ import { GoogleStrategy } from './strategies/google.strategy';
     PasswordService,
     JwtStrategy,
     GoogleStrategy,
+    GitHubStrategy,
     VerificationTokenService,
     PasswordResetTokenService,
     UserSessionService,
     OAuthAccountService,
     OAuthIdentityResolver,
     GoogleAuthService,
+    GitHubAuthService,
   ],
   exports: [
     AuthService,
@@ -55,6 +59,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
     OAuthAccountService,
     OAuthIdentityResolver,
     GoogleAuthService,
+    GitHubAuthService,
   ],
 })
 export class AuthModule {}

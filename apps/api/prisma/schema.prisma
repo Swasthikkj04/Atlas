@@ -30,6 +30,7 @@ enum UserAccountStatus {
 
 enum OAuthProvider {
   GOOGLE
+  GITHUB
 }
 
 enum GuestSessionStatus {

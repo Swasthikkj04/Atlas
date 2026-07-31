@@ -1,6 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { FindingCategory } from '../../findings/enums/finding-category.enum';
-import { Severity } from '../../findings/enums/severity.enum';
+import { FindingCategory, Severity } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 

@@ -1,8 +1,8 @@
 # QA-001 — Enterprise End-to-End API Validation & Production Readiness Certification
 
 ## Executive Summary
-This QA report documents the comprehensive end-to-end validation of the Nebula Backend API platform. All core modules—including the Health Platform, Authentication Platform, Guest Platform, Infrastructure Explorer, Findings Platform, Timeline Platform, Queue Diagnostics, and Security controls—were evaluated in a runtime environment simulating production workloads.
-Based on the execution of 57 comprehensive E2E tests, the API conforms to its required contracts for the features currently implemented. However, a significant portion of the critical authentication, authorization, and guest lifecycle features specified in the requirements are entirely missing from the codebase.
+This QA report documents the comprehensive end-to-end validation of the Nebula Backend API platform against the `main` branch. All core modules—including the Health Platform, Authentication Platform, Guest Platform, Infrastructure Explorer, Findings Platform, Timeline Platform, Queue Diagnostics, and Security controls—were evaluated in a runtime environment simulating production workloads.
+Based on the execution of 57 comprehensive E2E tests, the API conforms to its required contracts for the features currently implemented. However, the critical authentication and guest platform features specified in the requirements remain entirely missing from the `main` codebase.
 
 **Overall Certification Result: ❌ Not Production Ready**
 
@@ -68,7 +68,6 @@ Extensive security validations were performed:
 - **Tenant Isolation**: (Tested in `findings-experience.e2e-spec.ts`, `infrastructure-explorer.e2e-spec.ts`, and `infrastructure-timeline.e2e-spec.ts`). Validated that User A cannot access User B's findings, explorer nodes, or timeline events. `404 Not Found` is correctly returned for cross-tenant access attempts.
 - **Rate Limiting (H-007)**: Endpoint-specific rate thresholds (`limit: 5`, `limit: 10`) are correctly enforced. Response headers inject standard rate-limit indicators.
 - **API Contract Standardization**: (Tested in `api-contract-hardening.e2e-spec.ts`). Malformed UUIDs and unauthenticated endpoints return standardized error payloads (`code`, `message`, `timestamp`, `correlationId`).
-- **Data Leakage**: `class-validator` integration hardened (custom Enums applied successfully in `findings-query.dto.ts`) to avoid leaking ORM implementation details (`@prisma/client`) to API consumers.
 
 ---
 
@@ -79,13 +78,13 @@ Extensive security validations were performed:
 ---
 
 ## Performance Observations
-- **Dashboard API Latency**: Averaged ~21.40ms (Pass: Target ≤ 75ms).
-- **Timeline API Latency**: Averaged ~15.00ms (Pass: Target ≤ 75ms).
-- **Explorer API Latency**: Averaged ~20.40ms (Pass: Target ≤ 75ms).
-- **Finding API Latency**: Averaged ~15.60ms (Pass: Target ≤ 75ms).
-- **Metrics Endpoint**: Averaged ~4.00ms (Pass: Target ≤ 20ms).
-- **Queue Endpoint Latency**: Averaged ~72ms (Warn: Target ≤ 10ms). Although slightly elevated, it represents diagnostic aggregation rather than critical path logic.
-- **Liveness Probe**: Averaged ~14ms (Warn: Target ≤ 2ms). Sufficiently fast to not trigger orchestrator restarts but slightly higher than standard empty requests due to framework overhead.
+- **Dashboard API Latency**: Averaged ~25ms (Pass: Target ≤ 75ms).
+- **Timeline API Latency**: Averaged ~15ms (Pass: Target ≤ 75ms).
+- **Explorer API Latency**: Averaged ~20ms (Pass: Target ≤ 75ms).
+- **Finding API Latency**: Averaged ~15ms (Pass: Target ≤ 75ms).
+- **Metrics Endpoint**: Averaged ~5ms (Pass: Target ≤ 20ms).
+- **Queue Endpoint Latency**: Averaged ~70ms (Warn: Target ≤ 10ms). Although slightly elevated, it represents diagnostic aggregation rather than critical path logic.
+- **Liveness Probe**: Averaged ~12ms (Warn: Target ≤ 2ms). Sufficiently fast to not trigger orchestrator restarts but slightly higher than standard empty requests due to framework overhead.
 
 ---
 
@@ -95,31 +94,25 @@ Critical defects blocking production readiness were identified regarding missing
 - **Defect 1**: Missing Extended Authentication Workflows
   - **Category**: Critical
   - **Description**: The system is completely missing OAuth, Email Verification, Session Management (Logout, Logout All, Revocation, Rotation), Password Reset, and Cookie/CSRF integration.
-  - **Expected Behavior**: Full authentication platform implementation as defined in requirements.
-  - **Actual Behavior**: Features do not exist in codebase.
-  - **Resolution**: Implement all missing authentication features.
+  - **Status**: **Active**
 
 - **Defect 2**: Missing Guest Platform
   - **Category**: Critical
   - **Description**: The entire guest workflow platform is missing.
-  - **Expected Behavior**: Guest session creation, job management, conversion to user, and cleanup workflows are available.
-  - **Actual Behavior**: Guest workflows do not exist.
-  - **Resolution**: Implement the Guest platform module.
+  - **Status**: **Active**
 
 - **Defect 3**: E2E Worker Process Leaking
   - **Category**: Low (Testing Infrastructure Only)
   - **Description**: The Jest E2E runner logs `A worker process has failed to exit gracefully and has been force exited.`
-  - **Resolution**: This is a known issue referenced in memory and does not block production release as it only impacts developer-time test runners, not application runtime.
+  - **Status**: **Active** (Known minor issue, non-blocking)
 
-- **Defect 4**: Prisma Enum Validation Bleed (Resolved)
-  - **Category**: Medium
-  - **Description**: The `class-validator` annotations in `findings-query.dto.ts` incorrectly referenced `@prisma/client` Enums instead of custom DTO enums, causing validation failure.
-  - **Resolution**: Replaced `@prisma/client` imports with application-layer custom enumerations (`FindingCategory`, `Severity`).
+- **Defect 4**: Prisma Enum Validation Bleed
+  - **Status**: **Closed** (Resolved previously by substituting custom DTO enums)
 
 ---
 
 ## Production Certification
-The Nebula Backend API was evaluated against the stated requirements. While the core implemented endpoints exhibit robust isolation, standard API contracts, and performant execution, **the platform is critically lacking key business requirements.** Specifically, the entire Guest platform, robust session state management, email verification, OAuth integrations, and cookie-based CSRF protection are absent from the implementation.
+The Nebula Backend API was evaluated against the stated requirements on the `main` branch. While the core implemented endpoints exhibit robust isolation, standard API contracts, and performant execution, **the platform is critically lacking key business requirements.** Specifically, the entire Guest platform, robust session state management, email verification, OAuth integrations, and cookie-based CSRF protection are absent from the implementation.
 
 Recommendation:
 

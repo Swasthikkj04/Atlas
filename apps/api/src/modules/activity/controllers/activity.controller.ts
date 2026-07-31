@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -51,9 +45,6 @@ export class ActivityController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ActivityQueryDto,
   ): Promise<ActivityResponseDto> {
-    return this.activityExperienceService.getActivityData(
-      req.user.id,
-      query,
-    );
+    return this.activityExperienceService.getActivityData(req.user.id, query);
   }
 }

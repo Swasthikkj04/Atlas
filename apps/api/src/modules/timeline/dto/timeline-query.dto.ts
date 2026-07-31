@@ -1,5 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ChangeSeverity, ChangeType, FindingCategory, FindingModule } from '@prisma/client';
+import {
+  ChangeSeverity,
+  ChangeType,
+  FindingCategory,
+  FindingModule,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
@@ -61,7 +66,8 @@ export class TimelineQueryDto {
   endDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Search query string to filter changes by title or description.',
+    description:
+      'Search query string to filter changes by title or description.',
     example: 'HSTS',
   })
   @IsOptional()

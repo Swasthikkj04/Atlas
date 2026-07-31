@@ -1,0 +1,22 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.logo {
+  display: block;
+}
+
+.wordmark {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sm .wordmark { font-size: 0.875rem; }
+.md .wordmark { font-size: 1rem; }
+.lg .wordmark { font-size: 1.25rem; }

@@ -60,15 +60,33 @@ describe('DomainExperienceService', () => {
   });
 
   it('should aggregate domain overview data in parallel via DomainDetailsService', async () => {
-    const result = await experienceService.getDomainOverview('user-1', 'domain-1');
+    const result = await experienceService.getDomainOverview(
+      'user-1',
+      'domain-1',
+    );
 
-    expect(domainDetailsService.getDomain).toHaveBeenCalledWith('user-1', 'domain-1');
-    expect(domainDetailsService.getLatestSnapshot).toHaveBeenCalledWith('domain-1');
-    expect(domainDetailsService.countSnapshots).toHaveBeenCalledWith('domain-1');
-    expect(domainDetailsService.getFindingsSummary).toHaveBeenCalledWith('domain-1');
-    expect(domainDetailsService.getLatestBrief).toHaveBeenCalledWith('domain-1');
-    expect(domainDetailsService.getLatestVerification).toHaveBeenCalledWith('domain-1');
-    expect(domainDetailsService.countVerifications).toHaveBeenCalledWith('domain-1');
+    expect(domainDetailsService.getDomain).toHaveBeenCalledWith(
+      'user-1',
+      'domain-1',
+    );
+    expect(domainDetailsService.getLatestSnapshot).toHaveBeenCalledWith(
+      'domain-1',
+    );
+    expect(domainDetailsService.countSnapshots).toHaveBeenCalledWith(
+      'domain-1',
+    );
+    expect(domainDetailsService.getFindingsSummary).toHaveBeenCalledWith(
+      'domain-1',
+    );
+    expect(domainDetailsService.getLatestBrief).toHaveBeenCalledWith(
+      'domain-1',
+    );
+    expect(domainDetailsService.getLatestVerification).toHaveBeenCalledWith(
+      'domain-1',
+    );
+    expect(domainDetailsService.countVerifications).toHaveBeenCalledWith(
+      'domain-1',
+    );
 
     expect(result.domain.domainName).toBe('app.example.com');
     expect(result.health.score).toBe(65);
@@ -77,10 +95,18 @@ describe('DomainExperienceService', () => {
   });
 
   it('should aggregate domain details in parallel via DomainDetailsService', async () => {
-    const result = await experienceService.getDomainDetails('user-1', 'domain-1');
+    const result = await experienceService.getDomainDetails(
+      'user-1',
+      'domain-1',
+    );
 
-    expect(domainDetailsService.getDomain).toHaveBeenCalledWith('user-1', 'domain-1');
-    expect(domainDetailsService.getLatestSnapshot).toHaveBeenCalledWith('domain-1');
+    expect(domainDetailsService.getDomain).toHaveBeenCalledWith(
+      'user-1',
+      'domain-1',
+    );
+    expect(domainDetailsService.getLatestSnapshot).toHaveBeenCalledWith(
+      'domain-1',
+    );
     expect(result.domain.domainName).toBe('app.example.com');
     expect(result.latestBrief?.summary).toBe('All systems operational');
   });

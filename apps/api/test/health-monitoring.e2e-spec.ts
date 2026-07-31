@@ -36,7 +36,9 @@ describe('Health, Readiness & Liveness Monitoring Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Liveness Probe Latency: ${latency}ms (Target ≤ 2ms: ${latency <= 10 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Liveness Probe Latency: ${latency}ms (Target ≤ 2ms: ${latency <= 10 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body.status).toBe('UP');
       expect(response.body.service).toBe('atlas-api');
@@ -53,7 +55,9 @@ describe('Health, Readiness & Liveness Monitoring Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Readiness Probe Latency: ${latency}ms (Target ≤ 20ms: ${latency <= 20 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Readiness Probe Latency: ${latency}ms (Target ≤ 20ms: ${latency <= 20 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body.status).toBe('READY');
       expect(response.body.checks.database).toBe('UP');
@@ -69,7 +73,9 @@ describe('Health, Readiness & Liveness Monitoring Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Overall Health Endpoint Latency: ${latency}ms (Target ≤ 30ms: ${latency <= 30 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Overall Health Endpoint Latency: ${latency}ms (Target ≤ 30ms: ${latency <= 30 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body.status).toBe('HEALTHY');
       expect(response.body.checks.database.status).toBe('UP');

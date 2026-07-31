@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import { createDomainDto } from '../common/factories.helper';
 import {
   closeTestApp,

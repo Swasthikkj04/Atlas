@@ -4,19 +4,20 @@ import { Prisma, Severity } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { FindingsQueryDto } from '../dto/findings-query.dto';
 
-export type FindingWithSnapshotAndDomain = Prisma.InfrastructureFindingGetPayload<{
-  include: {
-    snapshot: {
-      include: {
-        domain: {
-          select: {
-            domainName: true;
+export type FindingWithSnapshotAndDomain =
+  Prisma.InfrastructureFindingGetPayload<{
+    include: {
+      snapshot: {
+        include: {
+          domain: {
+            select: {
+              domainName: true;
+            };
           };
         };
       };
     };
-  };
-}>;
+  }>;
 
 @Injectable()
 export class InfrastructureFindingRepository {
@@ -98,7 +99,7 @@ export class InfrastructureFindingRepository {
     ]);
 
     return {
-      data: data as FindingWithSnapshotAndDomain[],
+      data: data,
       total,
     };
   }
@@ -109,7 +110,7 @@ export class InfrastructureFindingRepository {
   ): Promise<FindingWithSnapshotAndDomain | null> {
     const sanitizedId = findingId.replace(/^(find|finding)-/, '');
 
-    return (await this.prisma.infrastructureFinding.findFirst({
+    return await this.prisma.infrastructureFinding.findFirst({
       where: {
         OR: [{ id: findingId }, { id: sanitizedId }],
         snapshot: {
@@ -129,7 +130,7 @@ export class InfrastructureFindingRepository {
           },
         },
       },
-    })) as FindingWithSnapshotAndDomain | null;
+    });
   }
 
   async findRawEvidenceForDomain(domainId: string) {
@@ -150,11 +151,7 @@ export class InfrastructureFindingRepository {
     });
   }
 
-  async findBySnapshot(
-    snapshotId: string,
-    page: number,
-    limit: number,
-  ) {
+  async findBySnapshot(snapshotId: string, page: number, limit: number) {
     return this.prisma.infrastructureFinding.findMany({
       where: {
         snapshotId,
@@ -175,9 +172,7 @@ export class InfrastructureFindingRepository {
     });
   }
 
-  async getSummaryByDomain(
-    domainId: string,
-  ): Promise<{
+  async getSummaryByDomain(domainId: string): Promise<{
     total: number;
     critical: number;
     high: number;
@@ -234,8 +229,7 @@ export class InfrastructureFindingRepository {
           break;
 
         case Severity.INFO:
-          summary.informational =
-            finding._count.severity;
+          summary.informational = finding._count.severity;
           break;
       }
     }
@@ -243,29 +237,26 @@ export class InfrastructureFindingRepository {
     return summary;
   }
 
-  async getSeveritySummaryByUser(
-    userId: string,
-  ): Promise<{
+  async getSeveritySummaryByUser(userId: string): Promise<{
     critical: number;
     high: number;
     medium: number;
     low: number;
     informational: number;
   }> {
-    const findings =
-      await this.prisma.infrastructureFinding.groupBy({
-        by: ['severity'],
-        where: {
-          snapshot: {
-            domain: {
-              userId,
-            },
+    const findings = await this.prisma.infrastructureFinding.groupBy({
+      by: ['severity'],
+      where: {
+        snapshot: {
+          domain: {
+            userId,
           },
         },
-        _count: {
-          severity: true,
-        },
-      });
+      },
+      _count: {
+        severity: true,
+      },
+    });
 
     const summary = {
       critical: 0,
@@ -294,8 +285,7 @@ export class InfrastructureFindingRepository {
           break;
 
         case Severity.INFO:
-          summary.informational =
-            finding._count.severity;
+          summary.informational = finding._count.severity;
           break;
       }
     }
@@ -303,23 +293,20 @@ export class InfrastructureFindingRepository {
     return summary;
   }
 
-  async getWorkspaceFindingSummaryByUser(
-    userId: string,
-  ): Promise<{
+  async getWorkspaceFindingSummaryByUser(userId: string): Promise<{
     total: number;
     unresolved: number;
     resolved: number;
   }> {
-    const total =
-      await this.prisma.infrastructureFinding.count({
-        where: {
-          snapshot: {
-            domain: {
-              userId,
-            },
+    const total = await this.prisma.infrastructureFinding.count({
+      where: {
+        snapshot: {
+          domain: {
+            userId,
           },
         },
-      });
+      },
+    });
 
     return {
       total,

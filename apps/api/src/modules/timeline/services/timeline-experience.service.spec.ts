@@ -66,7 +66,10 @@ describe('TimelineExperienceService', () => {
     const query: TimelineQueryDto = { limit: 20 };
     const response = await experienceService.getTimelineData('user-1', query);
 
-    expect(queryService.getTimelineChanges).toHaveBeenCalledWith('user-1', query);
+    expect(queryService.getTimelineChanges).toHaveBeenCalledWith(
+      'user-1',
+      query,
+    );
     expect(response.data).toHaveLength(1);
     expect(response.data[0]).toEqual({
       id: 'change-1',
@@ -80,7 +83,8 @@ describe('TimelineExperienceService', () => {
       category: 'DNS_RECORD',
       confidence: 1.0,
       summary: 'DNS Configuration Changed',
-      impact: 'HIGH Risk: DNS_RECORD change (modified) impacts security posture and requires immediate review.',
+      impact:
+        'HIGH Risk: DNS_RECORD change (modified) impacts security posture and requires immediate review.',
       findingCount: 1,
       observationCount: 2,
       evidenceCount: 1,
@@ -88,9 +92,15 @@ describe('TimelineExperienceService', () => {
   });
 
   it('should retrieve deep event details for getTimelineEventDetails with change diff', async () => {
-    const details = await experienceService.getTimelineEventDetails('user-1', 'change-1');
+    const details = await experienceService.getTimelineEventDetails(
+      'user-1',
+      'change-1',
+    );
 
-    expect(queryService.getTimelineChangeById).toHaveBeenCalledWith('user-1', 'change-1');
+    expect(queryService.getTimelineChangeById).toHaveBeenCalledWith(
+      'user-1',
+      'change-1',
+    );
     expect(details.event.summary).toBe('DNS Configuration Changed');
     expect(details.previousSnapshotId).toBe('prev-1');
     expect(details.currentSnapshotId).toBe('curr-1');

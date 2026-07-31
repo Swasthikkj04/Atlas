@@ -9,7 +9,8 @@ export class InfrastructureRelationshipDto {
 
   @ApiProperty({
     example: 'HOSTED_ON',
-    description: 'Relationship predicate type (HOSTED_ON, SECURED_BY, SERVED_BY, APPLIES_TO, DEPENDS_ON).',
+    description:
+      'Relationship predicate type (HOSTED_ON, SECURED_BY, SERVED_BY, APPLIES_TO, DEPENDS_ON).',
   })
   type!: string;
 

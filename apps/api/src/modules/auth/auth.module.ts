@@ -12,24 +12,14 @@ import { PasswordService } from './services/password.service';
   imports: [
     UsersModule,
     JwtModule.register({
-      secret:
-        process.env.JWT_ACCESS_SECRET ??
-        'atlas-development-secret',
+      secret: process.env.JWT_ACCESS_SECRET ?? 'atlas-development-secret',
       signOptions: {
         expiresIn: '15m',
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    PasswordService,
-    JwtStrategy,
-  ],
-  exports: [
-    AuthService,
-    PasswordService,
-    JwtModule,
-  ],
+  providers: [AuthService, PasswordService, JwtStrategy],
+  exports: [AuthService, PasswordService, JwtModule],
 })
 export class AuthModule {}

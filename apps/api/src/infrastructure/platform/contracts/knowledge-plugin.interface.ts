@@ -1,5 +1,8 @@
 import { NormalizationResult } from '../../normalization/contracts/normalization-result.interface';
-import { PluginManifest, PluginLifecycleState } from './plugin-manifest.interface';
+import {
+  PluginManifest,
+  PluginLifecycleState,
+} from './plugin-manifest.interface';
 
 export interface AtlasKnowledgePlugin {
   readonly manifest: PluginManifest;

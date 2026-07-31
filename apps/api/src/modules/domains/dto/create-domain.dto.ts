@@ -1,7 +1,4 @@
-import {
-  IsFQDN,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsFQDN, IsNotEmpty } from 'class-validator';
 
 export class CreateDomainDto {
   @IsNotEmpty()

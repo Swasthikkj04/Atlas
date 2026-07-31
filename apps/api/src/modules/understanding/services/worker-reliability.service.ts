@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { runWithCorrelationId } from '../../../infrastructure/logger/background-job-context';
 import { RequestContextStore } from '../../../infrastructure/logger/request-context.store';
 import { MetricsService } from '../../../infrastructure/metrics/metrics.service';
@@ -55,7 +51,11 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       msg.includes('HTTP timeout') ||
       msg.includes('TLS handshake')
     ) {
-      return { category: FailureCategory.NETWORK, isRetriable: true, message: msg };
+      return {
+        category: FailureCategory.NETWORK,
+        isRetriable: true,
+        message: msg,
+      };
     }
 
     if (
@@ -64,7 +64,11 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       msg.includes('Connection terminated') ||
       msg.includes('deadlock')
     ) {
-      return { category: FailureCategory.DATABASE, isRetriable: true, message: msg };
+      return {
+        category: FailureCategory.DATABASE,
+        isRetriable: true,
+        message: msg,
+      };
     }
 
     if (
@@ -72,7 +76,11 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       msg.includes('Validation failed') ||
       msg.includes('forbidNonWhitelisted')
     ) {
-      return { category: FailureCategory.VALIDATION, isRetriable: false, message: msg };
+      return {
+        category: FailureCategory.VALIDATION,
+        isRetriable: false,
+        message: msg,
+      };
     }
 
     if (
@@ -80,14 +88,26 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       msg.includes('Forbidden') ||
       msg.includes('Invalid configuration')
     ) {
-      return { category: FailureCategory.CONFIGURATION, isRetriable: false, message: msg };
+      return {
+        category: FailureCategory.CONFIGURATION,
+        isRetriable: false,
+        message: msg,
+      };
     }
 
     if (msg.includes('Discovery failed')) {
-      return { category: FailureCategory.DISCOVERY, isRetriable: true, message: msg };
+      return {
+        category: FailureCategory.DISCOVERY,
+        isRetriable: true,
+        message: msg,
+      };
     }
 
-    return { category: FailureCategory.UNKNOWN, isRetriable: true, message: msg };
+    return {
+      category: FailureCategory.UNKNOWN,
+      isRetriable: true,
+      message: msg,
+    };
   }
 
   getRetryDelayMs(attempt: number, baseMs = 1000, maxMs = 30000): number {
@@ -95,14 +115,21 @@ export class WorkerReliabilityService implements OnModuleDestroy {
     return Math.min(delay, maxMs);
   }
 
-  trackJobStart(jobId: string, domainId: string, correlationId?: string): ActiveWorkerJob {
+  trackJobStart(
+    jobId: string,
+    domainId: string,
+    correlationId?: string,
+  ): ActiveWorkerJob {
     const active: ActiveWorkerJob = {
       jobId,
       domainId,
-      correlationId: correlationId || RequestContextStore.getCorrelationId() || `corr_worker_${jobId}`,
+      correlationId:
+        correlationId ||
+        RequestContextStore.getCorrelationId() ||
+        `corr_worker_${jobId}`,
       startedAt: Date.now(),
       lastHeartbeat: Date.now(),
-      retryCount: (this.activeJobs.get(jobId)?.retryCount || 0),
+      retryCount: this.activeJobs.get(jobId)?.retryCount || 0,
     };
     this.activeJobs.set(jobId, active);
     return active;
@@ -119,7 +146,11 @@ export class WorkerReliabilityService implements OnModuleDestroy {
     this.activeJobs.delete(jobId);
   }
 
-  async handleJobFailure(jobId: string, rawError: any, durationMs: number): Promise<{ retried: boolean; category: FailureCategory }> {
+  async handleJobFailure(
+    jobId: string,
+    rawError: any,
+    durationMs: number,
+  ): Promise<{ retried: boolean; category: FailureCategory }> {
     const active = this.activeJobs.get(jobId);
     const retryCount = (active?.retryCount || 0) + 1;
     const classified = this.classifyError(rawError);
@@ -147,10 +178,16 @@ export class WorkerReliabilityService implements OnModuleDestroy {
 
       // Re-queue to PENDING so next worker poll claims it
       await this.understandingRepository.claimJob(jobId); // reset to RUNNING/PENDING lifecycle
-      await this.understandingRepository.failJob(jobId, `[RETRYING #${retryCount}] Scheduled`, 0);
-      
+      await this.understandingRepository.failJob(
+        jobId,
+        `[RETRYING #${retryCount}] Scheduled`,
+        0,
+      );
+
       // Update job back to PENDING status atomically
-      await (this.understandingRepository as any).prisma.understandingJob.update({
+      await (
+        this.understandingRepository as any
+      ).prisma.understandingJob.update({
         where: { id: jobId },
         data: { status: 'PENDING' },
       });
@@ -175,10 +212,14 @@ export class WorkerReliabilityService implements OnModuleDestroy {
 
     for (const [jobId, active] of this.activeJobs.entries()) {
       if (now - active.lastHeartbeat > timeoutMs) {
-        this.logger.warn(`Stuck job detected: ${jobId} (heartbeat age: ${now - active.lastHeartbeat}ms). Recovering...`);
+        this.logger.warn(
+          `Stuck job detected: ${jobId} (heartbeat age: ${now - active.lastHeartbeat}ms). Recovering...`,
+        );
         this.activeJobs.delete(jobId);
-        
-        await (this.understandingRepository as any).prisma.understandingJob.update({
+
+        await (
+          this.understandingRepository as any
+        ).prisma.understandingJob.update({
           where: { id: jobId },
           data: { status: 'PENDING', errorMessage: '[RECOVERED_STUCK_JOB]' },
         });
@@ -196,11 +237,15 @@ export class WorkerReliabilityService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     this.isShuttingDown = true;
-    this.logger.log('WorkerReliabilityService graceful shutdown initiated. Stopping new job claims.');
+    this.logger.log(
+      'WorkerReliabilityService graceful shutdown initiated. Stopping new job claims.',
+    );
 
     const activeCount = this.activeJobs.size;
     if (activeCount > 0) {
-      this.logger.log(`Waiting for ${activeCount} active job(s) to complete before exit...`);
+      this.logger.log(
+        `Waiting for ${activeCount} active job(s) to complete before exit...`,
+      );
       const graceStart = Date.now();
       while (this.activeJobs.size > 0 && Date.now() - graceStart < 3000) {
         await new Promise((resolve) => setTimeout(resolve, 200));

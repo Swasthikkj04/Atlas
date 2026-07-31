@@ -36,7 +36,9 @@ export class InfrastructureExplorerExperienceService {
   ): Promise<InfrastructureAssetDetailDto> {
     const asset = await this.queryService.getAssetById(userId, assetId);
     if (!asset) {
-      throw new NotFoundException(`Infrastructure asset '${assetId}' not found`);
+      throw new NotFoundException(
+        `Infrastructure asset '${assetId}' not found`,
+      );
     }
 
     const [rawEvidences, timelineChanges, findings] = await Promise.all([
@@ -60,7 +62,8 @@ export class InfrastructureExplorerExperienceService {
         targetId: `ast-tls-${asset.assetId}`,
         targetName: 'Active TLS Certificate',
         targetCategory: 'Certificates',
-        description: 'Transport layer encryption provided by domain TLS certificate.',
+        description:
+          'Transport layer encryption provided by domain TLS certificate.',
       },
       {
         id: `rel-${asset.assetId}-srv`,

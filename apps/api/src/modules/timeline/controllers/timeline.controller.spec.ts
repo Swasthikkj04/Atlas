@@ -21,9 +21,9 @@ describe('TimelineController', () => {
         domainId: 'domain-1',
         domainName: 'example.com',
         module: 'DNS' as any,
-        category: 'DNS_RECORD' as any,
-        changeType: 'MODIFIED' as any,
-        severity: 'HIGH' as any,
+        category: 'DNS_RECORD',
+        changeType: 'MODIFIED',
+        severity: 'HIGH',
         title: 'A record updated',
         description: 'DNS A record changed to 1.0.0.1',
         detectedAt: new Date('2026-07-24T18:00:00Z'),
@@ -90,10 +90,9 @@ describe('TimelineController', () => {
     const req = { user: mockUser } as any;
     const result = await controller.getTimelineEventDetails(req, 'change-1');
 
-    expect(timelineExperienceService.getTimelineEventDetails).toHaveBeenCalledWith(
-      'user-uuid-1',
-      'change-1',
-    );
+    expect(
+      timelineExperienceService.getTimelineEventDetails,
+    ).toHaveBeenCalledWith('user-uuid-1', 'change-1');
     expect(result.event.title).toBe('A record updated');
     expect(result.event.summary).toBe('DNS Configuration Changed');
   });

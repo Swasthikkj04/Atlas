@@ -87,7 +87,10 @@ export class MetricsService {
   }
 
   // 2. Discovery Metrics
-  recordDiscoveryJob(status: 'COMPLETED' | 'FAILED' | 'STARTED', durationSec?: number): void {
+  recordDiscoveryJob(
+    status: 'COMPLETED' | 'FAILED' | 'STARTED',
+    durationSec?: number,
+  ): void {
     this.registry.incCounter(
       'atlas_discovery_jobs_total',
       'Total number of infrastructure discovery understanding jobs.',
@@ -154,7 +157,10 @@ export class MetricsService {
   }
 
   // 7. Auth Metrics
-  recordAuthRequest(type: 'LOGIN' | 'REGISTER', status: 'SUCCESS' | 'FAILURE'): void {
+  recordAuthRequest(
+    type: 'LOGIN' | 'REGISTER',
+    status: 'SUCCESS' | 'FAILURE',
+  ): void {
     this.registry.incCounter(
       'atlas_auth_requests_total',
       'Total number of authentication requests.',
@@ -186,7 +192,9 @@ export class MetricsService {
   }
 
   // 9. Security Metrics
-  recordSecurityEvent(type: 'AUTH_FAILURE' | 'INVALID_JWT' | 'FORBIDDEN' | 'ABUSE_DETECTED'): void {
+  recordSecurityEvent(
+    type: 'AUTH_FAILURE' | 'INVALID_JWT' | 'FORBIDDEN' | 'ABUSE_DETECTED',
+  ): void {
     this.registry.incCounter(
       'atlas_security_events_total',
       'Total number of security events and potential attack attempts.',
@@ -251,7 +259,10 @@ export class MetricsService {
   private sanitizeRoute(route: string): string {
     if (!route) return 'unknown';
     return route
-      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id')
+      .replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+        ':id',
+      )
       .replace(/\/evt-[^/]+/gi, '/:id')
       .replace(/\/find-[^/]+/gi, '/:id')
       .replace(/\/ast-[^/]+/gi, '/:id')

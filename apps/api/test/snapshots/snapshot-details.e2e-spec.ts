@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -42,8 +39,9 @@ describe('GET /api/v1/snapshots/:snapshotId (Infrastructure Snapshot Details Reg
     it('should return security and correlation headers when querying snapshot details', async () => {
       const nonExistentSnapshotId = 'snp-3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .get(`${API_PREFIX}/snapshots/${nonExistentSnapshotId}`);
+      const response = await authenticatedRequest(testApp, userToken).get(
+        `${API_PREFIX}/snapshots/${nonExistentSnapshotId}`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);

@@ -18,9 +18,7 @@ export class SelfSignedCertificateRule implements FindingRule {
     'SELF_SIGNED_CERT_IN_CHAIN',
   ]);
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const ssl = context.snapshot.ssl;
 
     if (!ssl?.authorizationError) {
@@ -43,7 +41,7 @@ export class SelfSignedCertificateRule implements FindingRule {
           {
             title: 'Use a trusted certificate',
             description:
-              'Replace the self-signed certificate with one issued by a publicly trusted Certificate Authority (e.g., Let\'s Encrypt, DigiCert).',
+              "Replace the self-signed certificate with one issued by a publicly trusted Certificate Authority (e.g., Let's Encrypt, DigiCert).",
           },
         ],
       },

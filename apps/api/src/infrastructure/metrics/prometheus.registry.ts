@@ -34,7 +34,12 @@ export class PrometheusRegistry {
     return `{${formatted}}`;
   }
 
-  incCounter(name: string, help: string, labels: LabelMap = {}, value = 1): void {
+  incCounter(
+    name: string,
+    help: string,
+    labels: LabelMap = {},
+    value = 1,
+  ): void {
     if (!this.counters.has(name)) {
       this.counters.set(name, { help, values: new Map() });
     }
@@ -44,7 +49,12 @@ export class PrometheusRegistry {
     metric.values.set(labelKey, current + value);
   }
 
-  setGauge(name: string, help: string, labels: LabelMap = {}, value: number): void {
+  setGauge(
+    name: string,
+    help: string,
+    labels: LabelMap = {},
+    value: number,
+  ): void {
     if (!this.gauges.has(name)) {
       this.gauges.set(name, { help, values: new Map() });
     }
@@ -58,7 +68,9 @@ export class PrometheusRegistry {
     help: string,
     labels: LabelMap = {},
     valSec: number,
-    buckets: number[] = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+    buckets: number[] = [
+      0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10,
+    ],
   ): void {
     if (!this.histograms.has(name)) {
       this.histograms.set(name, { help, buckets, values: new Map() });

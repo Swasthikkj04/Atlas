@@ -15,7 +15,10 @@ export function createUserDto(overrides: Record<string, any> = {}) {
   };
 }
 
-export function createLoginDto(email: string, password: string = 'SuperSecurePassword123!') {
+export function createLoginDto(
+  email: string,
+  password: string = 'SuperSecurePassword123!',
+) {
   return {
     email,
     password,

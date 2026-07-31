@@ -115,7 +115,9 @@ describe('WorkspaceController', () => {
     const req = { user: mockUser } as any;
     const result = await controller.getWorkspaceDashboard(req);
 
-    expect(workspaceExperienceService.getDashboardData).toHaveBeenCalledWith(mockUser);
+    expect(workspaceExperienceService.getDashboardData).toHaveBeenCalledWith(
+      mockUser,
+    );
     expect(result.summary.totalDomains).toBe(12);
     expect(result.quickActions).toHaveLength(1);
   });
@@ -124,7 +126,9 @@ describe('WorkspaceController', () => {
     const req = { user: mockUser } as any;
     const result = await controller.getWorkspace(req);
 
-    expect(workspaceExperienceService.getWorkspaceData).toHaveBeenCalledWith(mockUser);
+    expect(workspaceExperienceService.getWorkspaceData).toHaveBeenCalledWith(
+      mockUser,
+    );
     expect(result).toEqual(mockResponse);
   });
 });

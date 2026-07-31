@@ -19,9 +19,7 @@ export interface UserContext {
 
 @Injectable()
 export class WorkspaceExperienceService {
-  constructor(
-    private readonly workspaceQueryService: WorkspaceQueryService,
-  ) {}
+  constructor(private readonly workspaceQueryService: WorkspaceQueryService) {}
 
   async getDashboardData(user: UserContext): Promise<WorkspaceDashboardDto> {
     const userId = user.id;
@@ -108,9 +106,7 @@ export class WorkspaceExperienceService {
     };
   }
 
-  async getWorkspaceData(
-    user: UserContext,
-  ): Promise<WorkspaceResponseDto> {
+  async getWorkspaceData(user: UserContext): Promise<WorkspaceResponseDto> {
     const [
       overview,
       infrastructureHealth,
@@ -144,9 +140,7 @@ export class WorkspaceExperienceService {
     };
   }
 
-  async getWorkspaceBrief(
-    userId: string,
-  ): Promise<WorkspaceBriefDto> {
+  async getWorkspaceBrief(userId: string): Promise<WorkspaceBriefDto> {
     const [summary, health, findings, recentActivity, attentionDomains] =
       await Promise.all([
         this.workspaceQueryService.buildSummary(userId),

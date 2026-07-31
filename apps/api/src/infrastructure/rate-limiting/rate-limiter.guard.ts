@@ -43,10 +43,11 @@ export class RateLimiterGuard implements CanActivate {
         return true;
       }
 
-      const rateLimitOptions = this.reflector.getAllAndOverride<RateLimitOptions>(
-        RATE_LIMIT_KEY,
-        [context.getHandler(), context.getClass()],
-      );
+      const rateLimitOptions =
+        this.reflector.getAllAndOverride<RateLimitOptions>(RATE_LIMIT_KEY, [
+          context.getHandler(),
+          context.getClass(),
+        ]);
 
       const clientIp =
         req.ip ||
@@ -105,7 +106,10 @@ export class RateLimiterGuard implements CanActivate {
         throw err;
       }
       // Fail-open safety
-      this.logger.error('RateLimiterGuard encountered internal error, failing open.', err);
+      this.logger.error(
+        'RateLimiterGuard encountered internal error, failing open.',
+        err,
+      );
       return true;
     }
   }

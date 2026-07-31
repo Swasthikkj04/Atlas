@@ -4,10 +4,7 @@ import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/d
 
 @Injectable()
 export class SnapshotEqualityEngine {
-  isEqual(
-    previous: DiscoverySnapshot,
-    current: DiscoverySnapshot,
-  ): boolean {
+  isEqual(previous: DiscoverySnapshot, current: DiscoverySnapshot): boolean {
     return (
       this.isDnsEqual(previous, current) &&
       this.isSslEqual(previous, current) &&
@@ -45,24 +42,15 @@ export class SnapshotEqualityEngine {
       return false;
     }
 
-    if (
-      prevSsl?.certificate?.issuer !==
-      currSsl?.certificate?.issuer
-    ) {
+    if (prevSsl?.certificate?.issuer !== currSsl?.certificate?.issuer) {
       return false;
     }
 
-    if (
-      prevSsl?.certificate?.validFrom !==
-      currSsl?.certificate?.validFrom
-    ) {
+    if (prevSsl?.certificate?.validFrom !== currSsl?.certificate?.validFrom) {
       return false;
     }
 
-    if (
-      prevSsl?.certificate?.validTo !==
-      currSsl?.certificate?.validTo
-    ) {
+    if (prevSsl?.certificate?.validTo !== currSsl?.certificate?.validTo) {
       return false;
     }
 
@@ -76,10 +64,7 @@ export class SnapshotEqualityEngine {
     const prevHttp = prev.http;
     const currHttp = curr.http;
 
-    if (
-      (prevHttp?.statusCode ?? null) !==
-      (currHttp?.statusCode ?? null)
-    ) {
+    if ((prevHttp?.statusCode ?? null) !== (currHttp?.statusCode ?? null)) {
       return false;
     }
 
@@ -93,14 +78,8 @@ export class SnapshotEqualityEngine {
     ];
 
     for (const key of securityHeaderKeys) {
-      const prevVal = this.getHeaderValue(
-        prevHttp?.headers,
-        key,
-      );
-      const currVal = this.getHeaderValue(
-        currHttp?.headers,
-        key,
-      );
+      const prevVal = this.getHeaderValue(prevHttp?.headers, key);
+      const currVal = this.getHeaderValue(currHttp?.headers, key);
 
       if (prevVal !== currVal) {
         return false;
@@ -128,10 +107,7 @@ export class SnapshotEqualityEngine {
     return undefined;
   }
 
-  private areArraysEqual(
-    arr1: string[],
-    arr2: string[],
-  ): boolean {
+  private areArraysEqual(arr1: string[], arr2: string[]): boolean {
     if (arr1.length !== arr2.length) {
       return false;
     }

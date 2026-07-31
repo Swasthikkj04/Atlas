@@ -56,13 +56,15 @@ describe('HttpNormalizerService (Knowledge Engine)', () => {
   it('should capture warnings when merging duplicate headers', () => {
     const result = normalizer.normalize('domain-1', 'ev-123', {
       headers: {
-        'Server': 'nginx',
-        'server': 'gws',
+        Server: 'nginx',
+        server: 'gws',
       },
     });
 
     expect(result.diagnostics.warnings).toHaveLength(1);
-    expect(result.observations.serverHeader.observation.value).toContain('nginx');
+    expect(result.observations.serverHeader.observation.value).toContain(
+      'nginx',
+    );
     expect(result.observations.serverHeader.observation.value).toContain('gws');
   });
 

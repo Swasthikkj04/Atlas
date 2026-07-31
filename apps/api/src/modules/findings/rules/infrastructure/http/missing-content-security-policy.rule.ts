@@ -13,18 +13,14 @@ export class MissingContentSecurityPolicyRule implements FindingRule {
   readonly name = 'Missing Content Security Policy';
   readonly category = FindingCategory.SECURITY_HEADER;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http?.reachable) {
       return [];
     }
 
-    if (
-      http.headers['content-security-policy']
-    ) {
+    if (http.headers['content-security-policy']) {
       return [];
     }
 

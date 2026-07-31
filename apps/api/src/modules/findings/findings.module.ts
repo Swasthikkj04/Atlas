@@ -20,7 +20,7 @@ import { MissingXFrameOptionsRule } from './rules/infrastructure/http/missing-x-
 import { MissingXContentTypeOptionsRule } from './rules/infrastructure/http/missing-x-content-type-options.rule';
 import { MissingReferrerPolicyRule } from './rules/infrastructure/http/missing-referrer-policy.rule';
 import { ServerHeaderExposedRule } from './rules/infrastructure/http/server-header-exposed.rule';
-import { SlowResponseRule } from './rules/infrastructure/http/slow-response.rule';  
+import { SlowResponseRule } from './rules/infrastructure/http/slow-response.rule';
 import { HttpServiceUnreachableRule } from './rules/infrastructure/http/http-service-unreachable.rule';
 
 @Module({

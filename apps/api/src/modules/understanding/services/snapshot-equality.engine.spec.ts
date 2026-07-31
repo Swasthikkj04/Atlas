@@ -25,7 +25,7 @@ describe('SnapshotEqualityEngine', () => {
       authorized: true,
       certificate: {
         subject: 'example.com',
-        issuer: 'Let\'s Encrypt',
+        issuer: "Let's Encrypt",
         validFrom: '2026-01-01T00:00:00Z',
         validTo: '2026-04-01T00:00:00Z',
         serialNumber: '12345',
@@ -40,9 +40,9 @@ describe('SnapshotEqualityEngine', () => {
       statusCode: 200,
       responseTimeMs: 220,
       headers: {
-        'server': 'nginx',
+        server: 'nginx',
         'strict-transport-security': 'max-age=31536000',
-        'content-security-policy': 'default-src \'self\'',
+        'content-security-policy': "default-src 'self'",
         'x-frame-options': 'DENY',
         'x-content-type-options': 'nosniff',
         'referrer-policy': 'no-referrer',

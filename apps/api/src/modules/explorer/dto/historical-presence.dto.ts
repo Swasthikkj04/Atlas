@@ -15,7 +15,8 @@ export class HistoricalPresenceDto {
 
   @ApiProperty({
     example: true,
-    description: 'Whether the asset is present in the current infrastructure snapshot.',
+    description:
+      'Whether the asset is present in the current infrastructure snapshot.',
   })
   currentlyPresent!: boolean;
 

@@ -7,10 +7,16 @@ export class WorkerActivityDto {
   @ApiProperty({ example: 1, description: 'Number of idle worker threads.' })
   idle!: number;
 
-  @ApiProperty({ example: 1, description: 'Number of busy worker threads processing jobs.' })
+  @ApiProperty({
+    example: 1,
+    description: 'Number of busy worker threads processing jobs.',
+  })
   busy!: number;
 
-  @ApiProperty({ example: 18452, description: 'Worker subsystem uptime in seconds.' })
+  @ApiProperty({
+    example: 18452,
+    description: 'Worker subsystem uptime in seconds.',
+  })
   uptimeSeconds!: number;
 }
 
@@ -21,7 +27,10 @@ export class QueueJobCountsDto {
   @ApiProperty({ example: 2, description: 'Number of currently running jobs.' })
   running!: number;
 
-  @ApiProperty({ example: 1542, description: 'Cumulative completed jobs count.' })
+  @ApiProperty({
+    example: 1542,
+    description: 'Cumulative completed jobs count.',
+  })
   completed!: number;
 
   @ApiProperty({ example: 3, description: 'Cumulative failed jobs count.' })
@@ -35,10 +44,16 @@ export class QueueThroughputDto {
   @ApiProperty({ example: 12.5, description: 'Jobs completed per minute.' })
   jobsPerMinute!: number;
 
-  @ApiProperty({ example: 1450, description: 'Average job processing time in milliseconds.' })
+  @ApiProperty({
+    example: 1450,
+    description: 'Average job processing time in milliseconds.',
+  })
   avgProcessingTimeMs!: number;
 
-  @ApiProperty({ example: 230, description: 'Average queue wait time in milliseconds.' })
+  @ApiProperty({
+    example: 230,
+    description: 'Average queue wait time in milliseconds.',
+  })
   avgQueueWaitTimeMs!: number;
 }
 
@@ -60,18 +75,31 @@ export class FailureCategoriesSummaryDto {
 }
 
 export class StuckJobStatsDto {
-  @ApiProperty({ example: 1, description: 'Total stuck jobs detected by heartbeat monitor.' })
+  @ApiProperty({
+    example: 1,
+    description: 'Total stuck jobs detected by heartbeat monitor.',
+  })
   detected!: number;
 
-  @ApiProperty({ example: 1, description: 'Total stuck jobs successfully recovered.' })
+  @ApiProperty({
+    example: 1,
+    description: 'Total stuck jobs successfully recovered.',
+  })
   recovered!: number;
 
-  @ApiProperty({ example: 1.0, description: 'Stuck job recovery success rate (0.0 to 1.0).' })
+  @ApiProperty({
+    example: 1.0,
+    description: 'Stuck job recovery success rate (0.0 to 1.0).',
+  })
   recoverySuccessRate!: number;
 }
 
 export class QueueDiagnosticsResponseDto {
-  @ApiProperty({ example: 'HEALTHY', description: 'Overall queue subsystem health (HEALTHY, DEGRADED, UNHEALTHY).' })
+  @ApiProperty({
+    example: 'HEALTHY',
+    description:
+      'Overall queue subsystem health (HEALTHY, DEGRADED, UNHEALTHY).',
+  })
   status!: string;
 
   @ApiProperty({ type: WorkerActivityDto })
@@ -89,6 +117,9 @@ export class QueueDiagnosticsResponseDto {
   @ApiProperty({ type: StuckJobStatsDto })
   stuckJobStats!: StuckJobStatsDto;
 
-  @ApiProperty({ example: '2026-07-26T10:15:00Z', description: 'Timestamp of diagnostic report.' })
+  @ApiProperty({
+    example: '2026-07-26T10:15:00Z',
+    description: 'Timestamp of diagnostic report.',
+  })
   timestamp!: string;
 }

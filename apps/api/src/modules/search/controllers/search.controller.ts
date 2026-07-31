@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -51,9 +45,6 @@ export class SearchController {
     @Req() req: AuthenticatedRequest,
     @Query() query: SearchQueryDto,
   ): Promise<SearchResponseDto> {
-    return this.searchExperienceService.search(
-      req.user.id,
-      query,
-    );
+    return this.searchExperienceService.search(req.user.id, query);
   }
 }

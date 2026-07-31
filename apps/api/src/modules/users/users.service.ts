@@ -10,9 +10,7 @@ interface CreateUserData {
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly usersRepository: UsersRepository,
-  ) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   async findById(id: string) {
     return this.usersRepository.findById(id);

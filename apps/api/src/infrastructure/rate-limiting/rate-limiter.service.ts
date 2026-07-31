@@ -43,7 +43,8 @@ export class RateLimiterService {
 
     const now = Date.now();
     const limit = customLimit || this.defaultGlobalLimit;
-    const windowMs = (customWindowSeconds || this.defaultGlobalWindowSeconds) * 1000;
+    const windowMs =
+      (customWindowSeconds || this.defaultGlobalWindowSeconds) * 1000;
     const windowStart = now - windowMs;
 
     let timestamps = this.windows.get(key) || [];

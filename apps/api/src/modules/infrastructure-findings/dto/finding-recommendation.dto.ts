@@ -27,7 +27,9 @@ export class FindingRecommendationDto {
   estimatedEffort!: string;
 
   @ApiProperty({
-    example: ['https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security'],
+    example: [
+      'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security',
+    ],
     description: 'Reference links and documentation.',
   })
   references!: string[];

@@ -9,7 +9,8 @@ export class InfrastructureAssetDto {
 
   @ApiProperty({
     example: 'Technologies',
-    description: 'Asset category (Technologies, DNS, HTTP, TLS, Certificates, Security Headers, Infrastructure Services, Detected Platforms).',
+    description:
+      'Asset category (Technologies, DNS, HTTP, TLS, Certificates, Security Headers, Infrastructure Services, Detected Platforms).',
   })
   category!: string;
 

@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -67,9 +62,7 @@ export class WorkspaceController {
   async getWorkspace(
     @Req() req: AuthenticatedRequest,
   ): Promise<WorkspaceResponseDto> {
-    return this.workspaceExperienceService.getWorkspaceData(
-      req.user,
-    );
+    return this.workspaceExperienceService.getWorkspaceData(req.user);
   }
 
   @Get('brief')
@@ -86,8 +79,6 @@ export class WorkspaceController {
   async getWorkspaceBrief(
     @Req() req: AuthenticatedRequest,
   ): Promise<WorkspaceBriefDto> {
-    return this.workspaceExperienceService.getWorkspaceBrief(
-      req.user.id,
-    );
+    return this.workspaceExperienceService.getWorkspaceBrief(req.user.id);
   }
 }

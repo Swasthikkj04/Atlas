@@ -22,20 +22,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(
-    registerDto: RegisterDto,
-  ): Promise<RegisterResponseDto> {
-    const existingUser = await this.usersService.findByEmail(
-      registerDto.email,
-    );
+  async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
+    const existingUser = await this.usersService.findByEmail(registerDto.email);
 
     if (existingUser) {
       throw new ConflictException('Email is already registered.');
     }
 
-    const passwordHash = await this.passwordService.hash(
-      registerDto.password,
-    );
+    const passwordHash = await this.passwordService.hash(registerDto.password);
 
     const user = await this.usersService.create({
       fullName: registerDto.fullName,

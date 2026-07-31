@@ -36,9 +36,7 @@ interface AuthenticatedRequest extends Request {
 @UseGuards(JwtAuthGuard)
 @Controller('findings')
 export class FindingController {
-  constructor(
-    private readonly findingService: InfrastructureFindingService,
-  ) {}
+  constructor(private readonly findingService: InfrastructureFindingService) {}
 
   @Get()
   @ApiOperation({
@@ -55,10 +53,7 @@ export class FindingController {
     @Req() req: AuthenticatedRequest,
     @Query() query: FindingsQueryDto,
   ): Promise<FindingsListDto> {
-    return this.findingService.getFindingsExperienceList(
-      req.user.id,
-      query,
-    );
+    return this.findingService.getFindingsExperienceList(req.user.id, query);
   }
 
   @Get(':findingId')
@@ -115,10 +110,6 @@ export class FindingController {
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
   ) {
-    return this.findingService.getFindingsBySnapshot(
-      snapshotId,
-      page,
-      limit,
-    );
+    return this.findingService.getFindingsBySnapshot(snapshotId, page, limit);
   }
 }

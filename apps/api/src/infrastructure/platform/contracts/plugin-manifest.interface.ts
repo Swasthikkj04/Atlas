@@ -1,8 +1,5 @@
 export type PluginEngineType =
-  | 'discovery'
-  | 'knowledge'
-  | 'intelligence'
-  | 'experience';
+  'discovery' | 'knowledge' | 'intelligence' | 'experience';
 
 export interface PluginManifest {
   id: string;
@@ -16,8 +13,4 @@ export interface PluginManifest {
 }
 
 export type PluginLifecycleState =
-  | 'REGISTERED'
-  | 'VALIDATED'
-  | 'INITIALIZED'
-  | 'EXECUTING'
-  | 'SHUTDOWN';
+  'REGISTERED' | 'VALIDATED' | 'INITIALIZED' | 'EXECUTING' | 'SHUTDOWN';

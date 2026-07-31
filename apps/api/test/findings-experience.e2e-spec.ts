@@ -34,9 +34,7 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
 
   describe('1. Security & Authentication Checks', () => {
     it('GET /api/v1/findings - should reject missing Authorization header (401)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/findings')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/findings').expect(401);
     });
 
     it('GET /api/v1/findings/:id - should reject missing Authorization header (401)', async () => {
@@ -66,9 +64,11 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
       // User A Setup
       const emailA = `findings-tenant-a-${Date.now()}@atlas.local`;
       const passA = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailA, password: passA, fullName: 'Findings Tenant A' });
+      await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailA,
+        password: passA,
+        fullName: 'Findings Tenant A',
+      });
       const loginA = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailA, password: passA });
@@ -78,9 +78,11 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
       // User B Setup
       const emailB = `findings-tenant-b-${Date.now()}@atlas.local`;
       const passB = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailB, password: passB, fullName: 'Findings Tenant B' });
+      await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailB,
+        password: passB,
+        fullName: 'Findings Tenant B',
+      });
       const loginB = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailB, password: passB });
@@ -89,13 +91,28 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
 
       // Create Domain, Snapshot, Raw Evidence, & Finding for User A
       const domainA = await prisma.domain.create({
-        data: { userId: userAId, domainName: 'tenant-a-findings.internal', monitoringEnabled: true },
+        data: {
+          userId: userAId,
+          domainName: 'tenant-a-findings.internal',
+          monitoringEnabled: true,
+        },
       });
       const jobA = await prisma.understandingJob.create({
-        data: { domainId: domainA.id, status: 'COMPLETED', trigger: 'MANUAL', completedAt: new Date() },
+        data: {
+          domainId: domainA.id,
+          status: 'COMPLETED',
+          trigger: 'MANUAL',
+          completedAt: new Date(),
+        },
       });
       const snapA = await prisma.infrastructureSnapshot.create({
-        data: { domainId: domainA.id, jobId: jobA.id, responseTimeMs: 88, httpStatus: 200, payload: { webServer: 'nginx' } },
+        data: {
+          domainId: domainA.id,
+          jobId: jobA.id,
+          responseTimeMs: 88,
+          httpStatus: 200,
+          payload: { webServer: 'nginx' },
+        },
       });
       await prisma.rawEvidence.create({
         data: {
@@ -108,7 +125,8 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
           target: 'https://tenant-a-findings.internal',
           payload: 'Server: nginx',
           sizeBytes: 128,
-          hashSha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
+          hashSha256:
+            'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
         },
       });
       const findingA = await prisma.infrastructureFinding.create({
@@ -161,7 +179,9 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Finding Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Finding Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body.id).toBe(findingAId);
       expect(response.body.title).toBe('Missing HSTS Response Header');
@@ -191,8 +211,11 @@ describe('Findings Experience Platinum Certification Suite (E2E)', () => {
         latencies.push(Date.now() - start);
       }
 
-      const avgLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
-      console.log(`[PERF BENCHMARK] Findings List API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`);
+      const avgLatency =
+        latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+      console.log(
+        `[PERF BENCHMARK] Findings List API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`,
+      );
       expect(avgLatency).toBeLessThan(100);
     });
   });

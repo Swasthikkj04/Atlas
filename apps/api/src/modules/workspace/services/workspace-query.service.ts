@@ -396,7 +396,9 @@ export class WorkspaceQueryService {
 
       const penalty =
         criticalCount * 25 + highCount * 10 + mediumCount * 5 + lowCount * 2;
-      const healthScore = snap ? Math.max(0, Math.min(100, 100 - penalty)) : 100;
+      const healthScore = snap
+        ? Math.max(0, Math.min(100, 100 - penalty))
+        : 100;
 
       let technologiesCount = 0;
       if (snap?.payload && typeof snap.payload === 'object') {

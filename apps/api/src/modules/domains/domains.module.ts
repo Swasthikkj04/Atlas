@@ -9,10 +9,7 @@ import { DomainsRepository } from './repositories/domains.repository';
 @Module({
   imports: [PrismaModule],
   controllers: [DomainsController],
-  providers: [
-    DomainsService,
-    DomainsRepository,
-  ],
+  providers: [DomainsService, DomainsRepository],
   exports: [DomainsService],
 })
 export class DomainsModule {}

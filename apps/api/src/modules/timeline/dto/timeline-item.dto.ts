@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChangeSeverity, ChangeType, FindingCategory, FindingModule } from '@prisma/client';
+import {
+  ChangeSeverity,
+  ChangeType,
+  FindingCategory,
+  FindingModule,
+} from '@prisma/client';
 
 export class TimelineItemDto {
   @ApiProperty({

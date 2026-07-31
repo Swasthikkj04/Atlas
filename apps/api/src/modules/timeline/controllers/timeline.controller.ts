@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -54,10 +47,7 @@ export class TimelineController {
     @Req() req: AuthenticatedRequest,
     @Query() query: TimelineQueryDto,
   ): Promise<TimelineResponseDto> {
-    return this.timelineExperienceService.getTimelineData(
-      req.user.id,
-      query,
-    );
+    return this.timelineExperienceService.getTimelineData(req.user.id, query);
   }
 
   @Get(':id/details')

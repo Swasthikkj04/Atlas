@@ -50,11 +50,7 @@ export class SnapshotController {
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
   ) {
-    return this.snapshotService.getSnapshotsByDomain(
-      domainId,
-      page,
-      limit,
-    );
+    return this.snapshotService.getSnapshotsByDomain(domainId, page, limit);
   }
 
   @Get('snapshots/:snapshotId')
@@ -80,9 +76,7 @@ export class SnapshotController {
     status: 404,
     description: 'Snapshot not found.',
   })
-  async getSnapshotById(
-    @Param('snapshotId') snapshotId: string,
-  ) {
+  async getSnapshotById(@Param('snapshotId') snapshotId: string) {
     return this.snapshotService.getSnapshotById(snapshotId);
   }
 }

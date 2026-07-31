@@ -5,13 +5,9 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class InfrastructureSnapshotRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    data: Prisma.InfrastructureSnapshotCreateInput,
-  ) {
+  async create(data: Prisma.InfrastructureSnapshotCreateInput) {
     return this.prisma.infrastructureSnapshot.create({
       data,
     });
@@ -25,11 +21,7 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
-  async findByDomain(
-    domainId: string,
-    page: number,
-    limit: number,
-  ) {
+  async findByDomain(domainId: string, page: number, limit: number) {
     return this.prisma.infrastructureSnapshot.findMany({
       where: {
         domainId,
@@ -42,9 +34,7 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
-  async findLatestByDomain(
-    domainId: string,
-  ) {
+  async findLatestByDomain(domainId: string) {
     return this.prisma.infrastructureSnapshot.findFirst({
       where: {
         domainId,
@@ -63,9 +53,7 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
-  async countByUser(
-    userId: string,
-  ): Promise<number> {
+  async countByUser(userId: string): Promise<number> {
     return this.prisma.infrastructureSnapshot.count({
       where: {
         domain: {
@@ -75,23 +63,20 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
-  async findLatestScanByUser(
-    userId: string,
-  ): Promise<Date | null> {
-    const snapshot =
-      await this.prisma.infrastructureSnapshot.findFirst({
-        where: {
-          domain: {
-            userId,
-          },
+  async findLatestScanByUser(userId: string): Promise<Date | null> {
+    const snapshot = await this.prisma.infrastructureSnapshot.findFirst({
+      where: {
+        domain: {
+          userId,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: {
-          createdAt: true,
-        },
-      });
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        createdAt: true,
+      },
+    });
 
     return snapshot?.createdAt ?? null;
   }

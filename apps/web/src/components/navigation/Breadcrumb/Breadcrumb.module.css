@@ -1,0 +1,16 @@
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.item {
+  color: inherit;
+  text-decoration: none;
+}
+
+.separator {
+  color: var(--text-muted);
+}

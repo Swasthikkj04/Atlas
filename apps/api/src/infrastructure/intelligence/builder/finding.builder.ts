@@ -70,7 +70,9 @@ export class FindingBuilder {
 
   build(): IntelligenceFinding {
     if (!this.ruleId || !this.title) {
-      throw new Error('Rule ID and Title are required to build an IntelligenceFinding');
+      throw new Error(
+        'Rule ID and Title are required to build an IntelligenceFinding',
+      );
     }
 
     const generatedAt = new Date();

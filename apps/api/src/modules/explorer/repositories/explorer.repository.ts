@@ -92,7 +92,8 @@ export class ExplorerRepository {
             sourcePlugin: 'http-discovery',
             knowledgePlugin: 'http-knowledge',
             evidenceCount: 1,
-            findingCount: snap.findings.filter((f) => f.category === 'GENERAL').length,
+            findingCount: snap.findings.filter((f) => f.category === 'GENERAL')
+              .length,
           });
         }
       }
@@ -116,7 +117,9 @@ export class ExplorerRepository {
               sourcePlugin: 'dns-discovery',
               knowledgePlugin: 'dns-knowledge',
               evidenceCount: 1,
-              findingCount: snap.findings.filter((f) => f.category === 'DNS_RECORD').length,
+              findingCount: snap.findings.filter(
+                (f) => f.category === 'DNS_RECORD',
+              ).length,
             });
           }
         }
@@ -155,8 +158,15 @@ export class ExplorerRepository {
           assetId: secAssetId,
           category: 'Security Headers',
           name: 'Strict-Transport-Security Header',
-          value: payload.hstsHeader || (payload.headers?.['strict-transport-security'] ? 'PRESENT' : 'MISSING'),
-          status: payload.hstsHeader || payload.headers?.['strict-transport-security'] ? 'ACTIVE' : 'INACTIVE',
+          value:
+            payload.hstsHeader ||
+            (payload.headers?.['strict-transport-security']
+              ? 'PRESENT'
+              : 'MISSING'),
+          status:
+            payload.hstsHeader || payload.headers?.['strict-transport-security']
+              ? 'ACTIVE'
+              : 'INACTIVE',
           confidence: 'CERTAIN',
           firstObserved: snap.createdAt,
           lastObserved: snap.createdAt,
@@ -164,15 +174,20 @@ export class ExplorerRepository {
           sourcePlugin: 'http-discovery',
           knowledgePlugin: 'http-knowledge',
           evidenceCount: 1,
-          findingCount: snap.findings.filter((f) => f.ruleId.includes('hsts')).length,
+          findingCount: snap.findings.filter((f) => f.ruleId.includes('hsts'))
+            .length,
         });
       }
 
       // 5. Detected Platforms / Technologies
       if (Array.isArray(payload.technologies)) {
         for (const tech of payload.technologies) {
-          const techName = typeof tech === 'string' ? tech : tech.name || 'Unknown';
-          const techVal = typeof tech === 'string' ? tech : tech.version || tech.name || 'Unknown';
+          const techName =
+            typeof tech === 'string' ? tech : tech.name || 'Unknown';
+          const techVal =
+            typeof tech === 'string'
+              ? tech
+              : tech.version || tech.name || 'Unknown';
           const techAssetId = `ast-tech-${snap.domainId}-${techName}`;
           if (!seenAssetIds.has(techAssetId)) {
             seenAssetIds.add(techAssetId);
@@ -189,7 +204,9 @@ export class ExplorerRepository {
               sourcePlugin: 'tech-discovery',
               knowledgePlugin: 'tech-knowledge',
               evidenceCount: 1,
-              findingCount: snap.findings.filter((f) => f.category === 'TECHNOLOGY').length,
+              findingCount: snap.findings.filter(
+                (f) => f.category === 'TECHNOLOGY',
+              ).length,
             });
           }
         }
@@ -214,7 +231,8 @@ export class ExplorerRepository {
     if (query.search) {
       const s = query.search.toLowerCase();
       filtered = filtered.filter(
-        (a) => a.name.toLowerCase().includes(s) || a.value.toLowerCase().includes(s),
+        (a) =>
+          a.name.toLowerCase().includes(s) || a.value.toLowerCase().includes(s),
       );
     }
 

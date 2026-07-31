@@ -8,9 +8,10 @@ import { Normalizer } from '../contracts/normalizer.interface';
 import { CanonicalHttpObservations } from '../models/canonical-http-observation.model';
 
 @Injectable()
-export class HttpNormalizerService
-  implements Normalizer<Record<string, any>, CanonicalHttpObservations>
-{
+export class HttpNormalizerService implements Normalizer<
+  Record<string, any>,
+  CanonicalHttpObservations
+> {
   readonly name = 'http-normalizer';
   readonly version = '1.0.0';
 
@@ -33,12 +34,16 @@ export class HttpNormalizerService
       for (const [key, val] of Object.entries(rawHeaders)) {
         const lowerKey = key.toLowerCase().trim();
         const strVal = Array.isArray(val)
-          ? val.map((v) => String(v).trim()).sort().join(', ')
+          ? val
+              .map((v) => String(v).trim())
+              .sort()
+              .join(', ')
           : String(val).trim();
 
         if (canonicalHeaders[lowerKey]) {
           warnings.push(`Duplicate header '${key}' merged into '${lowerKey}'`);
-          canonicalHeaders[lowerKey] = `${canonicalHeaders[lowerKey]}, ${strVal}`;
+          canonicalHeaders[lowerKey] =
+            `${canonicalHeaders[lowerKey]}, ${strVal}`;
         } else {
           canonicalHeaders[lowerKey] = strVal;
         }

@@ -18,9 +18,7 @@ export class CertificateExpiryRule implements FindingRule {
 
   readonly category = FindingCategory.CERTIFICATE;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const ssl = context.snapshot.ssl;
 
     if (!ssl?.certificate?.validTo) {
@@ -71,8 +69,7 @@ export class CertificateExpiryRule implements FindingRule {
           recommendations: [
             {
               title: 'Renew the certificate',
-              description:
-                'Renew the TLS certificate before it expires.',
+              description: 'Renew the TLS certificate before it expires.',
             },
           ],
         },

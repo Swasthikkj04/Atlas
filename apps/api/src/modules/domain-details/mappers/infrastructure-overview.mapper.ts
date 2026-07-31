@@ -22,40 +22,31 @@ export class InfrastructureOverviewMapper {
       };
     }
 
-    const payload =
-      snapshot.payload as unknown as DiscoverySnapshot;
+    const payload = snapshot.payload as unknown as DiscoverySnapshot;
 
     return {
-      ipv4Addresses:
-        payload.dns?.a ?? [],
+      ipv4Addresses: payload.dns?.a ?? [],
 
-      ipv6Addresses:
-        payload.dns?.aaaa ?? [],
+      ipv6Addresses: payload.dns?.aaaa ?? [],
 
-      webServer:
-        payload.http?.headers?.server ?? null,
+      webServer: payload.http?.headers?.server ?? null,
 
       // Atlas does not yet have dedicated CDN detection.
       cdn: null,
 
-      sslValid:
-        payload.ssl?.authorized ?? false,
+      sslValid: payload.ssl?.authorized ?? false,
 
-      sslExpiresAt:
-        payload.ssl?.certificate?.validTo
-          ? new Date(payload.ssl.certificate.validTo)
-          : null,
+      sslExpiresAt: payload.ssl?.certificate?.validTo
+        ? new Date(payload.ssl.certificate.validTo)
+        : null,
 
       technologies:
-        payload.technology?.technologies.map(
-          (technology) => technology.name,
-        ) ?? [],
+        payload.technology?.technologies.map((technology) => technology.name) ??
+        [],
 
-      httpStatus:
-        snapshot.httpStatus,
+      httpStatus: snapshot.httpStatus,
 
-      responseTimeMs:
-        snapshot.responseTimeMs,
+      responseTimeMs: snapshot.responseTimeMs,
     };
   }
 }

@@ -1,5 +1,8 @@
 import { MetricsService } from '../../../infrastructure/metrics/metrics.service';
-import { FailureCategory, WorkerReliabilityService } from './worker-reliability.service';
+import {
+  FailureCategory,
+  WorkerReliabilityService,
+} from './worker-reliability.service';
 
 describe('WorkerReliabilityService', () => {
   let workerReliability: WorkerReliabilityService;
@@ -23,7 +26,7 @@ describe('WorkerReliabilityService', () => {
 
     workerReliability = new WorkerReliabilityService(
       mockUnderstandingRepo,
-      mockMetricsService as unknown as MetricsService,
+      mockMetricsService,
     );
   });
 
@@ -73,7 +76,9 @@ describe('WorkerReliabilityService', () => {
       const recovered = await workerReliability.recoverStuckJobs(30000);
 
       expect(recovered).toBe(1);
-      expect(mockUnderstandingRepo.prisma.understandingJob.update).toHaveBeenCalledWith({
+      expect(
+        mockUnderstandingRepo.prisma.understandingJob.update,
+      ).toHaveBeenCalledWith({
         where: { id: 'job_stuck_123' },
         data: { status: 'PENDING', errorMessage: '[RECOVERED_STUCK_JOB]' },
       });
@@ -84,7 +89,11 @@ describe('WorkerReliabilityService', () => {
     it('should schedule retry for retriable error under max retries', async () => {
       workerReliability.trackJobStart('job_retry_1', 'dom_1');
 
-      const result = await workerReliability.handleJobFailure('job_retry_1', new Error('ETIMEDOUT'), 150);
+      const result = await workerReliability.handleJobFailure(
+        'job_retry_1',
+        new Error('ETIMEDOUT'),
+        150,
+      );
 
       expect(result.retried).toBe(true);
       expect(result.category).toBe(FailureCategory.NETWORK);
@@ -93,7 +102,11 @@ describe('WorkerReliabilityService', () => {
     it('should transition to PERMANENT_FAILURE on non-retriable error', async () => {
       workerReliability.trackJobStart('job_fail_1', 'dom_1');
 
-      const result = await workerReliability.handleJobFailure('job_fail_1', new Error('Invalid domain specified'), 100);
+      const result = await workerReliability.handleJobFailure(
+        'job_fail_1',
+        new Error('Invalid domain specified'),
+        100,
+      );
 
       expect(result.retried).toBe(false);
       expect(result.category).toBe(FailureCategory.VALIDATION);

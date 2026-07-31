@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -87,8 +84,9 @@ describe('GET /api/v1/explorer & GET /api/v1/explorer/:assetId (Product Experien
     it('should return 404 Not Found when asset ID does not exist', async () => {
       const nonExistentAssetId = 'ast-nonexistent-123';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .get(`${API_PREFIX}/explorer/${nonExistentAssetId}`);
+      const response = await authenticatedRequest(testApp, userToken).get(
+        `${API_PREFIX}/explorer/${nonExistentAssetId}`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);
@@ -98,8 +96,9 @@ describe('GET /api/v1/explorer & GET /api/v1/explorer/:assetId (Product Experien
     it('should return 404 Not Found when User B attempts to access User A asset (Cross-Tenant Isolation)', async () => {
       const nonExistentAssetId = 'ast-user-a-123';
 
-      const response = await authenticatedRequest(testApp, userBToken)
-        .get(`${API_PREFIX}/explorer/${nonExistentAssetId}`);
+      const response = await authenticatedRequest(testApp, userBToken).get(
+        `${API_PREFIX}/explorer/${nonExistentAssetId}`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);

@@ -6,10 +6,7 @@ import {
   expectSecurityHeaders,
   expectUuid,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import { createDomainDto } from '../common/factories.helper';
 import {
   closeTestApp,
@@ -89,8 +86,9 @@ describe('GET /api/v1/jobs/:jobId & GET /api/v1/domains/:domainId/jobs (Understa
     it('should return 404 Not Found when jobId does not exist', async () => {
       const nonExistentJobId = '3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, userAToken)
-        .get(`${API_PREFIX}/jobs/${nonExistentJobId}`);
+      const response = await authenticatedRequest(testApp, userAToken).get(
+        `${API_PREFIX}/jobs/${nonExistentJobId}`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });
@@ -110,8 +108,9 @@ describe('GET /api/v1/jobs/:jobId & GET /api/v1/domains/:domainId/jobs (Understa
       const jobIdUserA = understandRes.body.id;
 
       // User B attempts to view User A's job details -> Should return 404
-      const response = await authenticatedRequest(testApp, userBToken)
-        .get(`${API_PREFIX}/jobs/${jobIdUserA}`);
+      const response = await authenticatedRequest(testApp, userBToken).get(
+        `${API_PREFIX}/jobs/${jobIdUserA}`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
       expect(response.body).not.toHaveProperty('domainId');
@@ -185,8 +184,9 @@ describe('GET /api/v1/jobs/:jobId & GET /api/v1/domains/:domainId/jobs (Understa
         .expect(202);
 
       // User B attempts to list jobs for User A's domain -> Should return 404
-      const response = await authenticatedRequest(testApp, userBToken)
-        .get(`${API_PREFIX}/domains/${domainIdUserA}/jobs`);
+      const response = await authenticatedRequest(testApp, userBToken).get(
+        `${API_PREFIX}/domains/${domainIdUserA}/jobs`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });

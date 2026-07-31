@@ -44,20 +44,14 @@ export class InfrastructureSnapshotService {
     return SnapshotMapper.toDetailDto(snapshot);
   }
 
-  async getSnapshotsByDomain(
-    domainId: string,
-    page: number,
-    limit: number,
-  ) {
+  async getSnapshotsByDomain(domainId: string, page: number, limit: number) {
     const [snapshots, total] = await Promise.all([
       this.snapshotRepository.findByDomain(domainId, page, limit),
       this.snapshotRepository.countByDomain(domainId),
     ]);
 
     return {
-      data: snapshots.map((snapshot) =>
-        SnapshotMapper.toListDto(snapshot),
-      ),
+      data: snapshots.map((snapshot) => SnapshotMapper.toListDto(snapshot)),
       pagination: {
         page,
         limit,
@@ -68,32 +62,18 @@ export class InfrastructureSnapshotService {
   }
 
   async getLatestByDomain(domainId: string) {
-    return this.snapshotRepository.findLatestByDomain(
-      domainId,
-    );
+    return this.snapshotRepository.findLatestByDomain(domainId);
   }
 
-  async countByDomain(
-    domainId: string,
-  ): Promise<number> {
-    return this.snapshotRepository.countByDomain(
-      domainId,
-    );
+  async countByDomain(domainId: string): Promise<number> {
+    return this.snapshotRepository.countByDomain(domainId);
   }
 
-  async countByUser(
-    userId: string,
-  ): Promise<number> {
-    return this.snapshotRepository.countByUser(
-      userId,
-    );
+  async countByUser(userId: string): Promise<number> {
+    return this.snapshotRepository.countByUser(userId);
   }
 
-  async findLatestScanByUser(
-    userId: string,
-  ): Promise<Date | null> {
-    return this.snapshotRepository.findLatestScanByUser(
-      userId,
-    );
+  async findLatestScanByUser(userId: string): Promise<Date | null> {
+    return this.snapshotRepository.findLatestScanByUser(userId);
   }
 }

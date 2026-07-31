@@ -6,9 +6,7 @@ import { SearchQueryService } from './search-query.service';
 
 @Injectable()
 export class SearchExperienceService {
-  constructor(
-    private readonly searchQueryService: SearchQueryService,
-  ) {}
+  constructor(private readonly searchQueryService: SearchQueryService) {}
 
   async search(
     userId: string,

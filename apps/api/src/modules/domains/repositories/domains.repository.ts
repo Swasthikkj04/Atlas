@@ -9,9 +9,7 @@ interface CreateDomainData {
 
 @Injectable()
 export class DomainsRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateDomainData) {
     return this.prisma.domain.create({
@@ -30,10 +28,7 @@ export class DomainsRepository {
     });
   }
 
-  async findByUserAndDomain(
-    userId: string,
-    domainName: string,
-  ) {
+  async findByUserAndDomain(userId: string, domainName: string) {
     return this.prisma.domain.findFirst({
       where: {
         userId,
@@ -58,9 +53,7 @@ export class DomainsRepository {
     });
   }
 
-  async countActiveByUser(
-    userId: string,
-  ): Promise<number> {
+  async countActiveByUser(userId: string): Promise<number> {
     return this.prisma.domain.count({
       where: {
         userId,

@@ -8,8 +8,10 @@ import { EvidenceCollector } from '../contracts/evidence-collector.interface';
 import { CollectorExecutionResult } from '../contracts/evidence/collector-execution-result.interface';
 import { Observation } from '../contracts/evidence/observation.interface';
 
-export interface HttpSecurityHeaderObservations
-  extends Record<string, Observation<string>> {
+export interface HttpSecurityHeaderObservations extends Record<
+  string,
+  Observation<string>
+> {
   strictTransportSecurity: Observation<string>;
   contentSecurityPolicy: Observation<string>;
   xFrameOptions: Observation<string>;

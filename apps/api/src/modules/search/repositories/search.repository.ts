@@ -7,10 +7,7 @@ import { SearchItemDto } from '../dto/search-item.dto';
 export class SearchRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async executeSearch(
-    userId: string,
-    query: string,
-  ): Promise<SearchItemDto[]> {
+  async executeSearch(userId: string, query: string): Promise<SearchItemDto[]> {
     const qTerm = query.trim().toLowerCase();
     if (!qTerm) {
       return [];
@@ -77,7 +74,12 @@ export class SearchRepository {
 
     // Map Domains
     for (const d of domains) {
-      const score = this.computeScore(d.domainName, 'Monitored domain', qTerm, 20);
+      const score = this.computeScore(
+        d.domainName,
+        'Monitored domain',
+        qTerm,
+        20,
+      );
       if (score > 0) {
         results.push({
           id: d.id,

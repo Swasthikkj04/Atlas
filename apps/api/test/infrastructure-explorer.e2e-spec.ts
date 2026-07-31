@@ -34,9 +34,7 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
 
   describe('1. Security & Authentication Checks', () => {
     it('GET /api/v1/explorer - should reject missing Authorization header (401)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/explorer')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/explorer').expect(401);
     });
 
     it('GET /api/v1/explorer/:assetId - should reject missing Authorization header (401)', async () => {
@@ -66,9 +64,11 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
       // User A Setup
       const emailA = `explorer-tenant-a-${Date.now()}@atlas.local`;
       const passA = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailA, password: passA, fullName: 'Explorer Tenant A' });
+      await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailA,
+        password: passA,
+        fullName: 'Explorer Tenant A',
+      });
       const loginA = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailA, password: passA });
@@ -78,9 +78,11 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
       // User B Setup
       const emailB = `explorer-tenant-b-${Date.now()}@atlas.local`;
       const passB = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailB, password: passB, fullName: 'Explorer Tenant B' });
+      await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailB,
+        password: passB,
+        fullName: 'Explorer Tenant B',
+      });
       const loginB = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailB, password: passB });
@@ -89,10 +91,19 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
 
       // Create Domain, Job, Snapshot for User A
       const domainA = await prisma.domain.create({
-        data: { userId: userAId, domainName: 'tenant-a-explorer.internal', monitoringEnabled: true },
+        data: {
+          userId: userAId,
+          domainName: 'tenant-a-explorer.internal',
+          monitoringEnabled: true,
+        },
       });
       const jobA = await prisma.understandingJob.create({
-        data: { domainId: domainA.id, status: 'COMPLETED', trigger: 'MANUAL', completedAt: new Date() },
+        data: {
+          domainId: domainA.id,
+          status: 'COMPLETED',
+          trigger: 'MANUAL',
+          completedAt: new Date(),
+        },
       });
       await prisma.infrastructureSnapshot.create({
         data: {
@@ -100,7 +111,11 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
           jobId: jobA.id,
           responseTimeMs: 76,
           httpStatus: 200,
-          payload: { webServer: 'nginx/1.24.0', technologies: ['React'], ipv4Addresses: ['10.10.1.1'] },
+          payload: {
+            webServer: 'nginx/1.24.0',
+            technologies: ['React'],
+            ipv4Addresses: ['10.10.1.1'],
+          },
         },
       });
 
@@ -141,7 +156,9 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Asset Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Asset Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body).toHaveProperty('asset');
       expect(response.body).toHaveProperty('historicalPresence');
@@ -163,8 +180,11 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
         latencies.push(Date.now() - start);
       }
 
-      const avgLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
-      console.log(`[PERF BENCHMARK] Explorer API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`);
+      const avgLatency =
+        latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+      console.log(
+        `[PERF BENCHMARK] Explorer API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`,
+      );
       expect(avgLatency).toBeLessThan(100);
     });
   });

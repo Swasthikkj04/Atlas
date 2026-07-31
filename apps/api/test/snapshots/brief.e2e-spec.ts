@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -40,8 +37,9 @@ describe('GET /api/v1/snapshots/:snapshotId/brief & POST /api/v1/snapshots/:snap
     it('should return 404 Not Found when requesting brief for non-existent snapshot ID', async () => {
       const nonExistentSnapshotId = 'snp-3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .get(`${API_PREFIX}/snapshots/${nonExistentSnapshotId}/brief`);
+      const response = await authenticatedRequest(testApp, userToken).get(
+        `${API_PREFIX}/snapshots/${nonExistentSnapshotId}/brief`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });
@@ -59,8 +57,9 @@ describe('GET /api/v1/snapshots/:snapshotId/brief & POST /api/v1/snapshots/:snap
     it('should return 404 Not Found when generating brief for non-existent snapshot ID', async () => {
       const nonExistentSnapshotId = 'snp-3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .post(`${API_PREFIX}/snapshots/${nonExistentSnapshotId}/brief`);
+      const response = await authenticatedRequest(testApp, userToken).post(
+        `${API_PREFIX}/snapshots/${nonExistentSnapshotId}/brief`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });

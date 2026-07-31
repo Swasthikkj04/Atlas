@@ -77,13 +77,17 @@ export class TimelineExperienceService {
     const [previousSnapshot, currentSnapshot, relatedFindings, rawEvidences] =
       await Promise.all([
         record.previousSnapshotId
-          ? this.timelineQueryService.findSnapshotById(record.previousSnapshotId)
+          ? this.timelineQueryService.findSnapshotById(
+              record.previousSnapshotId,
+            )
           : Promise.resolve(null),
         record.currentSnapshotId
           ? this.timelineQueryService.findSnapshotById(record.currentSnapshotId)
           : Promise.resolve(null),
         record.currentSnapshotId
-          ? this.timelineQueryService.findFindingsBySnapshot(record.currentSnapshotId)
+          ? this.timelineQueryService.findFindingsBySnapshot(
+              record.currentSnapshotId,
+            )
           : Promise.resolve([]),
         this.timelineQueryService.findRawEvidenceByDomain(record.domainId),
       ]);
@@ -118,9 +122,9 @@ export class TimelineExperienceService {
       ),
       findingCount: relatedFindings.length || 1,
       observationCount:
-        (changeDiff.technologies.added.length +
+        changeDiff.technologies.added.length +
           changeDiff.dns.added.length +
-          changeDiff.headers.added.length) || 2,
+          changeDiff.headers.added.length || 2,
       evidenceCount: rawEvidences.length || 1,
     };
 
@@ -203,9 +207,7 @@ export class TimelineExperienceService {
       return 'TLS Certificate Renewed';
     }
     if (category === 'TECHNOLOGY') {
-      return changeType === 'ADDED'
-        ? 'Technology Added'
-        : 'Technology Removed';
+      return changeType === 'ADDED' ? 'Technology Added' : 'Technology Removed';
     }
     if (category === 'DNS_RECORD') {
       return 'DNS Configuration Changed';

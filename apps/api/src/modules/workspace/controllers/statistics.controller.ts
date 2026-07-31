@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -52,8 +47,6 @@ export class StatisticsController {
   async getStatistics(
     @Req() req: AuthenticatedRequest,
   ): Promise<StatisticsResponseDto> {
-    return this.statisticsExperienceService.getStatisticsData(
-      req.user.id,
-    );
+    return this.statisticsExperienceService.getStatisticsData(req.user.id);
   }
 }

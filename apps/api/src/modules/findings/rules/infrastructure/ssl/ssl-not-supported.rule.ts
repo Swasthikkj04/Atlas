@@ -13,9 +13,7 @@ export class SslUnsupportedRule implements FindingRule {
   readonly name = 'SSL Unsupported';
   readonly category = FindingCategory.TLS;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const ssl = context.snapshot.ssl;
 
     if (!ssl) {

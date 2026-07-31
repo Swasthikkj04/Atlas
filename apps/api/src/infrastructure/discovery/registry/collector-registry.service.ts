@@ -15,10 +15,6 @@ export class CollectorRegistryService {
   ) {}
 
   collectors(): DiscoveryCollector<unknown>[] {
-    return [
-      this.dnsCollector,
-      this.httpCollector,
-      this.sslCollector,
-    ];
+    return [this.dnsCollector, this.httpCollector, this.sslCollector];
   }
 }

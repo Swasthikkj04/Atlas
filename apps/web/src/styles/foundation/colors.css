@@ -1,0 +1,17 @@
+:root {
+  /* Raw Primitive Color Scale */
+  --color-neutral-0: #ffffff;
+  --color-neutral-900: #08090d;
+  --color-neutral-800: #0f1117;
+  --color-neutral-700: #161922;
+  --color-neutral-600: #1c202c;
+  --color-neutral-500: #2e354a;
+  --color-neutral-400: #4b5563;
+  --color-neutral-300: #9ca3af;
+  --color-neutral-100: #f3f4f6;
+
+  --color-blue-500: #3b82f6;
+  --color-blue-500-12: rgba(59, 130, 246, 0.12);
+  --color-blue-600: #4b44e0;
+  --color-blue-400: #8b7cf6;
+}

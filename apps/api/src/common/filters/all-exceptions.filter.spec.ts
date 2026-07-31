@@ -189,7 +189,9 @@ describe('AllExceptionsFilter', () => {
     });
 
     it('should format unexpected unhandled exceptions as 500 Internal Server Error', () => {
-      const unhandledError = new Error('Database connection failed unexpectedly');
+      const unhandledError = new Error(
+        'Database connection failed unexpectedly',
+      );
 
       filter.catch(unhandledError, mockHost);
 

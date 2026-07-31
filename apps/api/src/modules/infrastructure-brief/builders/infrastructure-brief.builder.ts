@@ -36,8 +36,7 @@ export class InfrastructureBriefBuilder {
       highlights: findings
         .filter(
           (finding) =>
-            finding.severity === 'CRITICAL' ||
-            finding.severity === 'HIGH',
+            finding.severity === 'CRITICAL' || finding.severity === 'HIGH',
         )
         .slice(0, 5)
         .map((finding) => ({
@@ -53,11 +52,10 @@ export class InfrastructureBriefBuilder {
                 ? finding.recommendations
                 : [],
             )
-            .map(
-              (
-                recommendation: InfrastructureBriefRecommendation,
-              ) => [recommendation.title, recommendation],
-            ),
+            .map((recommendation: InfrastructureBriefRecommendation) => [
+              recommendation.title,
+              recommendation,
+            ]),
         ).values(),
       ].slice(0, 5),
     };

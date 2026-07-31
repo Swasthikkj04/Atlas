@@ -29,7 +29,8 @@ export class FindingsQueryDto {
   category?: FindingCategory;
 
   @ApiPropertyOptional({
-    description: 'Filter findings by state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
+    description:
+      'Filter findings by state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
     example: 'OPEN',
   })
   @IsOptional()
@@ -37,7 +38,8 @@ export class FindingsQueryDto {
   state?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter findings by confidence rating (CERTAIN, PROBABLE, UNKNOWN).',
+    description:
+      'Filter findings by confidence rating (CERTAIN, PROBABLE, UNKNOWN).',
     example: 'CERTAIN',
   })
   @IsOptional()

@@ -6,10 +6,7 @@ import {
   expectSecurityHeaders,
   expectUuid,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import { createDomainDto } from '../common/factories.helper';
 import {
   closeTestApp,
@@ -92,8 +89,12 @@ describe('GET /api/v1/domains (Domain Management Regression Suite)', () => {
       const userA = await getAccessToken(testApp);
       const userB = await getAccessToken(testApp);
 
-      const domainA = createDomainDto({ domainName: `tenant-a-${Date.now()}.com` });
-      const domainB = createDomainDto({ domainName: `tenant-b-${Date.now()}.com` });
+      const domainA = createDomainDto({
+        domainName: `tenant-a-${Date.now()}.com`,
+      });
+      const domainB = createDomainDto({
+        domainName: `tenant-b-${Date.now()}.com`,
+      });
 
       // User A creates domain A
       await authenticatedRequest(testApp, userA.accessToken)

@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -76,8 +73,9 @@ describe('GET /api/v1/timeline & GET /api/v1/timeline/:id/details (Product Exper
     it('should return 404 Not Found when timeline event ID does not exist', async () => {
       const nonExistentEventId = 'evt-nonexistent-123';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .get(`${API_PREFIX}/timeline/${nonExistentEventId}/details`);
+      const response = await authenticatedRequest(testApp, userToken).get(
+        `${API_PREFIX}/timeline/${nonExistentEventId}/details`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);
@@ -87,8 +85,9 @@ describe('GET /api/v1/timeline & GET /api/v1/timeline/:id/details (Product Exper
     it('should return 404 Not Found when User B attempts to access User A timeline event (Cross-Tenant Isolation)', async () => {
       const nonExistentEventId = 'evt-user-a-123';
 
-      const response = await authenticatedRequest(testApp, userBToken)
-        .get(`${API_PREFIX}/timeline/${nonExistentEventId}/details`);
+      const response = await authenticatedRequest(testApp, userBToken).get(
+        `${API_PREFIX}/timeline/${nonExistentEventId}/details`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);

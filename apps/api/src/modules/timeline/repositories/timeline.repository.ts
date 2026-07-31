@@ -24,7 +24,7 @@ export class TimelineRepository {
   ): Promise<ChangeHistoryWithDomain | null> {
     const sanitizedId = id.replace(/^(change|evt|verif|finding)-/, '');
 
-    return (await this.prisma.changeHistory.findFirst({
+    return await this.prisma.changeHistory.findFirst({
       where: {
         OR: [{ id }, { id: sanitizedId }],
         domain: {
@@ -38,7 +38,7 @@ export class TimelineRepository {
           },
         },
       },
-    })) as ChangeHistoryWithDomain | null;
+    });
   }
 
   async findTimelineChanges(

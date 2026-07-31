@@ -39,11 +39,15 @@ describe('Metrics & Telemetry Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Metrics Endpoint Latency: ${latency}ms (Target ≤ 20ms: ${latency <= 20 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Metrics Endpoint Latency: ${latency}ms (Target ≤ 20ms: ${latency <= 20 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.headers['content-type']).toContain('text/plain');
       expect(response.text).toContain('# HELP atlas_http_requests_total');
-      expect(response.text).toContain('# TYPE atlas_http_requests_total counter');
+      expect(response.text).toContain(
+        '# TYPE atlas_http_requests_total counter',
+      );
       expect(response.text).toContain('atlas_process_heap_bytes');
     });
 
@@ -52,9 +56,13 @@ describe('Metrics & Telemetry Suite (E2E)', () => {
       await request(app.getHttpServer()).get('/api/v1/health/live').expect(200);
 
       // Scrape metrics
-      const response = await request(app.getHttpServer()).get('/api/v1/metrics').expect(200);
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/metrics')
+        .expect(200);
 
-      expect(response.text).toContain('atlas_http_requests_total{method="GET",route="/api/v1/health/live",status="200"}');
+      expect(response.text).toContain(
+        'atlas_http_requests_total{method="GET",route="/api/v1/health/live",status="200"}',
+      );
     });
   });
 });

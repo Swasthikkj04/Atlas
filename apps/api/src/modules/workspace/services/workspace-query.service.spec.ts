@@ -66,7 +66,9 @@ describe('WorkspaceQueryService', () => {
       },
       changeHistory: {
         count: jest.fn().mockResolvedValue(0),
-        groupBy: jest.fn().mockResolvedValue([{ domainId: 'domain-1', _count: { id: 2 } }]),
+        groupBy: jest
+          .fn()
+          .mockResolvedValue([{ domainId: 'domain-1', _count: { id: 2 } }]),
         findMany: jest.fn().mockResolvedValue([]),
       },
     } as unknown as jest.Mocked<PrismaService>;
@@ -86,7 +88,9 @@ describe('WorkspaceQueryService', () => {
 
     infrastructureSnapshotService = {
       countByUser: jest.fn().mockResolvedValue(45),
-      findLatestScanByUser: jest.fn().mockResolvedValue(new Date('2026-07-24T12:00:00Z')),
+      findLatestScanByUser: jest
+        .fn()
+        .mockResolvedValue(new Date('2026-07-24T12:00:00Z')),
     } as unknown as jest.Mocked<InfrastructureSnapshotService>;
 
     infrastructureFindingService = {

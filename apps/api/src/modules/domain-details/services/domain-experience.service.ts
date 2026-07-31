@@ -8,9 +8,7 @@ import { DomainDetailsService } from './domain-details.service';
 
 @Injectable()
 export class DomainExperienceService {
-  constructor(
-    private readonly domainDetailsService: DomainDetailsService,
-  ) {}
+  constructor(private readonly domainDetailsService: DomainDetailsService) {}
 
   async getDomainOverview(
     userId: string,
@@ -106,8 +104,7 @@ export class DomainExperienceService {
           }
         : null,
 
-      infrastructure:
-        InfrastructureOverviewMapper.fromSnapshot(latestSnapshot),
+      infrastructure: InfrastructureOverviewMapper.fromSnapshot(latestSnapshot),
 
       statistics,
     };
@@ -144,8 +141,7 @@ export class DomainExperienceService {
 
       findings: findingsSummary,
 
-      infrastructure:
-        InfrastructureOverviewMapper.fromSnapshot(latestSnapshot),
+      infrastructure: InfrastructureOverviewMapper.fromSnapshot(latestSnapshot),
 
       latestBrief: latestBrief
         ? {

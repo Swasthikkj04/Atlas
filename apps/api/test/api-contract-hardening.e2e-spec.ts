@@ -188,8 +188,14 @@ describe('API Contract Hardening Suite (E2E)', () => {
         .expect(200);
 
       expect(response.headers).toHaveProperty('x-frame-options', 'DENY');
-      expect(response.headers).toHaveProperty('x-content-type-options', 'nosniff');
-      expect(response.headers).toHaveProperty('referrer-policy', 'strict-origin-when-cross-origin');
+      expect(response.headers).toHaveProperty(
+        'x-content-type-options',
+        'nosniff',
+      );
+      expect(response.headers).toHaveProperty(
+        'referrer-policy',
+        'strict-origin-when-cross-origin',
+      );
       expect(response.headers).toHaveProperty('permissions-policy');
       expect(response.headers['permissions-policy']).toContain('camera=()');
     });
@@ -201,7 +207,10 @@ describe('API Contract Hardening Suite (E2E)', () => {
         .set('X-Correlation-ID', customCorrelationId)
         .expect(200);
 
-      expect(response.headers).toHaveProperty('x-correlation-id', customCorrelationId);
+      expect(response.headers).toHaveProperty(
+        'x-correlation-id',
+        customCorrelationId,
+      );
       expect(response.headers).toHaveProperty('x-request-id');
       expect(response.headers['x-request-id']).toMatch(/^req_/);
     });
@@ -209,9 +218,7 @@ describe('API Contract Hardening Suite (E2E)', () => {
 
   describe('6. OpenAPI / Swagger Documentation Verification', () => {
     it('GET /api/docs - Swagger documentation UI should be accessible', async () => {
-      await request(app.getHttpServer())
-        .get('/api/docs')
-        .expect(200);
+      await request(app.getHttpServer()).get('/api/docs').expect(200);
     });
   });
 });

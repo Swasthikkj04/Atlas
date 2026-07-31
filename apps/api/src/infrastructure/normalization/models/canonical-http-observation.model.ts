@@ -1,7 +1,9 @@
 import { CanonicalObservation } from '../contracts/canonical-observation.interface';
 
-export interface CanonicalHttpObservations
-  extends Record<string, CanonicalObservation<string>> {
+export interface CanonicalHttpObservations extends Record<
+  string,
+  CanonicalObservation<string>
+> {
   strictTransportSecurity: CanonicalObservation<string>;
   contentSecurityPolicy: CanonicalObservation<string>;
   xFrameOptions: CanonicalObservation<string>;

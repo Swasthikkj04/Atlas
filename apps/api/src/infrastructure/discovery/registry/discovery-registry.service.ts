@@ -15,11 +15,6 @@ export class DiscoveryRegistryService {
   ) {}
 
   getModules(): readonly DiscoveryModule<any>[] {
-    return [
-      this.dns,
-      this.http,
-      this.ssl,
-      this.technology,
-    ];
+    return [this.dns, this.http, this.ssl, this.technology];
   }
 }

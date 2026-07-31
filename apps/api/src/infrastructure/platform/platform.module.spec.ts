@@ -49,7 +49,9 @@ describe('Platform Plugin Architecture & Registries', () => {
 
     const result = await registered?.collectEvidence('example.com');
     expect(result?.metadata.collectorName).toBe('http');
-    expect(httpDiscoveryService.collectEvidence).toHaveBeenCalledWith('example.com');
+    expect(httpDiscoveryService.collectEvidence).toHaveBeenCalledWith(
+      'example.com',
+    );
   });
 
   it('should register and execute Knowledge Plugin via KnowledgeRegistry', async () => {
@@ -62,7 +64,9 @@ describe('Platform Plugin Architecture & Registries', () => {
       headers: { 'strict-transport-security': 'max-age=31536000' },
     });
 
-    expect(result?.observations.strictTransportSecurity.observation.state).toBe('OBSERVED');
+    expect(result?.observations.strictTransportSecurity.observation.state).toBe(
+      'OBSERVED',
+    );
   });
 
   it('should register and execute Intelligence Plugin via IntelligenceRegistry', async () => {

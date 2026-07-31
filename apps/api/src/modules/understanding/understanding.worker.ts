@@ -19,7 +19,9 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    this.logger.log('Understanding Worker started with reliability & idempotency engine.');
+    this.logger.log(
+      'Understanding Worker started with reliability & idempotency engine.',
+    );
     void this.startPolling();
   }
 
@@ -28,7 +30,10 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
   }
 
   private async startPolling(): Promise<void> {
-    while (this.isPolling && !this.workerReliabilityService.isShuttingDownState()) {
+    while (
+      this.isPolling &&
+      !this.workerReliabilityService.isShuttingDownState()
+    ) {
       let currentJobId: string | null = null;
       let startedAt = 0;
 
@@ -53,12 +58,18 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
               job.domainId,
             );
 
-            this.logger.log(`Claimed job: ${currentJobId} (correlationId=${activeJob.correlationId})`);
+            this.logger.log(
+              `Claimed job: ${currentJobId} (correlationId=${activeJob.correlationId})`,
+            );
 
-            await runWithCorrelationId(activeJob.correlationId, currentJobId, async () => {
-              this.workerReliabilityService.updateHeartbeat(currentJobId!);
-              await this.understandingService.processJob(currentJobId!);
-            });
+            await runWithCorrelationId(
+              activeJob.correlationId,
+              currentJobId,
+              async () => {
+                this.workerReliabilityService.updateHeartbeat(currentJobId!);
+                await this.understandingService.processJob(currentJobId!);
+              },
+            );
 
             const durationMs = Date.now() - startedAt;
 
@@ -69,7 +80,9 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
 
             this.workerReliabilityService.trackJobCompletion(currentJobId);
 
-            this.logger.log(`Completed job: ${currentJobId} (${durationMs} ms)`);
+            this.logger.log(
+              `Completed job: ${currentJobId} (${durationMs} ms)`,
+            );
           }
         }
       } catch (error) {
@@ -84,7 +97,9 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
           } catch (cleanupError) {
             this.logger.error(
               `Failed to handle job ${currentJobId} failure.`,
-              cleanupError instanceof Error ? cleanupError.stack : String(cleanupError),
+              cleanupError instanceof Error
+                ? cleanupError.stack
+                : String(cleanupError),
             );
           }
         }

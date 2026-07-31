@@ -13,9 +13,7 @@ export class MissingXFrameOptionsRule implements FindingRule {
   readonly name = 'Missing X-Frame-Options Header';
   readonly category = FindingCategory.SECURITY_HEADER;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http?.reachable) {

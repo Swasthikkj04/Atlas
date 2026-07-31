@@ -20,7 +20,7 @@ describe('HttpDiscoveryService (Evidence Architecture)', () => {
         'X-Frame-Options': 'DENY',
       },
       request: { res: { responseUrl: 'https://example.com' } },
-    } as any);
+    });
 
     const result = await service.collectEvidence('example.com');
 
@@ -55,7 +55,7 @@ describe('HttpDiscoveryService (Evidence Architecture)', () => {
         'content-type': 'text/html',
       },
       request: { res: { responseUrl: 'https://example.com' } },
-    } as any);
+    });
 
     const result = await service.collectEvidence('example.com');
 
@@ -86,7 +86,7 @@ describe('HttpDiscoveryService (Evidence Architecture)', () => {
       status: 200,
       headers: { server: 'nginx' },
       request: { res: { responseUrl: 'https://example.com' } },
-    } as any);
+    });
 
     const result = await service.discover('example.com');
 

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { HttpDiscoveryService } from '../../discovery/http/http-discovery.service';
 import { AtlasDiscoveryPlugin } from '../contracts/discovery-plugin.interface';
-import { PluginLifecycleState, PluginManifest } from '../contracts/plugin-manifest.interface';
+import {
+  PluginLifecycleState,
+  PluginManifest,
+} from '../contracts/plugin-manifest.interface';
 
 @Injectable()
 export class HttpDiscoveryPlugin implements AtlasDiscoveryPlugin {

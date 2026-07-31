@@ -59,13 +59,11 @@ describe('Workspace Dashboard Platinum Certification Suite (E2E)', () => {
       const email = `test-dashboard-${Date.now()}@example.com`;
       const password = 'Password123!';
 
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({
-          email,
-          password,
-          fullName: 'Dashboard QA Tester',
-        });
+      await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email,
+        password,
+        fullName: 'Dashboard QA Tester',
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
@@ -128,7 +126,9 @@ describe('Workspace Dashboard Platinum Certification Suite (E2E)', () => {
 
       const avgLatency =
         latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
-      console.log(`[PERF BENCHMARK] Dashboard API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`);
+      console.log(
+        `[PERF BENCHMARK] Dashboard API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`,
+      );
       expect(avgLatency).toBeLessThan(100);
     });
   });

@@ -12,7 +12,8 @@ export class ActivityQueryDto {
   domainId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter activity by severity (INFO, LOW, MEDIUM, HIGH, CRITICAL).',
+    description:
+      'Filter activity by severity (INFO, LOW, MEDIUM, HIGH, CRITICAL).',
     example: 'CRITICAL',
   })
   @IsOptional()

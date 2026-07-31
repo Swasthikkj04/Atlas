@@ -6,10 +6,7 @@ import {
   expectSecurityHeaders,
   expectUuid,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import { createDomainDto } from '../common/factories.helper';
 import {
   closeTestApp,
@@ -86,8 +83,9 @@ describe('POST /api/v1/domains/:domainId/understand (Understanding Engine Regres
     it('should return 404 Not Found when target domain UUID does not exist', async () => {
       const nonExistentDomainId = '3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, userAToken)
-        .post(`${API_PREFIX}/domains/${nonExistentDomainId}/understand`);
+      const response = await authenticatedRequest(testApp, userAToken).post(
+        `${API_PREFIX}/domains/${nonExistentDomainId}/understand`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });
@@ -106,8 +104,9 @@ describe('POST /api/v1/domains/:domainId/understand (Understanding Engine Regres
       const domainId = domainRes.body.id;
 
       // User B attempts to trigger understanding on User A's domain -> Should return 404
-      const response = await authenticatedRequest(testApp, userBToken)
-        .post(`${API_PREFIX}/domains/${domainId}/understand`);
+      const response = await authenticatedRequest(testApp, userBToken).post(
+        `${API_PREFIX}/domains/${domainId}/understand`,
+      );
 
       expectApiError(response, 404, 'NOT_FOUND');
     });
@@ -130,8 +129,9 @@ describe('POST /api/v1/domains/:domainId/understand (Understanding Engine Regres
         .expect(202);
 
       // Trigger concurrent second job -> 409 Conflict
-      const response = await authenticatedRequest(testApp, userAToken)
-        .post(`${API_PREFIX}/domains/${domainId}/understand`);
+      const response = await authenticatedRequest(testApp, userAToken).post(
+        `${API_PREFIX}/domains/${domainId}/understand`,
+      );
 
       expectApiError(response, 409, 'CONFLICT');
       expect(response.body.message).toMatch(/already in progress/i);

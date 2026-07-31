@@ -7,7 +7,9 @@ import { QueueDiagnosticsService } from './services/queue-diagnostics.service';
 @ApiTags('Queue Monitoring & Diagnostics')
 @Controller('queue')
 export class QueueController {
-  constructor(private readonly queueDiagnosticsService: QueueDiagnosticsService) {}
+  constructor(
+    private readonly queueDiagnosticsService: QueueDiagnosticsService,
+  ) {}
 
   @Get()
   @ApiOperation({

@@ -6,10 +6,7 @@ import {
   expectSecurityHeaders,
   expectUuid,
 } from '../common/assertions.helper';
-import {
-  createUserDto,
-  randomEmail,
-} from '../common/factories.helper';
+import { createUserDto, randomEmail } from '../common/factories.helper';
 import {
   closeTestApp,
   createTestApp,

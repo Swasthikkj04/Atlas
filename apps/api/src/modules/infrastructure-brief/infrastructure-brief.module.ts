@@ -21,8 +21,6 @@ import { InfrastructureBriefService } from './services/infrastructure-brief.serv
     InfrastructureBriefService,
     InfrastructureBriefBuilder,
   ],
-  exports: [
-    InfrastructureBriefService,
-  ],
+  exports: [InfrastructureBriefService],
 })
 export class InfrastructureBriefModule {}

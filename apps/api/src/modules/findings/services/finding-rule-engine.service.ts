@@ -6,17 +6,11 @@ import { FindingRuleRegistryService } from './finding-rule-registry.service';
 
 @Injectable()
 export class FindingRuleEngineService {
-  private readonly logger = new Logger(
-    FindingRuleEngineService.name,
-  );
+  private readonly logger = new Logger(FindingRuleEngineService.name);
 
-  constructor(
-    private readonly registry: FindingRuleRegistryService,
-  ) {}
+  constructor(private readonly registry: FindingRuleRegistryService) {}
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const findings: FindingResult[] = [];
 
     const rules = this.registry.getRules();
@@ -29,9 +23,7 @@ export class FindingRuleEngineService {
       } catch (error) {
         this.logger.error(
           `Rule failed: ${rule.id}`,
-          error instanceof Error
-            ? error.stack
-            : String(error),
+          error instanceof Error ? error.stack : String(error),
         );
 
         continue;

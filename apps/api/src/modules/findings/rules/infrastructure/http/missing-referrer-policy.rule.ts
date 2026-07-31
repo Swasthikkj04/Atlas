@@ -13,9 +13,7 @@ export class MissingReferrerPolicyRule implements FindingRule {
   readonly name = 'Missing Referrer-Policy Header';
   readonly category = FindingCategory.SECURITY_HEADER;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http?.reachable) {

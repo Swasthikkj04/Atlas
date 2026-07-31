@@ -117,9 +117,7 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
 
     it('should NOT automatically log the user in or allow unauthenticated access to /me', async () => {
       // Direct call to /me without Authorization header should be rejected with 401
-      await request(app.getHttpServer())
-        .get('/api/v1/auth/me')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/auth/me').expect(401);
 
       // User must explicitly log in to receive tokens
       const loginRes = await request(app.getHttpServer())

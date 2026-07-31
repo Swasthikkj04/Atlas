@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import { createDomainDto } from '../common/factories.helper';
 import {
   closeTestApp,
@@ -42,8 +39,10 @@ describe('DELETE /api/v1/domains/:id (Domain Management Regression Suite)', () =
       // Delete domain request
       // KNOWN DEFECT DISCOVERY: DomainsController line 131 passes (user.id, domainId) to DomainsService.delete(domainId, userId),
       // resulting in 404 Not Found due to swapped parameter order. Documented for separate resolution.
-      const deleteRes = await authenticatedRequest(testApp, user.accessToken)
-        .delete(`${API_PREFIX}/domains/${domainId}`);
+      const deleteRes = await authenticatedRequest(
+        testApp,
+        user.accessToken,
+      ).delete(`${API_PREFIX}/domains/${domainId}`);
 
       expect(deleteRes.status).toBe(404);
       expectSecurityHeaders(deleteRes);
@@ -77,15 +76,20 @@ describe('DELETE /api/v1/domains/:id (Domain Management Regression Suite)', () =
       const domainId = createRes.body.id;
 
       // User B attempts to delete User A's domain -> Should return 404 (hiding resource existence)
-      const deleteRes = await authenticatedRequest(testApp, userB.accessToken)
-        .delete(`${API_PREFIX}/domains/${domainId}`);
+      const deleteRes = await authenticatedRequest(
+        testApp,
+        userB.accessToken,
+      ).delete(`${API_PREFIX}/domains/${domainId}`);
 
       expect(deleteRes.status).toBe(404);
       expectCorrelationHeaders(deleteRes);
       expectSecurityHeaders(deleteRes);
 
       // Verify User A's domain is still intact
-      const listResUserA = await authenticatedRequest(testApp, userA.accessToken)
+      const listResUserA = await authenticatedRequest(
+        testApp,
+        userA.accessToken,
+      )
         .get(`${API_PREFIX}/domains`)
         .expect(200);
 
@@ -99,8 +103,10 @@ describe('DELETE /api/v1/domains/:id (Domain Management Regression Suite)', () =
       const user = await getAccessToken(testApp);
       const nonExistentUuid = '3d91d72d-0000-0000-0000-000000000000';
 
-      const response = await authenticatedRequest(testApp, user.accessToken)
-        .delete(`${API_PREFIX}/domains/${nonExistentUuid}`);
+      const response = await authenticatedRequest(
+        testApp,
+        user.accessToken,
+      ).delete(`${API_PREFIX}/domains/${nonExistentUuid}`);
 
       expect(response.status).toBe(404);
       expectCorrelationHeaders(response);
@@ -112,8 +118,10 @@ describe('DELETE /api/v1/domains/:id (Domain Management Regression Suite)', () =
     it('should return 400 Bad Request when deleting with a malformed non-UUID id parameter', async () => {
       const user = await getAccessToken(testApp);
 
-      const response = await authenticatedRequest(testApp, user.accessToken)
-        .delete(`${API_PREFIX}/domains/malformed-non-uuid-string`);
+      const response = await authenticatedRequest(
+        testApp,
+        user.accessToken,
+      ).delete(`${API_PREFIX}/domains/malformed-non-uuid-string`);
 
       expectApiError(response, 400, 'BAD_REQUEST');
       expect(response.body.message).toMatch(/uuid/i);

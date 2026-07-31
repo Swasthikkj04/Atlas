@@ -9,7 +9,8 @@ export class FindingObservationDto {
 
   @ApiProperty({
     example: 'MISSING',
-    description: '4-state observation state (OBSERVED, MISSING, UNKNOWN, FAILED).',
+    description:
+      '4-state observation state (OBSERVED, MISSING, UNKNOWN, FAILED).',
   })
   state!: string;
 

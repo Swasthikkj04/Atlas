@@ -34,9 +34,7 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
 
   describe('1. Security & Authentication Checks', () => {
     it('GET /api/v1/timeline - should reject missing Authorization header (401)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/timeline')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/timeline').expect(401);
     });
 
     it('GET /api/v1/timeline/:id/details - should reject missing Authorization header (401)', async () => {
@@ -89,11 +87,20 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
 
       // Create Domain, Job, Snapshots, & Change for Tenant A
       const domainA = await prisma.domain.create({
-        data: { userId: userAId, domainName: 'tenant-a-timeline.internal', monitoringEnabled: true },
+        data: {
+          userId: userAId,
+          domainName: 'tenant-a-timeline.internal',
+          monitoringEnabled: true,
+        },
       });
 
       const jobA1 = await prisma.understandingJob.create({
-        data: { domainId: domainA.id, status: 'COMPLETED', trigger: 'MANUAL', completedAt: new Date(Date.now() - 3600000) },
+        data: {
+          domainId: domainA.id,
+          status: 'COMPLETED',
+          trigger: 'MANUAL',
+          completedAt: new Date(Date.now() - 3600000),
+        },
       });
       const snapA1 = await prisma.infrastructureSnapshot.create({
         data: {
@@ -101,12 +108,21 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
           jobId: jobA1.id,
           responseTimeMs: 95,
           httpStatus: 200,
-          payload: { webServer: 'apache/2.4', technologies: ['PHP'], ipv4Addresses: ['10.0.0.1'] },
+          payload: {
+            webServer: 'apache/2.4',
+            technologies: ['PHP'],
+            ipv4Addresses: ['10.0.0.1'],
+          },
         },
       });
 
       const jobA2 = await prisma.understandingJob.create({
-        data: { domainId: domainA.id, status: 'COMPLETED', trigger: 'MANUAL', completedAt: new Date() },
+        data: {
+          domainId: domainA.id,
+          status: 'COMPLETED',
+          trigger: 'MANUAL',
+          completedAt: new Date(),
+        },
       });
       const snapA2 = await prisma.infrastructureSnapshot.create({
         data: {
@@ -148,7 +164,9 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
       expect(response.body).toHaveProperty('data');
       expect(response.body.data.length).toBeGreaterThanOrEqual(1);
       expect(response.body.data[0].id).toBe(changeAId);
-      expect(response.body.data[0].title).toBe('Strict-Transport-Security header added');
+      expect(response.body.data[0].title).toBe(
+        'Strict-Transport-Security header added',
+      );
     });
 
     it('GET /api/v1/timeline - User B retrieves empty timeline (Zero Cross-Tenant Leakage)', async () => {
@@ -175,15 +193,21 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Timeline Event Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Timeline Event Details API Latency: ${latency}ms (Target ≤ 75ms: ${latency <= 75 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body).toHaveProperty('event');
       expect(response.body.event.id).toBe(changeAId);
-      expect(response.body.event.summary).toBe('HTTP Security Headers Improved');
+      expect(response.body.event.summary).toBe(
+        'HTTP Security Headers Improved',
+      );
 
       expect(response.body).toHaveProperty('changeDiff');
       expect(response.body.changeDiff.technologies.added).toContain('React');
-      expect(response.body.changeDiff.headers.added[0].name).toBe('strict-transport-security');
+      expect(response.body.changeDiff.headers.added[0].name).toBe(
+        'strict-transport-security',
+      );
 
       expect(response.body).toHaveProperty('rule');
       expect(response.body.rule.ruleId).toBe('rule.http.security_header');
@@ -202,8 +226,11 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
         latencies.push(Date.now() - start);
       }
 
-      const avgLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
-      console.log(`[PERF BENCHMARK] Timeline API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`);
+      const avgLatency =
+        latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+      console.log(
+        `[PERF BENCHMARK] Timeline API Latency: ${avgLatency.toFixed(2)}ms across ${iterations} runs`,
+      );
       expect(avgLatency).toBeLessThan(100);
     });
   });

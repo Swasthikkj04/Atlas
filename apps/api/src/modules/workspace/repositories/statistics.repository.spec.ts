@@ -38,7 +38,9 @@ describe('StatisticsRepository', () => {
   it('should query Prisma models in parallel and compute domain health metrics', async () => {
     const stats = await repository.getWorkspaceStatistics('user-1');
 
-    expect(prisma.domain.count).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(prisma.domain.count).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+    });
     expect(prisma.infrastructureSnapshot.count).toHaveBeenCalled();
     expect(prisma.infrastructureFinding.groupBy).toHaveBeenCalled();
     expect(prisma.changeHistory.count).toHaveBeenCalled();

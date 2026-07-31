@@ -33,7 +33,9 @@ describe('IntelligenceEngineService (Rule Engine Refactor)', () => {
     expect(pkg.findings[0].ruleId).toBe('http.missing-hsts');
     expect(pkg.findings[0].severity).toBe('HIGH');
     expect(pkg.findings[0].lineage.evidenceIds).toContain('ev-v7-123');
-    expect(pkg.findings[0].lineage.matchedObservations).toContain('strictTransportSecurity');
+    expect(pkg.findings[0].lineage.matchedObservations).toContain(
+      'strictTransportSecurity',
+    );
   });
 
   it('should produce 0 findings when security headers are OBSERVED', () => {

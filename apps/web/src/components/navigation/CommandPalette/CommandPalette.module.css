@@ -1,0 +1,18 @@
+.palette {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: var(--z-index-modal);
+  display: flex;
+  justify-content: center;
+  padding-top: 15vh;
+}
+
+.box {
+  width: 100%;
+  max-width: 560px;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}

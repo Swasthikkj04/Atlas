@@ -13,9 +13,7 @@ export class MissingXContentTypeOptionsRule implements FindingRule {
   readonly name = 'Missing X-Content-Type-Options Header';
   readonly category = FindingCategory.SECURITY_HEADER;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http?.reachable) {

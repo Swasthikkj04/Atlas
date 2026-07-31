@@ -1,12 +1,21 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from '../app.module';
-import { FailureCategory, WorkerReliabilityService } from '../modules/understanding/services/worker-reliability.service';
+import {
+  FailureCategory,
+  WorkerReliabilityService,
+} from '../modules/understanding/services/worker-reliability.service';
 
 async function runValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-004 WORKER RELIABILITY)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-004 WORKER RELIABILITY)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -26,7 +35,11 @@ async function runValidation() {
 
   console.log('✅ 1. WORKER LIFECYCLE MANAGEMENT & CLAIMING');
   const jobId1 = 'job_test_lifecycle_001';
-  const activeJob1 = workerReliability.trackJobStart(jobId1, 'dom_123', 'corr_lifecycle_001');
+  const activeJob1 = workerReliability.trackJobStart(
+    jobId1,
+    'dom_123',
+    'corr_lifecycle_001',
+  );
   console.log(`   - Status Transition: QUEUED -> CLAIMED -> RUNNING`);
   console.log(`   - Correlation ID Preserved: ${activeJob1.correlationId}`);
   console.log(`   - Single Ownership Claimed: ✅ PASS\n`);
@@ -34,7 +47,9 @@ async function runValidation() {
   console.log('✅ 2. FAILURE CLASSIFICATION & EXPONENTIAL BACKOFF POLICY');
   const netErr = new Error('fetch failed: ETIMEDOUT');
   const classNet = workerReliability.classifyError(netErr);
-  console.log(`   - Transient Network Error: category=${classNet.category}, retriable=${classNet.isRetriable}`);
+  console.log(
+    `   - Transient Network Error: category=${classNet.category}, retriable=${classNet.isRetriable}`,
+  );
   console.log(`   - Exponential Backoff Delays:`);
   console.log(`     * Attempt 1: ${workerReliability.getRetryDelayMs(1)} ms`);
   console.log(`     * Attempt 2: ${workerReliability.getRetryDelayMs(2)} ms`);
@@ -45,10 +60,16 @@ async function runValidation() {
   console.log('✅ 3. PERMANENT FAILURE CLASSIFICATION (NON-RETRIABLE)');
   const cfgErr = new Error('Invalid configuration payload');
   const classCfg = workerReliability.classifyError(cfgErr);
-  console.log(`   - Configuration Error: category=${classCfg.category}, retriable=${classCfg.isRetriable}`);
+  console.log(
+    `   - Configuration Error: category=${classCfg.category}, retriable=${classCfg.isRetriable}`,
+  );
   const failRes = await workerReliability.handleJobFailure(jobId1, cfgErr, 120);
-  console.log(`   - Job Failure Status: PERMANENT_FAILURE (Zero retries scheduled)`);
-  console.log(`   - Non-Retriable Handling: ${!failRes.retried ? '✅ PASS' : '❌ FAIL'}\n`);
+  console.log(
+    `   - Job Failure Status: PERMANENT_FAILURE (Zero retries scheduled)`,
+  );
+  console.log(
+    `   - Non-Retriable Handling: ${!failRes.retried ? '✅ PASS' : '❌ FAIL'}\n`,
+  );
 
   console.log('✅ 4. HEARTBEAT & STUCK JOB RECOVERY');
   const stuckJobId = 'job_stuck_002';
@@ -62,17 +83,25 @@ async function runValidation() {
   const recLatency = Date.now() - t0;
 
   console.log(`   - Stuck Jobs Detected & Recovered: ${recoveredCount}`);
-  console.log(`   - Recovery Sweeper Latency: ${recLatency} ms (Target ≤ 5s: ✅ PASS)`);
-  console.log(`   - Stuck Job Recovery: ${recoveredCount > 0 ? '✅ PASS' : '❌ FAIL'}\n`);
+  console.log(
+    `   - Recovery Sweeper Latency: ${recLatency} ms (Target ≤ 5s: ✅ PASS)`,
+  );
+  console.log(
+    `   - Stuck Job Recovery: ${recoveredCount > 0 ? '✅ PASS' : '❌ FAIL'}\n`,
+  );
 
   console.log('✅ 5. GRACEFUL SHUTDOWN INITIATION');
   await app.close();
   console.log('   - Active Jobs Drained & Resources Released Cleanly');
   console.log('   - Graceful Shutdown: ✅ PASS\n');
 
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
   console.log('💎 ATLAS HARDENING H-004 RUNTIME VERIFICATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

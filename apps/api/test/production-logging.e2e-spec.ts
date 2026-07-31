@@ -42,8 +42,12 @@ describe('Production Logging & Correlation IDs Suite (E2E)', () => {
       expect(response.headers).toHaveProperty('x-request-id');
       expect(response.headers['x-correlation-id']).toMatch(/^corr_/);
       expect(response.headers['x-request-id']).toMatch(/^req_/);
-      console.log(`[LOGGING VERIFICATION] Header X-Correlation-ID: ${response.headers['x-correlation-id']}`);
-      console.log(`[PERF BENCHMARK] Logging Overhead Latency: ${latency}ms (Target ≤ 2ms: ${latency <= 20 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[LOGGING VERIFICATION] Header X-Correlation-ID: ${response.headers['x-correlation-id']}`,
+      );
+      console.log(
+        `[PERF BENCHMARK] Logging Overhead Latency: ${latency}ms (Target ≤ 2ms: ${latency <= 20 ? 'PASS' : 'WARN'})`,
+      );
     });
 
     it('GET /api/v1/health - should accept inbound X-Correlation-ID if provided by trusted caller', async () => {

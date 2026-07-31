@@ -38,7 +38,10 @@ describe('SearchExperienceService', () => {
     const queryDto: SearchQueryDto = { q: 'example', limit: 1 };
     const response = await service.search('user-1', queryDto);
 
-    expect(queryService.executeSearch).toHaveBeenCalledWith('user-1', 'example');
+    expect(queryService.executeSearch).toHaveBeenCalledWith(
+      'user-1',
+      'example',
+    );
     expect(response.total).toBe(2);
     expect(response.data).toHaveLength(1);
     expect(response.data[0].id).toBe('domain-1');

@@ -4,9 +4,7 @@ import { SnapshotDetailDto } from '../dto/snapshot-detail.dto';
 import { SnapshotListDto } from '../dto/snapshot-list.dto';
 
 export class SnapshotMapper {
-  static toDetailDto(
-    snapshot: InfrastructureSnapshot,
-  ): SnapshotDetailDto {
+  static toDetailDto(snapshot: InfrastructureSnapshot): SnapshotDetailDto {
     return {
       id: snapshot.id,
       domainId: snapshot.domainId,
@@ -17,9 +15,7 @@ export class SnapshotMapper {
     };
   }
 
-  static toListDto(
-    snapshot: InfrastructureSnapshot,
-  ): SnapshotListDto {
+  static toListDto(snapshot: InfrastructureSnapshot): SnapshotListDto {
     return {
       id: snapshot.id,
       domainId: snapshot.domainId,

@@ -22,12 +22,10 @@ export async function loginTestUser(
   credentials: { email: string; password?: string },
 ) {
   const password = credentials.password || 'SuperSecurePassword123!';
-  const response = await testApp.request
-    .post(`${API_PREFIX}/auth/login`)
-    .send({
-      email: credentials.email,
-      password,
-    });
+  const response = await testApp.request.post(`${API_PREFIX}/auth/login`).send({
+    email: credentials.email,
+    password,
+  });
 
   return {
     response,

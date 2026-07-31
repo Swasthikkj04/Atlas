@@ -22,10 +22,7 @@ export class UnderstandingService {
     private readonly understandingEngine: UnderstandingEngine,
   ) {}
 
-  async create(
-    userId: string,
-    domainId: string,
-  ): Promise<UnderstandingJob> {
+  async create(userId: string, domainId: string): Promise<UnderstandingJob> {
     const domains = await this.domainsService.findByUser(userId);
 
     const domain = domains.find((d) => d.id === domainId);
@@ -49,10 +46,7 @@ export class UnderstandingService {
     });
   }
 
-  async findById(
-    userId: string,
-    jobId: string,
-  ): Promise<UnderstandingJob> {
+  async findById(userId: string, jobId: string): Promise<UnderstandingJob> {
     const job = await this.understandingRepository.findById(jobId);
     if (!job) {
       throw new NotFoundException('Job not found.');
@@ -90,14 +84,8 @@ export class UnderstandingService {
     return this.understandingRepository.claimJob(jobId);
   }
 
-  async completeJob(
-    jobId: string,
-    durationMs: number,
-  ): Promise<void> {
-    await this.understandingRepository.completeJob(
-      jobId,
-      durationMs,
-    );
+  async completeJob(jobId: string, durationMs: number): Promise<void> {
+    await this.understandingRepository.completeJob(jobId, durationMs);
   }
 
   async failJob(
@@ -105,16 +93,11 @@ export class UnderstandingService {
     errorMessage: string,
     durationMs: number,
   ): Promise<void> {
-    await this.understandingRepository.failJob(
-      jobId,
-      errorMessage,
-      durationMs,
-    );
+    await this.understandingRepository.failJob(jobId, errorMessage, durationMs);
   }
 
   async processJob(jobId: string): Promise<void> {
-    const job =
-      await this.understandingRepository.findByIdWithDomain(jobId);
+    const job = await this.understandingRepository.findByIdWithDomain(jobId);
 
     if (!job) {
       throw new NotFoundException('Job not found.');
@@ -127,12 +110,7 @@ export class UnderstandingService {
     );
   }
 
-  async countRunningJobs(
-    userId: string,
-  ): Promise<number> {
-    return this.understandingRepository.countRunningJobs(
-      userId,
-    );
+  async countRunningJobs(userId: string): Promise<number> {
+    return this.understandingRepository.countRunningJobs(userId);
   }
-
 }

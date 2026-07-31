@@ -9,7 +9,5 @@ export interface FindingRule {
 
   readonly category: FindingCategory;
 
-  evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]>;
+  evaluate(context: FindingContext): Promise<FindingResult[]>;
 }

@@ -13,9 +13,7 @@ export class ServerHeaderExposedRule implements FindingRule {
   readonly name = 'Server Header Exposed';
   readonly category = FindingCategory.SECURITY_HEADER;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http?.reachable) {

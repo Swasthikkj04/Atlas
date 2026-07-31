@@ -13,22 +13,21 @@ export interface TechnologyDiscoveryResult {
 }
 
 @Injectable()
-export class TechnologyDiscoveryService
-  implements DiscoveryModule<TechnologyDiscoveryResult>
-{
+export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDiscoveryResult> {
   readonly name = 'technology';
 
-  async discover(
-    domainName: string,
-  ): Promise<TechnologyDiscoveryResult> {
-    const url = domainName.startsWith('http') ? domainName : `https://${domainName}`;
+  async discover(domainName: string): Promise<TechnologyDiscoveryResult> {
+    const url = domainName.startsWith('http')
+      ? domainName
+      : `https://${domainName}`;
     const technologies: DetectedTechnology[] = [];
 
     try {
       // Perform the single HTTP request with a 10-second timeout safety
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Technology-Discovery/1.0',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Technology-Discovery/1.0',
         },
         signal: AbortSignal.timeout(10000),
       });

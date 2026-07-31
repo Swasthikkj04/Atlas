@@ -77,10 +77,9 @@ describe('Forensic Runtime Evidence Collection Suite (google.com)', () => {
     const run1Snapshot = await prisma.infrastructureSnapshot.findFirst({
       where: { domainId: domain.id, jobId: run1Job.id },
     });
-    const run1Verification =
-      await prisma.infrastructureVerification.findFirst({
-        where: { jobId: run1Job.id },
-      });
+    const run1Verification = await prisma.infrastructureVerification.findFirst({
+      where: { jobId: run1Job.id },
+    });
 
     // --- RUN 2 (Consecutive Run for Deduplication Verification) ---
     const run2Job = await prisma.understandingJob.create({
@@ -104,18 +103,16 @@ describe('Forensic Runtime Evidence Collection Suite (google.com)', () => {
     const run2Snapshot = await prisma.infrastructureSnapshot.findFirst({
       where: { domainId: domain.id, jobId: run2Job.id },
     });
-    const run2Verification =
-      await prisma.infrastructureVerification.findFirst({
-        where: { jobId: run2Job.id },
-      });
+    const run2Verification = await prisma.infrastructureVerification.findFirst({
+      where: { jobId: run2Job.id },
+    });
 
     const snapshotsTotal = await prisma.infrastructureSnapshot.count({
       where: { domainId: domain.id },
     });
-    const verificationsTotal =
-      await prisma.infrastructureVerification.count({
-        where: { domainId: domain.id },
-      });
+    const verificationsTotal = await prisma.infrastructureVerification.count({
+      where: { domainId: domain.id },
+    });
 
     // Rule Engine Trace
     const discoveryPayload = run1Snapshot?.payload as any;

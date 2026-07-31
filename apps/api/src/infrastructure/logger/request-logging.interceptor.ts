@@ -30,7 +30,8 @@ export class RequestLoggingInterceptor implements NestInterceptor {
       RequestContextStore.setUserId(req.user.id);
     }
 
-    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
+    const clientIp =
+      req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
     const userAgent = req.headers['user-agent'];
 
     this.logger.log(

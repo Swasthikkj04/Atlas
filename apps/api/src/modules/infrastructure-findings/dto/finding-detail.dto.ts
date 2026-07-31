@@ -43,13 +43,22 @@ export class FindingDetailDto {
   })
   description!: string;
 
-  @ApiProperty({ example: 'HIGH', description: 'Severity level (CRITICAL, HIGH, MEDIUM, LOW, INFO).' })
+  @ApiProperty({
+    example: 'HIGH',
+    description: 'Severity level (CRITICAL, HIGH, MEDIUM, LOW, INFO).',
+  })
   severity!: string;
 
-  @ApiProperty({ example: 'CERTAIN', description: 'Confidence model rating (CERTAIN, PROBABLE, UNKNOWN).' })
+  @ApiProperty({
+    example: 'CERTAIN',
+    description: 'Confidence model rating (CERTAIN, PROBABLE, UNKNOWN).',
+  })
   confidence!: string;
 
-  @ApiProperty({ example: 'OPEN', description: 'Canonical state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).' })
+  @ApiProperty({
+    example: 'OPEN',
+    description: 'Canonical state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
+  })
   state!: string;
 
   @ApiProperty({ type: RuleExplainabilityDto })

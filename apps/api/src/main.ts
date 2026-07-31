@@ -53,9 +53,7 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  Logger.log(
-    `🚀 Atlas API running on http://localhost:${port}/api/v1`,
-  );
+  Logger.log(`🚀 Atlas API running on http://localhost:${port}/api/v1`);
   Logger.log(
     `📚 Swagger documentation available at http://localhost:${port}/api/docs`,
   );

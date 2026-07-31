@@ -48,9 +48,7 @@ export class SslDiscoveryService
 {
   readonly name = 'ssl';
 
-  async discover(
-    domainName: string,
-  ): Promise<SslDiscoveryResult> {
+  async discover(domainName: string): Promise<SslDiscoveryResult> {
     const startedAt = Date.now();
     const timeoutMs = 10000;
 
@@ -128,8 +126,11 @@ export class SslDiscoveryService
         socket.destroy();
 
         const errorCode = error?.code;
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const formattedError = errorCode ? `${errorCode}: ${errorMessage}` : errorMessage;
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const formattedError = errorCode
+          ? `${errorCode}: ${errorMessage}`
+          : errorMessage;
 
         // Transport/Network level connection failures
         const isNetworkFailure =

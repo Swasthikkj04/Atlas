@@ -17,7 +17,9 @@ export class RuleRegistry {
 
   register(rule: AtlasRulePlugin): void {
     if (this.rules.has(rule.metadata.id)) {
-      throw new Error(`Rule with ID '${rule.metadata.id}' is already registered`);
+      throw new Error(
+        `Rule with ID '${rule.metadata.id}' is already registered`,
+      );
     }
 
     this.rules.set(rule.metadata.id, rule);

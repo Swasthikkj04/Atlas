@@ -42,7 +42,9 @@ describe('CorrelationIdMiddleware', () => {
     };
 
     middleware.use(mockRequest, mockResponse, () => {
-      expect(RequestContextStore.getCorrelationId()).toBe('custom-correlation-123');
+      expect(RequestContextStore.getCorrelationId()).toBe(
+        'custom-correlation-123',
+      );
       expect(RequestContextStore.getRequestId()).toBe('custom-request-456');
     });
 

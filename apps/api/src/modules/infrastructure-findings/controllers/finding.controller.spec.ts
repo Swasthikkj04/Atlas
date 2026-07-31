@@ -51,7 +51,8 @@ describe('FindingController', () => {
       ruleVersion: '1.0.0',
       name: 'Missing HSTS Header Rule',
       category: 'SECURITY_HEADER',
-      evaluationLogic: 'Evaluates strictTransportSecurity canonical observation state.',
+      evaluationLogic:
+        'Evaluates strictTransportSecurity canonical observation state.',
     },
     observations: [],
     evidence: [],
@@ -66,7 +67,9 @@ describe('FindingController', () => {
   beforeEach(() => {
     service = {
       getFindingsExperienceList: jest.fn().mockResolvedValue(mockListResponse),
-      getFindingExplainabilityDetail: jest.fn().mockResolvedValue(mockDetailResponse),
+      getFindingExplainabilityDetail: jest
+        .fn()
+        .mockResolvedValue(mockDetailResponse),
       getFindingsBySnapshot: jest.fn(),
     } as unknown as jest.Mocked<InfrastructureFindingService>;
 
@@ -78,7 +81,10 @@ describe('FindingController', () => {
     const query: FindingsQueryDto = { page: 1, limit: 20 };
     const result = await controller.getFindings(req, query);
 
-    expect(service.getFindingsExperienceList).toHaveBeenCalledWith('user-1', query);
+    expect(service.getFindingsExperienceList).toHaveBeenCalledWith(
+      'user-1',
+      query,
+    );
     expect(result.data).toHaveLength(1);
     expect(result.data[0].confidence).toBe('CERTAIN');
   });
@@ -87,7 +93,10 @@ describe('FindingController', () => {
     const req = { user: mockUser } as any;
     const result = await controller.getFindingDetail(req, 'find-123');
 
-    expect(service.getFindingExplainabilityDetail).toHaveBeenCalledWith('user-1', 'find-123');
+    expect(service.getFindingExplainabilityDetail).toHaveBeenCalledWith(
+      'user-1',
+      'find-123',
+    );
     expect(result.rule.ruleId).toBe('http.missing-hsts');
     expect(result.confidence).toBe('CERTAIN');
   });

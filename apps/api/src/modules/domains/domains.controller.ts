@@ -37,9 +37,7 @@ type AuthenticatedRequest = Request & {
 @UseGuards(JwtAuthGuard)
 @Controller('domains')
 export class DomainsController {
-  constructor(
-    private readonly domainsService: DomainsService,
-  ) {}
+  constructor(private readonly domainsService: DomainsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -96,9 +94,7 @@ export class DomainsController {
   async findAll(
     @Req() request: AuthenticatedRequest,
   ): Promise<DomainResponseDto[]> {
-    return this.domainsService.findByUser(
-      request.user.id,
-    );
+    return this.domainsService.findByUser(request.user.id);
   }
 
   @Delete(':id')
@@ -128,9 +124,6 @@ export class DomainsController {
     @Req() request: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.domainsService.delete(
-      request.user.id,
-      id,
-    );
+    return this.domainsService.delete(request.user.id, id);
   }
 }

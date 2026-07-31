@@ -13,10 +13,7 @@ export class HttpServiceUnreachableRule implements FindingRule {
   readonly name = 'HTTP Service Unreachable';
   readonly category = FindingCategory.RESPONSE;
 
-
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
     if (!http) {

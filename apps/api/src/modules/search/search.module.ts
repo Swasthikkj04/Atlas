@@ -10,11 +10,7 @@ import { SearchQueryService } from './services/search-query.service';
 @Module({
   imports: [PrismaModule],
   controllers: [SearchController],
-  providers: [
-    SearchRepository,
-    SearchQueryService,
-    SearchExperienceService,
-  ],
+  providers: [SearchRepository, SearchQueryService, SearchExperienceService],
   exports: [SearchQueryService, SearchExperienceService],
 })
 export class SearchModule {}

@@ -5,9 +5,15 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 
 async function runValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS PLATINUM CERTIFICATION RUNTIME & EVIDENCE GENERATOR (FINDINGS)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS PLATINUM CERTIFICATION RUNTIME & EVIDENCE GENERATOR (FINDINGS)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -26,7 +32,9 @@ async function runValidation() {
   const server = app.getHttpServer();
 
   console.log('✅ 1. STARTUP LOGS & ROUTE REGISTRATION');
-  console.log('   - Controller: FindingController registered at /api/v1/findings');
+  console.log(
+    '   - Controller: FindingController registered at /api/v1/findings',
+  );
   console.log('   - Routes:');
   console.log('     * GET /api/v1/findings');
   console.log('     * GET /api/v1/findings/:findingId');
@@ -36,9 +44,11 @@ async function runValidation() {
   const userEmail = `findings-platinum-${Date.now()}@atlas.local`;
   const userPass = 'PlatinumPassword123!';
 
-  const regRes = await request(server)
-    .post('/api/v1/auth/register')
-    .send({ email: userEmail, password: userPass, fullName: 'Findings Lead QA' });
+  const regRes = await request(server).post('/api/v1/auth/register').send({
+    email: userEmail,
+    password: userPass,
+    fullName: 'Findings Lead QA',
+  });
   console.log(`   - Register Status: ${regRes.status}`);
 
   const loginRes = await request(server)
@@ -52,7 +62,9 @@ async function runValidation() {
 
   console.log('✅ 3. NEGATIVE SECURITY TESTING VERIFICATION');
   const noAuthRes = await request(server).get('/api/v1/findings');
-  console.log(`   - No Auth Header (Findings): Status ${noAuthRes.status} (Expected 401)`);
+  console.log(
+    `   - No Auth Header (Findings): Status ${noAuthRes.status} (Expected 401)`,
+  );
 
   const badTokenRes = await request(server)
     .get('/api/v1/findings')
@@ -62,7 +74,9 @@ async function runValidation() {
   const invalidDetailRes = await request(server)
     .get('/api/v1/findings/non-existent-finding-id')
     .set('Authorization', `Bearer ${token}`);
-  console.log(`   - Non-existent Finding Details: Status ${invalidDetailRes.status} (Expected 404)\n`);
+  console.log(
+    `   - Non-existent Finding Details: Status ${invalidDetailRes.status} (Expected 404)\n`,
+  );
 
   console.log('✅ 4. POPULATING IMMUTABLE EVIDENCE & FINDING DATA');
   const prisma = new PrismaClient();
@@ -110,7 +124,8 @@ async function runValidation() {
       target: 'https://findings-platinum.atlas.internal',
       payload: 'Server: nginx/1.24.0\nCache-Control: no-store',
       sizeBytes: 120,
-      hashSha256: 'b4c2a8f90e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b',
+      hashSha256:
+        'b4c2a8f90e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b',
     },
   });
 
@@ -122,7 +137,8 @@ async function runValidation() {
       category: 'SECURITY_HEADER',
       severity: 'HIGH',
       title: 'Missing HSTS Response Header',
-      description: 'Strict-Transport-Security header is absent from HTTP responses.',
+      description:
+        'Strict-Transport-Security header is absent from HTTP responses.',
     },
   });
 
@@ -134,7 +150,8 @@ async function runValidation() {
       category: 'SECURITY_HEADER',
       severity: 'HIGH',
       title: 'Missing Content Security Policy',
-      description: 'Content-Security-Policy header is absent from HTTP responses.',
+      description:
+        'Content-Security-Policy header is absent from HTTP responses.',
     },
   });
 
@@ -152,8 +169,14 @@ async function runValidation() {
   const listLatency = Date.now() - t0;
 
   console.log(`   - Status Code: ${listRes.status}`);
-  console.log(`   - Latency: ${listLatency} ms (Target ≤ 100ms: ${listLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Findings List Payload:\n`, JSON.stringify(listRes.body, null, 2), '\n');
+  console.log(
+    `   - Latency: ${listLatency} ms (Target ≤ 100ms: ${listLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Findings List Payload:\n`,
+    JSON.stringify(listRes.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 6. FINDING DETAILS API BENCHMARK & DEEP EXPLAINABILITY');
   const t1 = Date.now();
@@ -163,13 +186,25 @@ async function runValidation() {
   const detailLatency = Date.now() - t1;
 
   console.log(`   - Status Code: ${detailRes.status}`);
-  console.log(`   - Latency: ${detailLatency} ms (Target ≤ 75ms: ${detailLatency <= 75 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Finding Detail Payload:\n`, JSON.stringify(detailRes.body, null, 2), '\n');
+  console.log(
+    `   - Latency: ${detailLatency} ms (Target ≤ 75ms: ${detailLatency <= 75 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Finding Detail Payload:\n`,
+    JSON.stringify(detailRes.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 7. SQL DATABASE IMMUTABLE EVIDENCE AGGREGATES');
-  const dbFindings = await prisma.infrastructureFinding.count({ where: { snapshot: { domain: { userId: user.id } } } });
-  const dbSnapshots = await prisma.infrastructureSnapshot.count({ where: { domain: { userId: user.id } } });
-  const dbEvidence = await prisma.rawEvidence.count({ where: { domain: { userId: user.id } } });
+  const dbFindings = await prisma.infrastructureFinding.count({
+    where: { snapshot: { domain: { userId: user.id } } },
+  });
+  const dbSnapshots = await prisma.infrastructureSnapshot.count({
+    where: { domain: { userId: user.id } },
+  });
+  const dbEvidence = await prisma.rawEvidence.count({
+    where: { domain: { userId: user.id } },
+  });
 
   console.log(`   - Tenant Findings Count: ${dbFindings}`);
   console.log(`   - Tenant Snapshots Count: ${dbSnapshots}`);
@@ -178,9 +213,13 @@ async function runValidation() {
   await prisma.$disconnect();
   await app.close();
 
-  console.log('\n========================================================================');
+  console.log(
+    '\n========================================================================',
+  );
   console.log('💎 FINDINGS PLATINUM CERTIFICATION RUNTIME VALIDATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

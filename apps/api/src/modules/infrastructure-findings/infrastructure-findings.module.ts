@@ -7,12 +7,7 @@ import { InfrastructureFindingService } from './services/infrastructure-finding.
 @Module({
   imports: [PrismaModule],
   controllers: [FindingController],
-  providers: [
-    InfrastructureFindingRepository,
-    InfrastructureFindingService,
-  ],
-  exports: [
-    InfrastructureFindingService,
-  ],
+  providers: [InfrastructureFindingRepository, InfrastructureFindingService],
+  exports: [InfrastructureFindingService],
 })
 export class InfrastructureFindingsModule {}

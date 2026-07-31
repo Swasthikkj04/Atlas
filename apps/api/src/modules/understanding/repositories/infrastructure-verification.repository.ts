@@ -5,13 +5,9 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class InfrastructureVerificationRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    data: Prisma.InfrastructureVerificationUncheckedCreateInput,
-  ) {
+  async create(data: Prisma.InfrastructureVerificationUncheckedCreateInput) {
     return this.prisma.infrastructureVerification.create({
       data,
     });
@@ -25,9 +21,7 @@ export class InfrastructureVerificationRepository {
     });
   }
 
-  async findLatestByDomain(
-    domainId: string,
-  ) {
+  async findLatestByDomain(domainId: string) {
     return this.prisma.infrastructureVerification.findFirst({
       where: {
         domainId,

@@ -5,9 +5,15 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 
 async function runValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS PLATINUM CERTIFICATION RUNTIME & EVIDENCE GENERATOR (TIMELINE)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS PLATINUM CERTIFICATION RUNTIME & EVIDENCE GENERATOR (TIMELINE)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -26,7 +32,9 @@ async function runValidation() {
   const server = app.getHttpServer();
 
   console.log('✅ 1. STARTUP LOGS & ROUTE REGISTRATION');
-  console.log('   - Controller: TimelineController registered at /api/v1/timeline');
+  console.log(
+    '   - Controller: TimelineController registered at /api/v1/timeline',
+  );
   console.log('   - Routes:');
   console.log('     * GET /api/v1/timeline');
   console.log('     * GET /api/v1/timeline/:id/details\n');
@@ -35,9 +43,11 @@ async function runValidation() {
   const userEmail = `timeline-platinum-${Date.now()}@atlas.local`;
   const userPass = 'PlatinumPassword123!';
 
-  const regRes = await request(server)
-    .post('/api/v1/auth/register')
-    .send({ email: userEmail, password: userPass, fullName: 'Timeline Lead QA' });
+  const regRes = await request(server).post('/api/v1/auth/register').send({
+    email: userEmail,
+    password: userPass,
+    fullName: 'Timeline Lead QA',
+  });
   console.log(`   - Register Status: ${regRes.status}`);
 
   const loginRes = await request(server)
@@ -51,7 +61,9 @@ async function runValidation() {
 
   console.log('✅ 3. NEGATIVE SECURITY TESTING VERIFICATION');
   const noAuthRes = await request(server).get('/api/v1/timeline');
-  console.log(`   - No Auth Header (Timeline): Status ${noAuthRes.status} (Expected 401)`);
+  console.log(
+    `   - No Auth Header (Timeline): Status ${noAuthRes.status} (Expected 401)`,
+  );
 
   const badTokenRes = await request(server)
     .get('/api/v1/timeline')
@@ -61,7 +73,9 @@ async function runValidation() {
   const invalidDetailRes = await request(server)
     .get('/api/v1/timeline/non-existent-event-id/details')
     .set('Authorization', `Bearer ${token}`);
-  console.log(`   - Non-existent Event Details: Status ${invalidDetailRes.status} (Expected 404)\n`);
+  console.log(
+    `   - Non-existent Event Details: Status ${invalidDetailRes.status} (Expected 404)\n`,
+  );
 
   console.log('✅ 4. POPULATING IMMUTABLE EVIDENCE & SNAPSHOT DIFF DATA');
   const prisma = new PrismaClient();
@@ -150,7 +164,8 @@ async function runValidation() {
       target: 'https://timeline-platinum.atlas.internal',
       payload: 'Strict-Transport-Security: max-age=31536000; includeSubDomains',
       sizeBytes: 64,
-      hashSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      hashSha256:
+        'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     },
   });
 
@@ -164,7 +179,8 @@ async function runValidation() {
       changeType: 'ADDED',
       severity: 'HIGH',
       title: 'Strict-Transport-Security Header Enforced',
-      description: 'HTTP Strict-Transport-Security header was introduced with a 1-year max-age policy.',
+      description:
+        'HTTP Strict-Transport-Security header was introduced with a 1-year max-age policy.',
     },
   });
 
@@ -183,10 +199,18 @@ async function runValidation() {
   const timelineLatency = Date.now() - t0;
 
   console.log(`   - Status Code: ${timelineRes.status}`);
-  console.log(`   - Latency: ${timelineLatency} ms (Target ≤ 100ms: ${timelineLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Timeline Payload:\n`, JSON.stringify(timelineRes.body, null, 2), '\n');
+  console.log(
+    `   - Latency: ${timelineLatency} ms (Target ≤ 100ms: ${timelineLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Timeline Payload:\n`,
+    JSON.stringify(timelineRes.body, null, 2),
+    '\n',
+  );
 
-  console.log('✅ 6. TIMELINE EVENT DETAILS API BENCHMARK & DEEP EXPLAINABILITY');
+  console.log(
+    '✅ 6. TIMELINE EVENT DETAILS API BENCHMARK & DEEP EXPLAINABILITY',
+  );
   const t1 = Date.now();
   const detailRes = await request(server)
     .get(`/api/v1/timeline/${changeRecord.id}/details`)
@@ -194,14 +218,28 @@ async function runValidation() {
   const detailLatency = Date.now() - t1;
 
   console.log(`   - Status Code: ${detailRes.status}`);
-  console.log(`   - Latency: ${detailLatency} ms (Target ≤ 75ms: ${detailLatency <= 75 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Event Detail Payload:\n`, JSON.stringify(detailRes.body, null, 2), '\n');
+  console.log(
+    `   - Latency: ${detailLatency} ms (Target ≤ 75ms: ${detailLatency <= 75 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Event Detail Payload:\n`,
+    JSON.stringify(detailRes.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 7. SQL DATABASE IMMUTABLE EVIDENCE AGGREGATES');
-  const dbEvents = await prisma.changeHistory.count({ where: { domain: { userId: user.id } } });
-  const dbSnapshots = await prisma.infrastructureSnapshot.count({ where: { domain: { userId: user.id } } });
-  const dbFindings = await prisma.infrastructureFinding.count({ where: { snapshot: { domain: { userId: user.id } } } });
-  const dbEvidence = await prisma.rawEvidence.count({ where: { domain: { userId: user.id } } });
+  const dbEvents = await prisma.changeHistory.count({
+    where: { domain: { userId: user.id } },
+  });
+  const dbSnapshots = await prisma.infrastructureSnapshot.count({
+    where: { domain: { userId: user.id } },
+  });
+  const dbFindings = await prisma.infrastructureFinding.count({
+    where: { snapshot: { domain: { userId: user.id } } },
+  });
+  const dbEvidence = await prisma.rawEvidence.count({
+    where: { domain: { userId: user.id } },
+  });
 
   console.log(`   - Tenant Change Events: ${dbEvents}`);
   console.log(`   - Tenant Snapshots: ${dbSnapshots}`);
@@ -211,9 +249,13 @@ async function runValidation() {
   await prisma.$disconnect();
   await app.close();
 
-  console.log('\n========================================================================');
+  console.log(
+    '\n========================================================================',
+  );
   console.log('💎 TIMELINE PLATINUM CERTIFICATION RUNTIME VALIDATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

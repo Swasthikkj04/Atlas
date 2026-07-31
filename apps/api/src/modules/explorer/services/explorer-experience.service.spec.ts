@@ -35,7 +35,9 @@ describe('InfrastructureExplorerExperienceService', () => {
       findFindingsForUser: jest.fn().mockResolvedValue([]),
     } as unknown as jest.Mocked<InfrastructureExplorerQueryService>;
 
-    experienceService = new InfrastructureExplorerExperienceService(queryService);
+    experienceService = new InfrastructureExplorerExperienceService(
+      queryService,
+    );
   });
 
   it('should format explorer data with pagination for getExplorerData', async () => {
@@ -48,9 +50,15 @@ describe('InfrastructureExplorerExperienceService', () => {
   });
 
   it('should assemble asset detail with Knowledge Graph relationships for getAssetDetail', async () => {
-    const detail = await experienceService.getAssetDetail('user-1', 'ast-srv-domain-1-gws');
+    const detail = await experienceService.getAssetDetail(
+      'user-1',
+      'ast-srv-domain-1-gws',
+    );
 
-    expect(queryService.getAssetById).toHaveBeenCalledWith('user-1', 'ast-srv-domain-1-gws');
+    expect(queryService.getAssetById).toHaveBeenCalledWith(
+      'user-1',
+      'ast-srv-domain-1-gws',
+    );
     expect(detail.asset.name).toBe('Web Server (gws)');
     expect(detail.historicalPresence.currentlyPresent).toBe(true);
     expect(detail.relationships.length).toBeGreaterThan(0);

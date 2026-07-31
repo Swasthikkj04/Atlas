@@ -21,6 +21,9 @@ describe('TimelineQueryService', () => {
     const query: TimelineQueryDto = { limit: 20 };
     await service.getTimelineChanges('user-1', query);
 
-    expect(repository.findTimelineChanges).toHaveBeenCalledWith('user-1', query);
+    expect(repository.findTimelineChanges).toHaveBeenCalledWith(
+      'user-1',
+      query,
+    );
   });
 });

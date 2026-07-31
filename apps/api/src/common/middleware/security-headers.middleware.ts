@@ -47,7 +47,8 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
 
     // 7. Content Security Policy (CSP)
-    const isDocs = req.path.startsWith('/api/docs') || req.baseUrl.startsWith('/api/docs');
+    const isDocs =
+      req.path.startsWith('/api/docs') || req.baseUrl.startsWith('/api/docs');
     if (this.isProduction || process.env.ENABLE_CSP === 'true') {
       if (isDocs) {
         res.setHeader(

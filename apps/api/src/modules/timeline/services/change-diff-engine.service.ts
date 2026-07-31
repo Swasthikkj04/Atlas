@@ -80,7 +80,10 @@ export class ChangeDiffEngineService {
     return Array.from(new Set(assets));
   }
 
-  private diffStringArrays(prevList: string[], currList: string[]): ComponentDiff<string> {
+  private diffStringArrays(
+    prevList: string[],
+    currList: string[],
+  ): ComponentDiff<string> {
     const prevSet = new Set(prevList);
     const currSet = new Set(currList);
 

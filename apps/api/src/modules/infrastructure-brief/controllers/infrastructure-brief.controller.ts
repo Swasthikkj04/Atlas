@@ -25,9 +25,7 @@ import { InfrastructureBriefService } from '../services/infrastructure-brief.ser
 @UseGuards(JwtAuthGuard)
 @Controller('snapshots')
 export class InfrastructureBriefController {
-  constructor(
-    private readonly briefService: InfrastructureBriefService,
-  ) {}
+  constructor(private readonly briefService: InfrastructureBriefService) {}
 
   @Get(':snapshotId/brief')
   @ApiOperation({
@@ -52,9 +50,7 @@ export class InfrastructureBriefController {
     status: 404,
     description: 'Infrastructure snapshot or brief not found.',
   })
-  async getBySnapshot(
-    @Param('snapshotId') snapshotId: string,
-  ) {
+  async getBySnapshot(@Param('snapshotId') snapshotId: string) {
     return this.briefService.getBySnapshot(snapshotId);
   }
 

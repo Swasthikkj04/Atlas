@@ -14,21 +14,15 @@ export class AtlasHealthRule implements FindingRule {
   readonly name = 'Atlas Health';
   readonly category = FindingCategory.GENERAL;
 
-  constructor(
-    private readonly factory: FindingFactory,
-  ) {}
+  constructor(private readonly factory: FindingFactory) {}
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
-
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     return [
       this.factory.create({
         ruleId: this.id,
         title: 'Infrastructure processed',
 
-        description:
-          'Infrastructure snapshot processed successfully.',
+        description: 'Infrastructure snapshot processed successfully.',
 
         category: FindingCategory.GENERAL,
 

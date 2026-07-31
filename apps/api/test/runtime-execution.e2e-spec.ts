@@ -40,9 +40,7 @@ describe('Atlas Comprehensive Runtime & Security Execution Suite (E2E)', () => {
 
   describe('2. Authentication Security Validation', () => {
     it('GET /api/v1/workspace - should reject missing Authorization header with 401', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/workspace')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/workspace').expect(401);
     });
 
     it('GET /api/v1/workspace - should reject malformed Bearer token with 401', async () => {

@@ -22,28 +22,44 @@ export class QueueDiagnosticsService {
   async getQueueDiagnostics(): Promise<QueueDiagnosticsResponseDto> {
     const t0 = Date.now();
 
-    const [pendingCount, runningCount, completedCount, failedCount, recentJobs] =
-      await Promise.all([
-        this.prisma.understandingJob.count({ where: { status: JobStatus.PENDING } }),
-        this.prisma.understandingJob.count({ where: { status: JobStatus.RUNNING } }),
-        this.prisma.understandingJob.count({ where: { status: JobStatus.COMPLETED } }),
-        this.prisma.understandingJob.count({ where: { status: JobStatus.FAILED } }),
-        this.prisma.understandingJob.findMany({
-          take: 50,
-          orderBy: { startedAt: 'desc' },
-          select: {
-            status: true,
-            durationMs: true,
-            errorMessage: true,
-            startedAt: true,
-            completedAt: true,
-          },
-        }),
-      ]);
+    const [
+      pendingCount,
+      runningCount,
+      completedCount,
+      failedCount,
+      recentJobs,
+    ] = await Promise.all([
+      this.prisma.understandingJob.count({
+        where: { status: JobStatus.PENDING },
+      }),
+      this.prisma.understandingJob.count({
+        where: { status: JobStatus.RUNNING },
+      }),
+      this.prisma.understandingJob.count({
+        where: { status: JobStatus.COMPLETED },
+      }),
+      this.prisma.understandingJob.count({
+        where: { status: JobStatus.FAILED },
+      }),
+      this.prisma.understandingJob.findMany({
+        take: 50,
+        orderBy: { startedAt: 'desc' },
+        select: {
+          status: true,
+          durationMs: true,
+          errorMessage: true,
+          startedAt: true,
+          completedAt: true,
+        },
+      }),
+    ]);
 
     // Retrying count calculation
     const retryingCount = recentJobs.filter(
-      (j) => j.status === JobStatus.PENDING && j.errorMessage && j.errorMessage.includes('[RETRYING'),
+      (j) =>
+        j.status === JobStatus.PENDING &&
+        j.errorMessage &&
+        j.errorMessage.includes('[RETRYING'),
     ).length;
 
     // Failure categories classification
@@ -58,9 +74,17 @@ export class QueueDiagnosticsService {
     for (const job of recentJobs) {
       if (job.status === JobStatus.FAILED && job.errorMessage) {
         const msg = job.errorMessage.toUpperCase();
-        if (msg.includes('NETWORK') || msg.includes('TIMEOUT') || msg.includes('FETCH')) {
+        if (
+          msg.includes('NETWORK') ||
+          msg.includes('TIMEOUT') ||
+          msg.includes('FETCH')
+        ) {
           failureSummary.NETWORK += 1;
-        } else if (msg.includes('DATABASE') || msg.includes('PRISMA') || msg.includes('DEADLOCK')) {
+        } else if (
+          msg.includes('DATABASE') ||
+          msg.includes('PRISMA') ||
+          msg.includes('DEADLOCK')
+        ) {
           failureSummary.DATABASE += 1;
         } else if (msg.includes('DISCOVERY')) {
           failureSummary.DISCOVERY += 1;
@@ -79,23 +103,39 @@ export class QueueDiagnosticsService {
 
     const avgProcessingTimeMs =
       completedDurations.length > 0
-        ? Math.round(completedDurations.reduce((a, b) => a + b, 0) / completedDurations.length)
+        ? Math.round(
+            completedDurations.reduce((a, b) => a + b, 0) /
+              completedDurations.length,
+          )
         : 1200;
 
     // Queue status rules
     let status = 'HEALTHY';
-    if (pendingCount > 100 || (failedCount > 10 && failedCount / (completedCount + 1) > 0.3)) {
+    if (
+      pendingCount > 100 ||
+      (failedCount > 10 && failedCount / (completedCount + 1) > 0.3)
+    ) {
       status = 'UNHEALTHY';
-    } else if (pendingCount > 30 || (failedCount > 3 && failedCount / (completedCount + 1) > 0.1)) {
+    } else if (
+      pendingCount > 30 ||
+      (failedCount > 3 && failedCount / (completedCount + 1) > 0.1)
+    ) {
       status = 'DEGRADED';
     }
 
     // Update Prometheus metrics (H-003 Integration)
-    this.metricsService.recordExplorerRequest('QUEUE_DIAGNOSTICS', (Date.now() - t0) / 1000);
+    this.metricsService.recordExplorerRequest(
+      'QUEUE_DIAGNOSTICS',
+      (Date.now() - t0) / 1000,
+    );
 
     const recoveryRate =
       this.totalDetectedStuckJobs > 0
-        ? Number((this.totalRecoveredStuckJobs / this.totalDetectedStuckJobs).toFixed(2))
+        ? Number(
+            (
+              this.totalRecoveredStuckJobs / this.totalDetectedStuckJobs
+            ).toFixed(2),
+          )
         : 1.0;
 
     return {
@@ -114,7 +154,16 @@ export class QueueDiagnosticsService {
         retrying: retryingCount,
       },
       throughput: {
-        jobsPerMinute: Math.min(60, completedCount > 0 ? Number((completedCount / (Math.max(1, process.uptime()) / 60)).toFixed(1)) : 10),
+        jobsPerMinute: Math.min(
+          60,
+          completedCount > 0
+            ? Number(
+                (completedCount / (Math.max(1, process.uptime()) / 60)).toFixed(
+                  1,
+                ),
+              )
+            : 10,
+        ),
         avgProcessingTimeMs,
         avgQueueWaitTimeMs: 150,
       },

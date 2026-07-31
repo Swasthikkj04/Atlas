@@ -7,24 +7,39 @@ export class InfrastructureAssetDetailDto {
   @ApiProperty({ type: InfrastructureAssetDto })
   asset!: InfrastructureAssetDto;
 
-  @ApiProperty({ example: { name: 'gws', category: 'web-server' }, description: 'Current parsed value object.' })
+  @ApiProperty({
+    example: { name: 'gws', category: 'web-server' },
+    description: 'Current parsed value object.',
+  })
   currentValue!: any;
 
   @ApiProperty({ type: HistoricalPresenceDto })
   historicalPresence!: HistoricalPresenceDto;
 
-  @ApiProperty({ example: [], description: 'Raw evidence artifacts backing this asset.' })
+  @ApiProperty({
+    example: [],
+    description: 'Raw evidence artifacts backing this asset.',
+  })
   evidence!: any[];
 
-  @ApiProperty({ example: [], description: 'Canonical observations evaluated for this asset.' })
+  @ApiProperty({
+    example: [],
+    description: 'Canonical observations evaluated for this asset.',
+  })
   observations!: any[];
 
   @ApiProperty({ example: [], description: 'Findings related to this asset.' })
   relatedFindings!: any[];
 
-  @ApiProperty({ example: [], description: 'Timeline change events related to this asset.' })
+  @ApiProperty({
+    example: [],
+    description: 'Timeline change events related to this asset.',
+  })
   relatedTimelineEvents!: any[];
 
-  @ApiProperty({ type: [InfrastructureRelationshipDto], description: 'Knowledge Graph connected assets.' })
+  @ApiProperty({
+    type: [InfrastructureRelationshipDto],
+    description: 'Knowledge Graph connected assets.',
+  })
   relationships!: InfrastructureRelationshipDto[];
 }

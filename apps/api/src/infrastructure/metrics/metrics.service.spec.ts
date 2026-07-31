@@ -17,9 +17,15 @@ describe('MetricsService & PrometheusRegistry', () => {
 
       expect(text).toContain('# HELP atlas_http_requests_total');
       expect(text).toContain('# TYPE atlas_http_requests_total counter');
-      expect(text).toContain('atlas_http_requests_total{method="GET",route="/api/v1/explorer",status="200"} 1');
-      expect(text).toContain('atlas_findings_total{severity="HIGH",category="SECURITY_HEADER",state="OPEN"} 1');
-      expect(text).toContain('atlas_discovery_jobs_total{status="COMPLETED"} 1');
+      expect(text).toContain(
+        'atlas_http_requests_total{method="GET",route="/api/v1/explorer",status="200"} 1',
+      );
+      expect(text).toContain(
+        'atlas_findings_total{severity="HIGH",category="SECURITY_HEADER",state="OPEN"} 1',
+      );
+      expect(text).toContain(
+        'atlas_discovery_jobs_total{status="COMPLETED"} 1',
+      );
       expect(text).toContain('atlas_process_heap_bytes');
     });
 

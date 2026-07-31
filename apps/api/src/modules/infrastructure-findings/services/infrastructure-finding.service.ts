@@ -10,9 +10,7 @@ import { InfrastructureFindingRepository } from '../repositories/infrastructure-
 
 @Injectable()
 export class InfrastructureFindingService {
-  constructor(
-    private readonly repository: InfrastructureFindingRepository,
-  ) {}
+  constructor(private readonly repository: InfrastructureFindingRepository) {}
 
   async getFindingsExperienceList(
     userId: string,
@@ -76,7 +74,7 @@ export class InfrastructureFindingService {
         evidenceId: `ev-${record.id.slice(0, 8)}`,
         collector: `${record.module.toLowerCase()}-collector`,
         collectionTime: record.createdAt,
-        category: 'HTTP_RESPONSE' as any,
+        category: 'HTTP_RESPONSE',
         integrityStatus: 'VERIFIED',
         hashSha256: 'sha256-verified-evidence-proof',
         rawUrl: `/api/v1/evidence/ev-${record.id.slice(0, 8)}`,
@@ -124,9 +122,7 @@ export class InfrastructureFindingService {
               ? 'HIGH'
               : 'MEDIUM',
           estimatedEffort: 'LOW',
-          references: [
-            `https://developer.mozilla.org/en-US/docs/Web/Security`,
-          ],
+          references: [`https://developer.mozilla.org/en-US/docs/Web/Security`],
         },
       ],
     };
@@ -161,11 +157,7 @@ export class InfrastructureFindingService {
     );
   }
 
-  async getFindingsBySnapshot(
-    snapshotId: string,
-    page: number,
-    limit: number,
-  ) {
+  async getFindingsBySnapshot(snapshotId: string, page: number, limit: number) {
     const [findings, total] = await Promise.all([
       this.repository.findBySnapshot(snapshotId, page, limit),
       this.repository.countBySnapshot(snapshotId),
@@ -182,9 +174,7 @@ export class InfrastructureFindingService {
     };
   }
 
-  async getSummaryByDomain(
-    domainId: string,
-  ): Promise<{
+  async getSummaryByDomain(domainId: string): Promise<{
     total: number;
     critical: number;
     high: number;
@@ -195,9 +185,7 @@ export class InfrastructureFindingService {
     return this.repository.getSummaryByDomain(domainId);
   }
 
-  async getSeveritySummaryByUser(
-    userId: string,
-  ): Promise<{
+  async getSeveritySummaryByUser(userId: string): Promise<{
     critical: number;
     high: number;
     medium: number;
@@ -207,9 +195,7 @@ export class InfrastructureFindingService {
     return this.repository.getSeveritySummaryByUser(userId);
   }
 
-  async getWorkspaceFindingSummaryByUser(
-    userId: string,
-  ): Promise<{
+  async getWorkspaceFindingSummaryByUser(userId: string): Promise<{
     total: number;
     unresolved: number;
     resolved: number;

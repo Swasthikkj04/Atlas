@@ -26,7 +26,8 @@ export class StructuredLoggerService implements LoggerService {
       service: 'atlas-api',
       module: context || 'Application',
       message: sanitizedMsg,
-      correlationId: ctx?.correlationId || extraFields?.correlationId || 'corr_system',
+      correlationId:
+        ctx?.correlationId || extraFields?.correlationId || 'corr_system',
       requestId: ctx?.requestId || extraFields?.requestId || 'req_system',
     };
 

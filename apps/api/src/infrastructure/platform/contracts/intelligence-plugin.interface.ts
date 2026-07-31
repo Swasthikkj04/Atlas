@@ -1,5 +1,8 @@
 import { FindingResult } from '../../../modules/findings/contracts/finding-result.interface';
-import { PluginManifest, PluginLifecycleState } from './plugin-manifest.interface';
+import {
+  PluginManifest,
+  PluginLifecycleState,
+} from './plugin-manifest.interface';
 
 export interface IntelligenceRuleEvaluationResult {
   ruleId: string;
@@ -13,6 +16,8 @@ export interface AtlasIntelligencePlugin {
   state: PluginLifecycleState;
 
   initialize(): Promise<void>;
-  evaluate(canonicalObservations: Record<string, any>): IntelligenceRuleEvaluationResult[];
+  evaluate(
+    canonicalObservations: Record<string, any>,
+  ): IntelligenceRuleEvaluationResult[];
   shutdown(): Promise<void>;
 }

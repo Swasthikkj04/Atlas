@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { HttpNormalizerService } from '../../normalization/normalizers/http-normalizer.service';
 import { AtlasKnowledgePlugin } from '../contracts/knowledge-plugin.interface';
-import { PluginLifecycleState, PluginManifest } from '../contracts/plugin-manifest.interface';
+import {
+  PluginLifecycleState,
+  PluginManifest,
+} from '../contracts/plugin-manifest.interface';
 
 @Injectable()
 export class HttpKnowledgePlugin implements AtlasKnowledgePlugin {
@@ -24,7 +27,11 @@ export class HttpKnowledgePlugin implements AtlasKnowledgePlugin {
 
   normalize(domainId: string, evidenceId: string, rawPayload: any) {
     this.state = 'EXECUTING';
-    const result = this.httpNormalizer.normalize(domainId, evidenceId, rawPayload);
+    const result = this.httpNormalizer.normalize(
+      domainId,
+      evidenceId,
+      rawPayload,
+    );
     this.state = 'INITIALIZED';
     return result;
   }

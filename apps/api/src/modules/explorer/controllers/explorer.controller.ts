@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -54,15 +47,13 @@ export class ExplorerController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ExplorerQueryDto,
   ): Promise<InfrastructureExplorerDto> {
-    return this.explorerExperienceService.getExplorerData(
-      req.user.id,
-      query,
-    );
+    return this.explorerExperienceService.getExplorerData(req.user.id, query);
   }
 
   @Get(':assetId')
   @ApiOperation({
-    summary: 'Get complete infrastructure asset details & Knowledge Graph relationships',
+    summary:
+      'Get complete infrastructure asset details & Knowledge Graph relationships',
     description:
       'Returns deep asset explainability details including canonical observations, evidence lineage, historical presence, and Knowledge Graph relationships.',
   })
@@ -84,9 +75,6 @@ export class ExplorerController {
     @Req() req: AuthenticatedRequest,
     @Param('assetId') assetId: string,
   ): Promise<InfrastructureAssetDetailDto> {
-    return this.explorerExperienceService.getAssetDetail(
-      req.user.id,
-      assetId,
-    );
+    return this.explorerExperienceService.getAssetDetail(req.user.id, assetId);
   }
 }

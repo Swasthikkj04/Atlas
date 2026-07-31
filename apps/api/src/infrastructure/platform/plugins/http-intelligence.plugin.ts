@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { FindingCategory } from '../../../modules/findings/enums/finding-category.enum';
 import { Severity } from '../../../modules/findings/enums/severity.enum';
-import { AtlasIntelligencePlugin, IntelligenceRuleEvaluationResult } from '../contracts/intelligence-plugin.interface';
-import { PluginLifecycleState, PluginManifest } from '../contracts/plugin-manifest.interface';
+import {
+  AtlasIntelligencePlugin,
+  IntelligenceRuleEvaluationResult,
+} from '../contracts/intelligence-plugin.interface';
+import {
+  PluginLifecycleState,
+  PluginManifest,
+} from '../contracts/plugin-manifest.interface';
 
 @Injectable()
 export class HttpIntelligencePlugin implements AtlasIntelligencePlugin {
@@ -12,7 +18,12 @@ export class HttpIntelligencePlugin implements AtlasIntelligencePlugin {
     version: '1.0.0',
     engine: 'intelligence',
     apiVersion: 1,
-    capabilities: ['hsts-check', 'csp-check', 'xframe-check', 'xcontent-type-check'],
+    capabilities: [
+      'hsts-check',
+      'csp-check',
+      'xframe-check',
+      'xcontent-type-check',
+    ],
   };
 
   state: PluginLifecycleState = 'REGISTERED';
@@ -21,7 +32,9 @@ export class HttpIntelligencePlugin implements AtlasIntelligencePlugin {
     this.state = 'INITIALIZED';
   }
 
-  evaluate(canonicalObservations: Record<string, any>): IntelligenceRuleEvaluationResult[] {
+  evaluate(
+    canonicalObservations: Record<string, any>,
+  ): IntelligenceRuleEvaluationResult[] {
     this.state = 'EXECUTING';
     const results: IntelligenceRuleEvaluationResult[] = [];
 
@@ -33,15 +46,17 @@ export class HttpIntelligencePlugin implements AtlasIntelligencePlugin {
         evidenceReferences: [hsts.lineage.evidenceId],
         finding: {
           ruleId: 'http.missing-hsts',
-          module: 'HTTP' as any,
+          module: 'HTTP',
           title: 'Missing HSTS Header',
-          description: 'The application does not send the Strict-Transport-Security header.',
+          description:
+            'The application does not send the Strict-Transport-Security header.',
           category: FindingCategory.SECURITY_HEADER,
           severity: Severity.HIGH,
           recommendations: [
             {
               title: 'Enable HSTS',
-              description: 'Configure Strict-Transport-Security header with max-age=31536000.',
+              description:
+                'Configure Strict-Transport-Security header with max-age=31536000.',
             },
           ],
         },

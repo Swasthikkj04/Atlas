@@ -33,7 +33,8 @@ export class ApiErrorResponseDto {
   details?: any;
 
   @ApiProperty({
-    description: 'Unique trace identifier for cross-system request correlation and telemetry',
+    description:
+      'Unique trace identifier for cross-system request correlation and telemetry',
     example: 'corr_8e9d451b9a5b4ea7ba09b42617961a17',
   })
   correlationId!: string;

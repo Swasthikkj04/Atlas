@@ -5,21 +5,15 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class InfrastructureBriefRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    data: Prisma.InfrastructureBriefCreateInput,
-  ) {
+  async create(data: Prisma.InfrastructureBriefCreateInput) {
     return this.prisma.infrastructureBrief.create({
       data,
     });
   }
 
-  async findBySnapshot(
-    snapshotId: string,
-  ) {
+  async findBySnapshot(snapshotId: string) {
     return this.prisma.infrastructureBrief.findUnique({
       where: {
         snapshotId,
@@ -27,9 +21,7 @@ export class InfrastructureBriefRepository {
     });
   }
 
-  async findLatestByDomain(
-    domainId: string,
-  ) {
+  async findLatestByDomain(domainId: string) {
     return this.prisma.infrastructureBrief.findFirst({
       where: {
         snapshot: {

@@ -108,16 +108,24 @@ export class EvidenceService {
   }
 
   async getEvidenceByCategory(domainId: string, category: EvidenceCategory) {
-    const records = await this.evidenceRepository.findByCategory(domainId, category);
+    const records = await this.evidenceRepository.findByCategory(
+      domainId,
+      category,
+    );
     return records.map((r) => this.decodeRecord(r));
   }
 
   async getEvidenceByCollector(domainId: string, collectorName: string) {
-    const records = await this.evidenceRepository.findByCollector(domainId, collectorName);
+    const records = await this.evidenceRepository.findByCollector(
+      domainId,
+      collectorName,
+    );
     return records.map((r) => this.decodeRecord(r));
   }
 
-  async verifyIntegrity(evidenceId: string): Promise<IntegrityVerificationResult> {
+  async verifyIntegrity(
+    evidenceId: string,
+  ): Promise<IntegrityVerificationResult> {
     const record = await this.evidenceRepository.findById(evidenceId);
     if (!record) {
       return {

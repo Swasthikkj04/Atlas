@@ -13,7 +13,9 @@ export class FindingSummaryDto {
   @ApiProperty({ example: 'Missing HSTS Header' })
   title!: string;
 
-  @ApiProperty({ example: 'Strict-Transport-Security response header is absent.' })
+  @ApiProperty({
+    example: 'Strict-Transport-Security response header is absent.',
+  })
   description!: string;
 
   @ApiProperty({ example: 'HIGH' })

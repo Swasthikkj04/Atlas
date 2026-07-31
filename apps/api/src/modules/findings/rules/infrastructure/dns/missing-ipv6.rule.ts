@@ -13,9 +13,7 @@ export class MissingIpv6Rule implements FindingRule {
   readonly name = 'Missing IPv6 Support';
   readonly category = FindingCategory.DNS_RECORD;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
     if (!dns) {

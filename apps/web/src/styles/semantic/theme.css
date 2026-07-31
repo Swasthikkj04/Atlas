@@ -1,0 +1,28 @@
+@import "../foundation/colors.css";
+@import "../foundation/spacing.css";
+@import "../foundation/typography.css";
+
+:root {
+  /* Semantic Aliases mapped to Foundations */
+  --bg-app: var(--color-neutral-900);
+  --bg-surface: var(--color-neutral-800);
+  --bg-surface-elevated: var(--color-neutral-700);
+  --bg-subtle: var(--color-neutral-600);
+
+  --text-primary: var(--color-neutral-100);
+  --text-secondary: var(--color-neutral-300);
+  --text-muted: var(--color-neutral-400);
+
+  --accent-primary: var(--color-blue-500);
+  --accent-subtle: var(--color-blue-500-12);
+  --border-subtle: var(--color-neutral-600);
+  --border-strong: var(--color-neutral-500);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --transition-smooth: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}

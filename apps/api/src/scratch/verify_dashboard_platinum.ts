@@ -5,9 +5,13 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 
 async function runValidation() {
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
   console.log('🚀 ATLAS PLATINUM CERTIFICATION RUNTIME & EVIDENCE GENERATOR');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -26,7 +30,9 @@ async function runValidation() {
   const server = app.getHttpServer();
 
   console.log('✅ 1. STARTUP LOGS & ROUTE REGISTRATION');
-  console.log('   - Controller: WorkspaceController registered at /api/v1/workspace');
+  console.log(
+    '   - Controller: WorkspaceController registered at /api/v1/workspace',
+  );
   console.log('   - Routes:');
   console.log('     * GET /api/v1/workspace/dashboard');
   console.log('     * GET /api/v1/workspace');
@@ -37,9 +43,11 @@ async function runValidation() {
   const userEmail = `platinum-qa-${Date.now()}@atlas.local`;
   const userPass = 'PlatinumPassword123!';
 
-  const regRes = await request(server)
-    .post('/api/v1/auth/register')
-    .send({ email: userEmail, password: userPass, fullName: 'Platinum QA Lead' });
+  const regRes = await request(server).post('/api/v1/auth/register').send({
+    email: userEmail,
+    password: userPass,
+    fullName: 'Platinum QA Lead',
+  });
   console.log(`   - Register Status: ${regRes.status}`);
 
   const loginRes = await request(server)
@@ -63,7 +71,9 @@ async function runValidation() {
   const tamperedTokenRes = await request(server)
     .get('/api/v1/workspace/dashboard')
     .set('Authorization', `Bearer ${token}tampered`);
-  console.log(`   - Tampered JWT Signature: Status ${tamperedTokenRes.status} (Expected 401)\n`);
+  console.log(
+    `   - Tampered JWT Signature: Status ${tamperedTokenRes.status} (Expected 401)\n`,
+  );
 
   console.log('✅ 4. EMPTY WORKSPACE DASHBOARD API VERIFICATION');
   const startEmpty = Date.now();
@@ -74,8 +84,15 @@ async function runValidation() {
 
   console.log(`   - Status Code: ${emptyDashRes.status}`);
   console.log(`   - Latency: ${emptyLatency} ms (Target ≤ 100ms)`);
-  console.log(`   - Response Headers:`, JSON.stringify(emptyDashRes.headers, null, 2));
-  console.log(`   - Response Body:\n`, JSON.stringify(emptyDashRes.body, null, 2), '\n');
+  console.log(
+    `   - Response Headers:`,
+    JSON.stringify(emptyDashRes.headers, null, 2),
+  );
+  console.log(
+    `   - Response Body:\n`,
+    JSON.stringify(emptyDashRes.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 5. POPULATING PRODUCTION DATA FOR TENANT WORKSPACE');
   const prisma = new PrismaClient();
@@ -173,14 +190,26 @@ async function runValidation() {
   console.log(`   - Benchmark Latency (${benchmarkRuns} runs):`);
   console.log(`     * Average: ${avgLatency.toFixed(2)} ms`);
   console.log(`     * Min: ${minLatency} ms`);
-  console.log(`     * Max: ${maxLatency} ms (Target ≤ 100ms: ${maxLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Dashboard Payload Summary:\n`, JSON.stringify(populatedRes.body, null, 2), '\n');
+  console.log(
+    `     * Max: ${maxLatency} ms (Target ≤ 100ms: ${maxLatency <= 100 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Dashboard Payload Summary:\n`,
+    JSON.stringify(populatedRes.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 7. DIRECT DATABASE SQL QUERY EVIDENCE');
   const dbDomains = await prisma.domain.count({ where: { userId: user.id } });
-  const dbSnapshots = await prisma.infrastructureSnapshot.count({ where: { domain: { userId: user.id } } });
-  const dbFindings = await prisma.infrastructureFinding.count({ where: { snapshot: { domain: { userId: user.id } } } });
-  const dbVerifications = await prisma.infrastructureVerification.count({ where: { domain: { userId: user.id } } });
+  const dbSnapshots = await prisma.infrastructureSnapshot.count({
+    where: { domain: { userId: user.id } },
+  });
+  const dbFindings = await prisma.infrastructureFinding.count({
+    where: { snapshot: { domain: { userId: user.id } } },
+  });
+  const dbVerifications = await prisma.infrastructureVerification.count({
+    where: { domain: { userId: user.id } },
+  });
 
   console.log(`   - Tenant Domain Count: ${dbDomains}`);
   console.log(`   - Tenant Snapshot Count: ${dbSnapshots}`);
@@ -190,9 +219,13 @@ async function runValidation() {
   await prisma.$disconnect();
   await app.close();
 
-  console.log('\n========================================================================');
+  console.log(
+    '\n========================================================================',
+  );
   console.log('💎 PLATINUM CERTIFICATION RUNTIME VALIDATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

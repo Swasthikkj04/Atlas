@@ -83,7 +83,10 @@ describe('ExplorerController', () => {
     const req = { user: mockUser } as any;
     const result = await controller.getAssetDetail(req, 'ast-tech-gws-123');
 
-    expect(service.getAssetDetail).toHaveBeenCalledWith('user-1', 'ast-tech-gws-123');
+    expect(service.getAssetDetail).toHaveBeenCalledWith(
+      'user-1',
+      'ast-tech-gws-123',
+    );
     expect(result.relationships).toHaveLength(1);
     expect(result.relationships[0].type).toBe('SERVED_BY');
   });

@@ -10,7 +10,8 @@ export class RegisterResponseDto {
   message!: string;
 
   @ApiProperty({
-    description: 'Details of the newly registered user profile (excluding sensitive fields)',
+    description:
+      'Details of the newly registered user profile (excluding sensitive fields)',
     type: UserResponseDto,
   })
   user!: UserResponseDto;

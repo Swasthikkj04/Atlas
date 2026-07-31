@@ -69,7 +69,9 @@ export function validateEnvironment(config: Record<string, unknown>) {
     const formattedErrors = errors
       .map((err) => Object.values(err.constraints || {}).join(', '))
       .join('; ');
-    throw new Error(`[CONFIG_FATAL] Invalid environment variables: ${formattedErrors}`);
+    throw new Error(
+      `[CONFIG_FATAL] Invalid environment variables: ${formattedErrors}`,
+    );
   }
 
   return validatedConfig;

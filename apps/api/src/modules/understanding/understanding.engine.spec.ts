@@ -105,7 +105,9 @@ describe('UnderstandingEngine', () => {
     );
 
     expect(findingRuleEngine.evaluate).toHaveBeenCalled();
-    expect(infrastructureBriefService.generate).toHaveBeenCalledWith('snapshot-1');
+    expect(infrastructureBriefService.generate).toHaveBeenCalledWith(
+      'snapshot-1',
+    );
   });
 
   it('should skip snapshot creation and analysis when newly collected snapshot is identical to latest', async () => {
@@ -183,6 +185,8 @@ describe('UnderstandingEngine', () => {
     );
 
     expect(findingRuleEngine.evaluate).toHaveBeenCalled();
-    expect(infrastructureBriefService.generate).toHaveBeenCalledWith('new-snapshot-id');
+    expect(infrastructureBriefService.generate).toHaveBeenCalledWith(
+      'new-snapshot-id',
+    );
   });
 });

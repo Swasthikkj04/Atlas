@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -45,8 +42,9 @@ describe('GET /api/v1/findings/:findingId (Finding Details Regression Suite)', (
     it('should return 404 Not Found when finding ID does not exist', async () => {
       const nonExistentFindingId = 'find-nonexistent-123';
 
-      const response = await authenticatedRequest(testApp, userToken)
-        .get(`${API_PREFIX}/findings/${nonExistentFindingId}`);
+      const response = await authenticatedRequest(testApp, userToken).get(
+        `${API_PREFIX}/findings/${nonExistentFindingId}`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);
@@ -56,8 +54,9 @@ describe('GET /api/v1/findings/:findingId (Finding Details Regression Suite)', (
     it('should return 404 Not Found when User B attempts to access User A finding (Cross-Tenant Isolation)', async () => {
       const nonExistentFindingId = 'find-user-a-123';
 
-      const response = await authenticatedRequest(testApp, userBToken)
-        .get(`${API_PREFIX}/findings/${nonExistentFindingId}`);
+      const response = await authenticatedRequest(testApp, userBToken).get(
+        `${API_PREFIX}/findings/${nonExistentFindingId}`,
+      );
 
       expectSecurityHeaders(response);
       expectCorrelationHeaders(response);

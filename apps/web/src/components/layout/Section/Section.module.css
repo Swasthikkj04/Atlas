@@ -1,0 +1,16 @@
+.section {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero {
+  padding-block: var(--space-3xl) var(--space-4xl);
+}
+
+.default {
+  padding-block: var(--space-2xl);
+}
+
+.large {
+  padding-block: var(--space-3xl);
+}

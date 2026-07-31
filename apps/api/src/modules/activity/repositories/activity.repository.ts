@@ -20,10 +20,7 @@ export interface RawActivityRecord {
 export class ActivityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findActivityFeed(
-    userId: string,
-    query: ActivityQueryDto,
-  ) {
+  async findActivityFeed(userId: string, query: ActivityQueryDto) {
     const userDomains = await this.prisma.domain.findMany({
       where: { userId },
       select: { id: true, domainName: true },

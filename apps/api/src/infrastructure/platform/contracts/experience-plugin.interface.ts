@@ -1,4 +1,7 @@
-import { PluginManifest, PluginLifecycleState } from './plugin-manifest.interface';
+import {
+  PluginManifest,
+  PluginLifecycleState,
+} from './plugin-manifest.interface';
 
 export interface AtlasExperiencePlugin {
   readonly manifest: PluginManifest;

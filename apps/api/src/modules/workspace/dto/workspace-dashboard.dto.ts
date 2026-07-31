@@ -43,10 +43,16 @@ export class WorkspaceDashboardFindingsDto {
 }
 
 export class WorkspaceDashboardChangesDto {
-  @ApiProperty({ example: 3, description: 'Recent infrastructure changes count.' })
+  @ApiProperty({
+    example: 3,
+    description: 'Recent infrastructure changes count.',
+  })
   count!: number;
 
-  @ApiProperty({ example: 'Since last run', description: 'Context window descriptor.' })
+  @ApiProperty({
+    example: 'Since last run',
+    description: 'Context window descriptor.',
+  })
   sinceLastRun!: string;
 }
 

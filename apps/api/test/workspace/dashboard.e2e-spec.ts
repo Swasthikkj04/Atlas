@@ -4,10 +4,7 @@ import {
   expectCorrelationHeaders,
   expectSecurityHeaders,
 } from '../common/assertions.helper';
-import {
-  authenticatedRequest,
-  getAccessToken,
-} from '../common/auth.helper';
+import { authenticatedRequest, getAccessToken } from '../common/auth.helper';
 import {
   closeTestApp,
   createTestApp,
@@ -62,7 +59,9 @@ describe('GET /api/v1/workspace & GET /api/v1/workspace/dashboard (Workspace Das
   });
 
   it('should return 401 Unauthorized when requesting workspace dashboard without Bearer token', async () => {
-    const response = await testApp.request.get(`${API_PREFIX}/workspace/dashboard`);
+    const response = await testApp.request.get(
+      `${API_PREFIX}/workspace/dashboard`,
+    );
 
     expectApiError(response, 401, 'UNAUTHORIZED');
   });

@@ -33,13 +33,17 @@ describe('Worker Reliability, Retry, Backoff & Idempotency Suite (E2E)', () => {
 
   describe('1. Failure Classification & Retry Policy', () => {
     it('should classify transient network timeouts as RETRIABLE NETWORK failures', () => {
-      const classified = workerReliabilityService.classifyError(new Error('fetch failed: ETIMEDOUT'));
+      const classified = workerReliabilityService.classifyError(
+        new Error('fetch failed: ETIMEDOUT'),
+      );
       expect(classified.category).toBe('NETWORK');
       expect(classified.isRetriable).toBe(true);
     });
 
     it('should classify validation & auth failures as NON-RETRIABLE PERMANENT failures', () => {
-      const classified = workerReliabilityService.classifyError(new Error('Invalid configuration payload'));
+      const classified = workerReliabilityService.classifyError(
+        new Error('Invalid configuration payload'),
+      );
       expect(classified.category).toBe('CONFIGURATION');
       expect(classified.isRetriable).toBe(false);
     });
@@ -60,7 +64,9 @@ describe('Worker Reliability, Retry, Backoff & Idempotency Suite (E2E)', () => {
       const recovered = await workerReliabilityService.recoverStuckJobs(30000);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Stuck Job Recovery Latency: ${latency}ms (Target ≤ 5s: PASS)`);
+      console.log(
+        `[PERF BENCHMARK] Stuck Job Recovery Latency: ${latency}ms (Target ≤ 5s: PASS)`,
+      );
       expect(typeof recovered).toBe('number');
     });
   });

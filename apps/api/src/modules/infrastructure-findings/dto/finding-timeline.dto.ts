@@ -15,7 +15,8 @@ export class FindingTimelineDto {
 
   @ApiProperty({
     example: 'OPEN',
-    description: 'Current state of finding (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
+    description:
+      'Current state of finding (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
   })
   state!: string;
 }

@@ -32,9 +32,7 @@ export class UnderstandingRepository {
     });
   }
 
-  async findById(
-    id: string,
-  ): Promise<UnderstandingJob | null> {
+  async findById(id: string): Promise<UnderstandingJob | null> {
     return this.prisma.understandingJob.findUnique({
       where: { id },
     });
@@ -51,9 +49,7 @@ export class UnderstandingRepository {
     });
   }
 
-  async findByDomain(
-    domainId: string,
-  ): Promise<UnderstandingJob[]> {
+  async findByDomain(domainId: string): Promise<UnderstandingJob[]> {
     return this.prisma.understandingJob.findMany({
       where: { domainId },
       orderBy: {
@@ -73,9 +69,7 @@ export class UnderstandingRepository {
     });
   }
 
-  async claimJob(
-    jobId: string,
-  ): Promise<boolean> {
+  async claimJob(jobId: string): Promise<boolean> {
     const result = await this.prisma.understandingJob.updateMany({
       where: {
         id: jobId,
@@ -90,10 +84,7 @@ export class UnderstandingRepository {
     return result.count === 1;
   }
 
-  async completeJob(
-    jobId: string,
-    durationMs: number,
-  ): Promise<void> {
+  async completeJob(jobId: string, durationMs: number): Promise<void> {
     await this.prisma.understandingJob.update({
       where: {
         id: jobId,
@@ -124,19 +115,14 @@ export class UnderstandingRepository {
     });
   }
 
-  async countRunningJobs(
-    userId: string,
-  ): Promise<number> {
+  async countRunningJobs(userId: string): Promise<number> {
     return this.prisma.understandingJob.count({
       where: {
         domain: {
           userId,
         },
         status: {
-          in: [
-            JobStatus.PENDING,
-            JobStatus.RUNNING,
-          ],
+          in: [JobStatus.PENDING, JobStatus.RUNNING],
         },
       },
     });

@@ -5,14 +5,9 @@ import { TimelineRepository } from '../repositories/timeline.repository';
 
 @Injectable()
 export class TimelineQueryService {
-  constructor(
-    private readonly timelineRepository: TimelineRepository,
-  ) {}
+  constructor(private readonly timelineRepository: TimelineRepository) {}
 
-  async getTimelineChanges(
-    userId: string,
-    query: TimelineQueryDto,
-  ) {
+  async getTimelineChanges(userId: string, query: TimelineQueryDto) {
     return this.timelineRepository.findTimelineChanges(userId, query);
   }
 

@@ -17,6 +17,10 @@ import { TimelineQueryService } from './services/timeline-query.service';
     TimelineExperienceService,
     ChangeDiffEngineService,
   ],
-  exports: [TimelineQueryService, TimelineExperienceService, ChangeDiffEngineService],
+  exports: [
+    TimelineQueryService,
+    TimelineExperienceService,
+    ChangeDiffEngineService,
+  ],
 })
 export class TimelineModule {}

@@ -36,7 +36,9 @@ describe('Queue Diagnostics Suite (E2E)', () => {
         .expect(200);
       const latency = Date.now() - start;
 
-      console.log(`[PERF BENCHMARK] Queue Endpoint Latency: ${latency}ms (Target ≤ 10ms: ${latency <= 15 ? 'PASS' : 'WARN'})`);
+      console.log(
+        `[PERF BENCHMARK] Queue Endpoint Latency: ${latency}ms (Target ≤ 10ms: ${latency <= 15 ? 'PASS' : 'WARN'})`,
+      );
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('workers');

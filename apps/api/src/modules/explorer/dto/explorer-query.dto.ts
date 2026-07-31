@@ -29,7 +29,8 @@ export class ExplorerQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter assets by confidence rating (CERTAIN, PROBABLE, UNKNOWN).',
+    description:
+      'Filter assets by confidence rating (CERTAIN, PROBABLE, UNKNOWN).',
     example: 'CERTAIN',
   })
   @IsOptional()

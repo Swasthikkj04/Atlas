@@ -1,0 +1,14 @@
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-app, #f8f9fc);
+  color: var(--text-primary, #0b0c10);
+  overflow-x: hidden;
+}
+
+.mainContent {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}

@@ -39,7 +39,8 @@ export class TimelineEventDto {
 
   @ApiProperty({
     example: 'MODIFIED',
-    description: 'Canonical change type semantics (ADDED, REMOVED, MODIFIED, DETECTED, RESOLVED, REGRESSED).',
+    description:
+      'Canonical change type semantics (ADDED, REMOVED, MODIFIED, DETECTED, RESOLVED, REGRESSED).',
   })
   changeType!: string;
 
@@ -51,7 +52,8 @@ export class TimelineEventDto {
 
   @ApiProperty({
     example: 'SECURITY_HEADER',
-    description: 'Event category (Security, DNS, TLS, HTTP, Technology, Infrastructure, Certificate, Configuration).',
+    description:
+      'Event category (Security, DNS, TLS, HTTP, Technology, Infrastructure, Certificate, Configuration).',
   })
   category!: string;
 
@@ -68,7 +70,8 @@ export class TimelineEventDto {
   summary!: string;
 
   @ApiProperty({
-    example: 'High risk: Security header missing exposes application to downgrade attacks.',
+    example:
+      'High risk: Security header missing exposes application to downgrade attacks.',
     description: 'Impact narrative assessment of this change event.',
   })
   impact?: string;
@@ -87,7 +90,8 @@ export class TimelineEventDto {
 
   @ApiProperty({
     example: 1,
-    description: 'Number of immutable raw evidence payloads backing this change.',
+    description:
+      'Number of immutable raw evidence payloads backing this change.',
   })
   evidenceCount!: number;
 }

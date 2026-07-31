@@ -13,9 +13,7 @@ export class MissingMxRule implements FindingRule {
   readonly name = 'Missing MX Record';
   readonly category = FindingCategory.DNS_RECORD;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
     if (!dns) {

@@ -4,9 +4,15 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 
 async function runLoadScalabilityValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-012 LOAD & STRESS)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-012 LOAD & STRESS)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -90,23 +96,39 @@ async function runLoadScalabilityValidation() {
   }
 
   const finalMem = process.memoryUsage().heapUsed;
-  const memDiffMB = Number(((finalMem - initialMem) / (1024 * 1024)).toFixed(2));
+  const memDiffMB = Number(
+    ((finalMem - initialMem) / (1024 * 1024)).toFixed(2),
+  );
 
-  console.log(`   - Initial Heap Used: ${Number((initialMem / (1024 * 1024)).toFixed(2))} MB`);
-  console.log(`   - Final Heap Used: ${Number((finalMem / (1024 * 1024)).toFixed(2))} MB`);
+  console.log(
+    `   - Initial Heap Used: ${Number((initialMem / (1024 * 1024)).toFixed(2))} MB`,
+  );
+  console.log(
+    `   - Final Heap Used: ${Number((finalMem / (1024 * 1024)).toFixed(2))} MB`,
+  );
   console.log(`   - Memory Growth Delta: ${memDiffMB} MB`);
-  console.log(`   - Memory Leak Check: ${memDiffMB < 50 ? '✅ PASS (Stable)' : 'WARN'}\n`);
+  console.log(
+    `   - Memory Leak Check: ${memDiffMB < 50 ? '✅ PASS (Stable)' : 'WARN'}\n`,
+  );
 
   console.log('✅ 5. SECURITY & OBSERVABILITY UNDER LOAD AUDIT');
   const sampleRes = results500[0];
-  console.log(`   - X-Frame-Options Header Present: ${sampleRes.headers['x-frame-options'] === 'DENY' ? '✅ PASS' : '❌ FAIL'}`);
-  console.log(`   - X-Correlation-ID Header Present: ${sampleRes.headers['x-correlation-id'] ? '✅ PASS' : '❌ FAIL'}\n`);
+  console.log(
+    `   - X-Frame-Options Header Present: ${sampleRes.headers['x-frame-options'] === 'DENY' ? '✅ PASS' : '❌ FAIL'}`,
+  );
+  console.log(
+    `   - X-Correlation-ID Header Present: ${sampleRes.headers['x-correlation-id'] ? '✅ PASS' : '❌ FAIL'}\n`,
+  );
 
   await app.close();
 
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
   console.log('💎 ATLAS HARDENING H-012 LOAD & STRESS VALIDATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runLoadScalabilityValidation().catch(console.error);

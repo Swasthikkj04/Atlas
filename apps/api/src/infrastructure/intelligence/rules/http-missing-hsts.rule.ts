@@ -4,7 +4,10 @@ import { FindingCategory, FindingModule, Severity } from '@prisma/client';
 import { FindingBuilder } from '../builder/finding.builder';
 import { IntelligenceFinding } from '../contracts/intelligence-finding.interface';
 import { RuleContext } from '../contracts/rule-context.interface';
-import { AtlasRulePlugin, RuleMetadata } from '../contracts/rule-plugin.interface';
+import {
+  AtlasRulePlugin,
+  RuleMetadata,
+} from '../contracts/rule-plugin.interface';
 
 @Injectable()
 export class HttpMissingHstsRule implements AtlasRulePlugin {
@@ -36,7 +39,10 @@ export class HttpMissingHstsRule implements AtlasRulePlugin {
         .build();
     }
 
-    if (obs.observation.state === 'UNKNOWN' || obs.observation.state === 'FAILED') {
+    if (
+      obs.observation.state === 'UNKNOWN' ||
+      obs.observation.state === 'FAILED'
+    ) {
       return new FindingBuilder()
         .setRule(this.metadata.id, this.metadata.version)
         .setModule(FindingModule.HTTP)

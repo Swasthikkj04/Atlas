@@ -13,19 +13,14 @@ export class WeakTlsVersionRule implements FindingRule {
   readonly name = 'Weak TLS Version';
   readonly category = FindingCategory.TLS;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const ssl = context.snapshot.ssl;
 
     if (!ssl?.protocol) {
       return [];
     }
 
-    if (
-      ssl.protocol !== 'TLSv1' &&
-      ssl.protocol !== 'TLSv1.1'
-    ) {
+    if (ssl.protocol !== 'TLSv1' && ssl.protocol !== 'TLSv1.1') {
       return [];
     }
 

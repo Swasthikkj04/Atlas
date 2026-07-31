@@ -9,9 +9,7 @@ export class InfrastructureVerificationService {
     private readonly repository: InfrastructureVerificationRepository,
   ) {}
 
-  async create(
-    data: Prisma.InfrastructureVerificationUncheckedCreateInput,
-  ) {
+  async create(data: Prisma.InfrastructureVerificationUncheckedCreateInput) {
     return this.repository.create(data);
   }
 
@@ -19,15 +17,11 @@ export class InfrastructureVerificationService {
     return this.repository.findByJobId(jobId);
   }
 
-  async getLatestByDomain(
-    domainId: string,
-  ) {
+  async getLatestByDomain(domainId: string) {
     return this.repository.findLatestByDomain(domainId);
   }
 
-  async countByDomain(
-    domainId: string,
-  ) {
+  async countByDomain(domainId: string) {
     return this.repository.countByDomain(domainId);
   }
 }

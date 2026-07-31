@@ -4,9 +4,15 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 
 async function runValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-005 QUEUE DIAGNOSTICS)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-005 QUEUE DIAGNOSTICS)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -34,8 +40,14 @@ async function runValidation() {
   const latency = Date.now() - t0;
 
   console.log(`   - Status Code: ${res.status}`);
-  console.log(`   - Latency: ${latency} ms (Target ≤ 10ms: ${latency <= 15 ? '✅ PASS' : '❌ FAIL'})`);
-  console.log(`   - Queue Diagnostics Payload:\n`, JSON.stringify(res.body, null, 2), '\n');
+  console.log(
+    `   - Latency: ${latency} ms (Target ≤ 10ms: ${latency <= 15 ? '✅ PASS' : '❌ FAIL'})`,
+  );
+  console.log(
+    `   - Queue Diagnostics Payload:\n`,
+    JSON.stringify(res.body, null, 2),
+    '\n',
+  );
 
   console.log('✅ 3. SECURITY & ZERO TENANT DATA EXPOSURE CHECK');
   const rawPayloadStr = JSON.stringify(res.body);
@@ -47,13 +59,19 @@ async function runValidation() {
 
   console.log(`   - Tenant User IDs / Domain Names Exposed: FALSE`);
   console.log(`   - Credentials / Connection Strings Exposed: FALSE`);
-  console.log(`   - Operational Diagnostics Sanitization Verified: ${!containsTenantSecrets ? '✅ PASS' : '❌ FAIL'}\n`);
+  console.log(
+    `   - Operational Diagnostics Sanitization Verified: ${!containsTenantSecrets ? '✅ PASS' : '❌ FAIL'}\n`,
+  );
 
   await app.close();
 
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
   console.log('💎 ATLAS HARDENING H-005 RUNTIME VERIFICATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

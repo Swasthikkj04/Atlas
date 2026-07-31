@@ -13,9 +13,7 @@ export class MissingDmarcRule implements FindingRule {
   readonly name = 'Missing DMARC Record';
   readonly category = FindingCategory.DNS_RECORD;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
     if (!dns) {

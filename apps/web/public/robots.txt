@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://argonion.com/sitemap.xml

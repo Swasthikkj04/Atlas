@@ -7,10 +7,7 @@ import { InfrastructureSnapshotService } from './services/infrastructure-snapsho
 @Module({
   imports: [PrismaModule],
   controllers: [SnapshotController],
-  providers: [
-    InfrastructureSnapshotRepository,
-    InfrastructureSnapshotService,
-  ],
+  providers: [InfrastructureSnapshotRepository, InfrastructureSnapshotService],
   exports: [InfrastructureSnapshotService],
 })
 export class InfrastructureSnapshotsModule {}

@@ -7,15 +7,8 @@ import { SslModule } from './ssl/ssl.module';
 import { TechnologyModule } from './technology/technology.module';
 
 @Module({
-  imports: [
-    DnsModule,
-    HttpModule,
-    SslModule,
-    TechnologyModule,
-  ],
-  providers: [
-    DiscoveryRegistryService,
-  ],
+  imports: [DnsModule, HttpModule, SslModule, TechnologyModule],
+  providers: [DiscoveryRegistryService],
   exports: [
     DnsModule,
     HttpModule,

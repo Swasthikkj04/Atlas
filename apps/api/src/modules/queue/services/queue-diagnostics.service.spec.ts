@@ -19,7 +19,11 @@ describe('QueueDiagnosticsService', () => {
         }),
         findMany: jest.fn().mockResolvedValue([
           { status: 'COMPLETED', durationMs: 1100, errorMessage: null },
-          { status: 'FAILED', durationMs: 500, errorMessage: '[PERMANENT_FAILURE - NETWORK] ETIMEDOUT' },
+          {
+            status: 'FAILED',
+            durationMs: 500,
+            errorMessage: '[PERMANENT_FAILURE - NETWORK] ETIMEDOUT',
+          },
         ]),
       },
     };
@@ -28,10 +32,7 @@ describe('QueueDiagnosticsService', () => {
       recordExplorerRequest: jest.fn(),
     };
 
-    queueService = new QueueDiagnosticsService(
-      mockPrisma as unknown as PrismaService,
-      mockMetrics as unknown as MetricsService,
-    );
+    queueService = new QueueDiagnosticsService(mockPrisma, mockMetrics);
   });
 
   describe('1. Operational Queue Diagnostics (GET /queue)', () => {

@@ -51,10 +51,16 @@ export class SnapshotStatsDto {
 }
 
 export class UnderstandingStatsDto {
-  @ApiProperty({ description: 'Completed understanding jobs count.', example: 100 })
+  @ApiProperty({
+    description: 'Completed understanding jobs count.',
+    example: 100,
+  })
   completed!: number;
 
-  @ApiProperty({ description: 'Currently running understanding jobs count.', example: 1 })
+  @ApiProperty({
+    description: 'Currently running understanding jobs count.',
+    example: 1,
+  })
   running!: number;
 
   @ApiProperty({ description: 'Failed understanding jobs count.', example: 2 })
@@ -65,18 +71,33 @@ export class StatisticsResponseDto {
   @ApiProperty({ description: 'Domain metrics.', type: () => DomainStatsDto })
   domains!: DomainStatsDto;
 
-  @ApiProperty({ description: 'Finding severity breakdown.', type: () => FindingStatsDto })
+  @ApiProperty({
+    description: 'Finding severity breakdown.',
+    type: () => FindingStatsDto,
+  })
   findings!: FindingStatsDto;
 
-  @ApiProperty({ description: 'Change history statistics across timeframes.', type: () => TimeframeStatsDto })
+  @ApiProperty({
+    description: 'Change history statistics across timeframes.',
+    type: () => TimeframeStatsDto,
+  })
   changes!: TimeframeStatsDto;
 
-  @ApiProperty({ description: 'Verification statistics across timeframes.', type: () => TimeframeStatsDto })
+  @ApiProperty({
+    description: 'Verification statistics across timeframes.',
+    type: () => TimeframeStatsDto,
+  })
   verifications!: TimeframeStatsDto;
 
-  @ApiProperty({ description: 'Infrastructure snapshot statistics.', type: () => SnapshotStatsDto })
+  @ApiProperty({
+    description: 'Infrastructure snapshot statistics.',
+    type: () => SnapshotStatsDto,
+  })
   snapshots!: SnapshotStatsDto;
 
-  @ApiProperty({ description: 'Understanding jobs metrics.', type: () => UnderstandingStatsDto })
+  @ApiProperty({
+    description: 'Understanding jobs metrics.',
+    type: () => UnderstandingStatsDto,
+  })
   understanding!: UnderstandingStatsDto;
 }

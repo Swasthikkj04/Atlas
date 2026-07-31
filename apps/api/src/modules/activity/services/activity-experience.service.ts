@@ -6,9 +6,7 @@ import { ActivityQueryService } from './activity-query.service';
 
 @Injectable()
 export class ActivityExperienceService {
-  constructor(
-    private readonly activityQueryService: ActivityQueryService,
-  ) {}
+  constructor(private readonly activityQueryService: ActivityQueryService) {}
 
   async getActivityData(
     userId: string,

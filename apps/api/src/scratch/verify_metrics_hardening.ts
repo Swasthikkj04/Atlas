@@ -5,9 +5,15 @@ import { AppModule } from '../app.module';
 import { MetricsService } from '../infrastructure/metrics/metrics.service';
 
 async function runValidation() {
-  console.log('========================================================================');
-  console.log('🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-003 METRICS)');
-  console.log('========================================================================\n');
+  console.log(
+    '========================================================================',
+  );
+  console.log(
+    '🚀 ATLAS HARDENING CERTIFICATION RUNTIME VERIFICATION (H-003 METRICS)',
+  );
+  console.log(
+    '========================================================================\n',
+  );
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
@@ -27,7 +33,9 @@ async function runValidation() {
   const metricsService = app.get(MetricsService);
 
   console.log('✅ 1. STARTUP LOGS & ROUTE REGISTRATION');
-  console.log('   - Controller: MetricsController registered at /api/v1/metrics');
+  console.log(
+    '   - Controller: MetricsController registered at /api/v1/metrics',
+  );
   console.log('   - Interceptor: MetricsInterceptor registered globally\n');
 
   console.log('✅ 2. SIMULATING OPERATIONAL TRAFFIC & TELEMETRY RECORDING');
@@ -44,7 +52,9 @@ async function runValidation() {
   metricsService.recordAuthRequest('LOGIN', 'SUCCESS');
   metricsService.recordDbQuery('SELECT', 0.003);
 
-  console.log('   - Recorded simulated HTTP, Discovery, Knowledge, Findings, Timeline, Explorer, Auth, and DB metrics.\n');
+  console.log(
+    '   - Recorded simulated HTTP, Discovery, Knowledge, Findings, Timeline, Explorer, Auth, and DB metrics.\n',
+  );
 
   console.log('✅ 3. PROMETHEUS METRICS SCRAPE ENDPOINT (GET /api/v1/metrics)');
   const t0 = Date.now();
@@ -53,7 +63,9 @@ async function runValidation() {
 
   console.log(`   - Status Code: ${res.status}`);
   console.log(`   - Content-Type: ${res.headers['content-type']}`);
-  console.log(`   - Latency: ${latency} ms (Target ≤ 20ms: ${latency <= 20 ? '✅ PASS' : '❌ FAIL'})\n`);
+  console.log(
+    `   - Latency: ${latency} ms (Target ≤ 20ms: ${latency <= 20 ? '✅ PASS' : '❌ FAIL'})\n`,
+  );
 
   console.log('✅ 4. EXPORTED PROMETHEUS METRICS SAMPLE (FIRST 40 LINES):\n');
   const sampleLines = res.text.split('\n').slice(0, 40).join('\n');
@@ -68,13 +80,19 @@ async function runValidation() {
 
   console.log(`   - High-Cardinality User IDs / Domain Names Exposed: FALSE`);
   console.log(`   - Secrets / Credentials Exposed: FALSE`);
-  console.log(`   - Low-Cardinality Metric Sanitization Verified: ${!containsHighCardinality ? '✅ PASS' : '❌ FAIL'}\n`);
+  console.log(
+    `   - Low-Cardinality Metric Sanitization Verified: ${!containsHighCardinality ? '✅ PASS' : '❌ FAIL'}\n`,
+  );
 
   await app.close();
 
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
   console.log('💎 ATLAS HARDENING H-003 RUNTIME VERIFICATION COMPLETE');
-  console.log('========================================================================');
+  console.log(
+    '========================================================================',
+  );
 }
 
 runValidation().catch(console.error);

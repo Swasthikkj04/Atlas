@@ -104,16 +104,16 @@ describe('Evidence-Based Runtime Pipeline Validation (google.com)', () => {
     const savedJob = await prisma.understandingJob.findUnique({
       where: { id: job.id },
     });
-    const savedVerification =
-      await prisma.infrastructureVerification.findFirst({
+    const savedVerification = await prisma.infrastructureVerification.findFirst(
+      {
         where: { jobId: job.id },
         orderBy: { createdAt: 'desc' },
-      });
-    const savedSnapshotRecord =
-      await prisma.infrastructureSnapshot.findFirst({
-        where: { domainId: domain.id },
-        orderBy: { createdAt: 'desc' },
-      });
+      },
+    );
+    const savedSnapshotRecord = await prisma.infrastructureSnapshot.findFirst({
+      where: { domainId: domain.id },
+      orderBy: { createdAt: 'desc' },
+    });
     const savedFindings = savedSnapshotRecord
       ? await prisma.infrastructureFinding.findMany({
           where: { snapshotId: savedSnapshotRecord.id },

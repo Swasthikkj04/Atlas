@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -82,9 +76,6 @@ export class DomainDetailsController {
     @Req() req: AuthenticatedRequest,
     @Param('id') domainId: string,
   ): Promise<DomainDetailsDto> {
-    return this.domainExperienceService.getDomainDetails(
-      req.user.id,
-      domainId,
-    );
+    return this.domainExperienceService.getDomainDetails(req.user.id, domainId);
   }
 }

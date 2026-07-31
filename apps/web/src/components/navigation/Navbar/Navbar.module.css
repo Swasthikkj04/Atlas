@@ -1,0 +1,137 @@
+.header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(248, 249, 252, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(228, 231, 240, 0.6);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Brand Section */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--text-primary, #0b0c10);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logoMark {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+/* Nav Links - Desktop */
+.navDesktop {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navLink {
+  color: #585d6e !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.navLink:hover {
+  color: #0b0c10 !important;
+}
+
+/* Action Group */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.loginLink {
+  color: var(--text-primary, #0b0c10);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.5rem;
+  transition: opacity 0.15s ease;
+}
+
+.loginLink:hover {
+  opacity: 0.75;
+}
+
+/* Navy Pill CTA Button */
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  background-color: var(--btn-primary-bg, #090a10);
+  color: var(--btn-primary-text, #ffffff);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.ctaButton:hover {
+  background-color: #1b1d28;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(9, 10, 16, 0.12);
+}
+
+.ctaArrow {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+/* Mobile Toggle */
+.mobileToggle {
+  display: none;
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-primary, #0b0c10);
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 767px) {
+  .navDesktop {
+    display: none;
+  }
+
+  .mobileToggle {
+    display: flex;
+  }
+
+  .container {
+    padding: 0.875rem 1rem;
+  }
+}

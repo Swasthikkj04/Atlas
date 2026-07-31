@@ -13,9 +13,7 @@ export class SslEndpointUnreachableRule implements FindingRule {
   readonly name = 'SSL Endpoint Unreachable';
   readonly category = FindingCategory.TLS;
 
-  async evaluate(
-    context: FindingContext,
-  ): Promise<FindingResult[]> {
+  async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const ssl = context.snapshot.ssl;
 
     if (!ssl) {

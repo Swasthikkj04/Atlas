@@ -21,7 +21,8 @@ describe('EvidenceRepository (Hardened)', () => {
     compressedSizeBytes: null,
     compressionType: 'NONE',
     compressionVersion: '1.0',
-    hashSha256: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
+    hashSha256:
+      'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
     schemaVersion: 1,
     requestMethod: 'GET',
     responseStatus: 200,
@@ -56,7 +57,8 @@ describe('EvidenceRepository (Hardened)', () => {
       target: 'example.com',
       payload: '{"status":200}',
       sizeBytes: 14,
-      hashSha256: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
+      hashSha256:
+        'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
       requestMethod: 'GET',
       responseStatus: 200,
     });
@@ -67,7 +69,10 @@ describe('EvidenceRepository (Hardened)', () => {
   });
 
   it('should query evidence by category', async () => {
-    const records = await repository.findByCategory('domain-1', EvidenceCategory.HTTP_RESPONSE);
+    const records = await repository.findByCategory(
+      'domain-1',
+      EvidenceCategory.HTTP_RESPONSE,
+    );
     expect(prisma.rawEvidence.findMany).toHaveBeenCalledWith({
       where: { domainId: 'domain-1', category: EvidenceCategory.HTTP_RESPONSE },
       orderBy: { capturedAt: 'desc' },

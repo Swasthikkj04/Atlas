@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -29,9 +22,7 @@ import { AuthService } from './services/auth.service';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @RateLimit({ limit: 5, windowSeconds: 3600, name: 'auth_register' })
   @Post('register')
@@ -47,7 +38,8 @@ export class AuthController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Validation error (e.g. invalid email format, short password).',
+    description:
+      'Bad Request - Validation error (e.g. invalid email format, short password).',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
@@ -88,9 +80,7 @@ export class AuthController {
     description: 'Too Many Requests - Rate limit exceeded.',
     type: ApiErrorResponseDto,
   })
-  async login(
-    @Body() loginDto: LoginDto,
-  ): Promise<AuthResponseDto> {
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
 

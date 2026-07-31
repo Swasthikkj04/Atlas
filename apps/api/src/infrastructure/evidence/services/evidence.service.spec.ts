@@ -81,7 +81,10 @@ describe('EvidenceService (Hardened & Binary Integrity)', () => {
   it('should verify binary integrity against compressed stored payload bytes', async () => {
     const largePayload = 'A'.repeat(2000);
     const compressedBuffer = zlib.gzipSync(Buffer.from(largePayload, 'utf8'));
-    const compressedHash = crypto.createHash('sha256').update(compressedBuffer).digest('hex');
+    const compressedHash = crypto
+      .createHash('sha256')
+      .update(compressedBuffer)
+      .digest('hex');
 
     repository.findById.mockResolvedValueOnce({
       ...mockRecord,

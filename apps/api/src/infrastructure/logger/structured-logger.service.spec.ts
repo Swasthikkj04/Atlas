@@ -11,7 +11,11 @@ describe('StructuredLoggerService & Correlation Infrastructure', () => {
 
   describe('1. Structured JSON Log Output', () => {
     it('should format log output as valid structured JSON with standard fields', () => {
-      const logStr = loggerService.formatLog('INFO', 'Test log message', 'TestModule');
+      const logStr = loggerService.formatLog(
+        'INFO',
+        'Test log message',
+        'TestModule',
+      );
       const parsed = JSON.parse(logStr);
 
       expect(parsed).toHaveProperty('timestamp');
@@ -32,7 +36,11 @@ describe('StructuredLoggerService & Correlation Infrastructure', () => {
           startTime: Date.now(),
         },
         () => {
-          const logStr = loggerService.formatLog('INFO', 'User action log', 'UserService');
+          const logStr = loggerService.formatLog(
+            'INFO',
+            'User action log',
+            'UserService',
+          );
           const parsed = JSON.parse(logStr);
 
           expect(parsed.correlationId).toBe('corr_test_123');

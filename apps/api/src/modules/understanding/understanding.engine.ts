@@ -13,9 +13,7 @@ import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
 
 @Injectable()
 export class UnderstandingEngine {
-  private readonly logger = new Logger(
-    UnderstandingEngine.name,
-  );
+  private readonly logger = new Logger(UnderstandingEngine.name);
 
   constructor(
     private readonly discoveryRegistry: DiscoveryRegistryService,
@@ -33,29 +31,23 @@ export class UnderstandingEngine {
     domainName: string,
   ): Promise<void> {
     const startedAt = new Date();
-    const snapshot = await this.collectDiscovery(
-      domainName,
-    );
+    const snapshot = await this.collectDiscovery(domainName);
 
     const latestSnapshot =
-      await this.snapshotService.getLatestByDomain(
-        domainId,
-      );
+      await this.snapshotService.getLatestByDomain(domainId);
 
     if (latestSnapshot && latestSnapshot.payload) {
       const previousDiscovery =
         latestSnapshot.payload as unknown as DiscoverySnapshot;
 
-      const isSame =
-        this.snapshotEqualityEngine.isEqual(
-          previousDiscovery,
-          snapshot,
-        );
+      const isSame = this.snapshotEqualityEngine.isEqual(
+        previousDiscovery,
+        snapshot,
+      );
 
       if (isSame) {
         const completedAt = new Date();
-        const durationMs =
-          completedAt.getTime() - startedAt.getTime();
+        const durationMs = completedAt.getTime() - startedAt.getTime();
 
         await this.verificationService.create({
           domainId,
@@ -76,16 +68,14 @@ export class UnderstandingEngine {
       }
     }
 
-    const savedSnapshot =
-      await this.snapshotService.saveSnapshot(
-        domainId,
-        jobId,
-        snapshot,
-      );
+    const savedSnapshot = await this.snapshotService.saveSnapshot(
+      domainId,
+      jobId,
+      snapshot,
+    );
 
     const completedAt = new Date();
-    const durationMs =
-      completedAt.getTime() - startedAt.getTime();
+    const durationMs = completedAt.getTime() - startedAt.getTime();
 
     await this.verificationService.create({
       domainId,
@@ -104,10 +94,7 @@ export class UnderstandingEngine {
       snapshot,
     };
 
-    const findings =
-      await this.findingRuleEngine.evaluate(
-        context,
-      );
+    const findings = await this.findingRuleEngine.evaluate(context);
 
     if (findings.length > 0) {
       this.logger.debug(
@@ -120,9 +107,7 @@ export class UnderstandingEngine {
       findings,
     );
 
-    await this.infrastructureBriefService.generate(
-      savedSnapshot.id,
-    );
+    await this.infrastructureBriefService.generate(savedSnapshot.id);
 
     this.logger.debug(
       `Generated infrastructure brief for snapshot ${savedSnapshot.id}.`,
@@ -135,8 +120,7 @@ export class UnderstandingEngine {
     const snapshot: DiscoverySnapshot = {};
 
     for (const module of this.discoveryRegistry.getModules()) {
-      snapshot[module.name] =
-        await module.discover(domainName);
+      snapshot[module.name] = await module.discover(domainName);
     }
 
     return snapshot;

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
 import { NormalizationResult } from '../../normalization/contracts/normalization-result.interface';
-import { RuleEvaluationResultPackage, RuleRegistry } from '../registries/rule.registry';
+import {
+  RuleEvaluationResultPackage,
+  RuleRegistry,
+} from '../registries/rule.registry';
 
 @Injectable()
 export class IntelligenceEngineService {

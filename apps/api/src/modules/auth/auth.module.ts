@@ -11,7 +11,9 @@ import { PasswordService } from './services/password.service';
 import { VerificationTokenService } from './services/verification-token.service';
 import { PasswordResetTokenService } from './services/password-reset-token.service';
 import { UserSessionService } from './services/user-session.service';
+import { OAuthAccountService } from './services/oauth-account.service';
 import { GoogleAuthService } from './services/google-auth.service';
+import { OAuthIdentityResolver } from './resolvers/oauth-identity.resolver';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 
@@ -40,6 +42,8 @@ import { GoogleStrategy } from './strategies/google.strategy';
     VerificationTokenService,
     PasswordResetTokenService,
     UserSessionService,
+    OAuthAccountService,
+    OAuthIdentityResolver,
     GoogleAuthService,
   ],
   exports: [
@@ -48,6 +52,8 @@ import { GoogleStrategy } from './strategies/google.strategy';
     VerificationTokenService,
     PasswordResetTokenService,
     UserSessionService,
+    OAuthAccountService,
+    OAuthIdentityResolver,
     GoogleAuthService,
   ],
 })

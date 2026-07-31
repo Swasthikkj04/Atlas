@@ -1,8 +1,8 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { OAuthProvider, UserAccountStatus } from '@prisma/client';
-import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { OAuthProvider } from '@prisma/client';
 import { UserSessionService } from './user-session.service';
+import { OAuthIdentityResolver, OAuthProfile } from '../resolvers/oauth-identity.resolver';
 import { NormalizedGoogleProfile } from '../mappers/google-profile.mapper';
 import { DeviceMetadata } from '../utils/user-agent.parser';
 
@@ -11,7 +11,7 @@ export class GoogleAuthService {
   private readonly logger = new Logger(GoogleAuthService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly identityResolver: OAuthIdentityResolver,
     private readonly sessionService: UserSessionService,
     private readonly jwtService: JwtService,
   ) {}
@@ -19,90 +19,24 @@ export class GoogleAuthService {
   async resolveAndAuthenticateGoogleUser(
     profile: NormalizedGoogleProfile,
     deviceMeta: DeviceMetadata,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
+  ): Promise<{ accessToken: string; refreshToken: string; user: any; event: string }> {
     if (!profile.email || !profile.googleId) {
+      this.logger.error('Google Login Failed: Missing required Google profile claims');
       throw new UnauthorizedException('Invalid Google profile response.');
     }
 
-    const now = new Date();
+    const oauthProfile: OAuthProfile = {
+      provider: OAuthProvider.GOOGLE,
+      providerUserId: profile.googleId,
+      email: profile.email,
+      fullName: profile.fullName,
+      avatarUrl: profile.avatarUrl,
+    };
 
-    // 1. Identity Resolution Case 1: Existing Linked OAuth Account
-    const existingOAuth = await this.prisma.oAuthAccount.findUnique({
-      where: {
-        provider_providerUserId: {
-          provider: OAuthProvider.GOOGLE,
-          providerUserId: profile.googleId,
-        },
-      },
-      include: { user: true },
-    });
+    // 1. Resolve Identity via OAuthIdentityResolver (Cases A-D)
+    const { user, event } = await this.identityResolver.resolveUser(oauthProfile);
 
-    let user;
-
-    if (existingOAuth) {
-      this.logger.log(`Google OAuth Login (Linked Account): ${profile.email}`);
-      user = await this.prisma.user.update({
-        where: { id: existingOAuth.userId },
-        data: {
-          lastLoginAt: now,
-          avatarUrl: profile.avatarUrl || existingOAuth.user.avatarUrl,
-        },
-      });
-    } else {
-      // 2. Identity Resolution Case 2 & 3: Match by Email
-      const existingUser = await this.prisma.user.findUnique({
-        where: { email: profile.email },
-      });
-
-      if (existingUser) {
-        this.logger.log(`Google OAuth Linking Email: ${profile.email}`);
-
-        // Upgrade PENDING_VERIFICATION account to ACTIVE since Google verified ownership
-        user = await this.prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            status: UserAccountStatus.ACTIVE,
-            emailVerifiedAt: existingUser.emailVerifiedAt || now,
-            lastLoginAt: now,
-            avatarUrl: profile.avatarUrl || existingUser.avatarUrl,
-          },
-        });
-
-        // Link OAuthAccount
-        await this.prisma.oAuthAccount.create({
-          data: {
-            userId: user.id,
-            provider: OAuthProvider.GOOGLE,
-            providerUserId: profile.googleId,
-            providerEmail: profile.email,
-          },
-        });
-      } else {
-        // 3. Identity Resolution Case 4: Completely New User
-        this.logger.log(`Google OAuth Provisioning New User: ${profile.email}`);
-
-        user = await this.prisma.user.create({
-          data: {
-            email: profile.email,
-            fullName: profile.fullName,
-            avatarUrl: profile.avatarUrl,
-            status: UserAccountStatus.ACTIVE,
-            emailVerifiedAt: now,
-            lastLoginAt: now,
-            passwordHash: null,
-            oauthAccounts: {
-              create: {
-                provider: OAuthProvider.GOOGLE,
-                providerUserId: profile.googleId,
-                providerEmail: profile.email,
-              },
-            },
-          },
-        });
-      }
-    }
-
-    // 4. Issue Nebula Session & Access JWT via UserSessionService
+    // 2. Issue Stateful Session & Access JWT via UserSessionService
     const iat = Math.floor(Date.now() / 1000);
     const payload = {
       sub: user.id,
@@ -116,6 +50,8 @@ export class GoogleAuthService {
       deviceMeta,
     );
 
+    this.logger.log(`Google OAuth authenticated: User=${user.id} Event=${event}`);
+
     return {
       accessToken,
       refreshToken: rawRefreshToken,
@@ -125,6 +61,7 @@ export class GoogleAuthService {
         fullName: user.fullName,
         avatarUrl: user.avatarUrl,
       },
+      event,
     };
   }
 }

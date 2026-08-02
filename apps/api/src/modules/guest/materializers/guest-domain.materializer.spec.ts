@@ -58,8 +58,12 @@ describe('GuestDomainMaterializer', () => {
   it('should materialize a new customer-owned domain and link understanding', async () => {
     (prisma.domain.findFirst as jest.Mock).mockResolvedValue(null);
     (prisma.domain.create as jest.Mock).mockResolvedValue(mockUserDomain);
-    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(mockJob);
-    (prisma.infrastructureSnapshot.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(
+      mockJob,
+    );
+    (prisma.infrastructureSnapshot.findFirst as jest.Mock).mockResolvedValue(
+      null,
+    );
 
     const result = await materializer.materializeUserDomain(
       'usr-456',

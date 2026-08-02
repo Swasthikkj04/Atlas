@@ -150,7 +150,7 @@ export const Navbar: React.FC = () => {
           </nav>
           <div style={{ height: '1px', backgroundColor: 'rgba(209, 213, 225, 0.6)' }} />
           <a
-            href="#launch"
+            href="/guest"
             onClick={() => setMobileMenuOpen(false)}
             style={{
               backgroundColor: '#090a10',

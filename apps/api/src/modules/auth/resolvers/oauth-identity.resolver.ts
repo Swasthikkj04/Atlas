@@ -13,7 +13,8 @@ export interface OAuthProfile {
 
 export interface ResolutionResult {
   user: User;
-  event: 'GOOGLE_LOGIN_SUCCESS' | 'GOOGLE_ACCOUNT_LINKED' | 'GOOGLE_ACCOUNT_CREATED';
+  event:
+    'GOOGLE_LOGIN_SUCCESS' | 'GOOGLE_ACCOUNT_LINKED' | 'GOOGLE_ACCOUNT_CREATED';
 }
 
 @Injectable()
@@ -61,7 +62,8 @@ export class OAuthIdentityResolver {
     });
 
     if (existingUser) {
-      const isPending = existingUser.status === UserAccountStatus.PENDING_VERIFICATION;
+      const isPending =
+        existingUser.status === UserAccountStatus.PENDING_VERIFICATION;
       const caseName = isPending
         ? 'Case C (Pending Account Upgraded & Linked)'
         : 'Case B (Verified Local Account Linked)';
@@ -91,7 +93,9 @@ export class OAuthIdentityResolver {
     }
 
     // 3. Case D: Completely New User Provisioning
-    this.logger.log(`OAuth Resolution Case D (Provisioning New User): Email=${normalizedEmail}`);
+    this.logger.log(
+      `OAuth Resolution Case D (Provisioning New User): Email=${normalizedEmail}`,
+    );
 
     const user = await this.prisma.user.create({
       data: {

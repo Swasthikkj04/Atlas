@@ -2,7 +2,10 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider } from '@prisma/client';
 import { UserSessionService } from './user-session.service';
-import { OAuthIdentityResolver, OAuthProfile } from '../resolvers/oauth-identity.resolver';
+import {
+  OAuthIdentityResolver,
+  OAuthProfile,
+} from '../resolvers/oauth-identity.resolver';
 import { NormalizedGoogleProfile } from '../mappers/google-profile.mapper';
 import { DeviceMetadata } from '../utils/user-agent.parser';
 
@@ -19,9 +22,16 @@ export class GoogleAuthService {
   async resolveAndAuthenticateGoogleUser(
     profile: NormalizedGoogleProfile,
     deviceMeta: DeviceMetadata,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any; event: string }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+    event: string;
+  }> {
     if (!profile.email || !profile.googleId) {
-      this.logger.error('Google Login Failed: Missing required Google profile claims');
+      this.logger.error(
+        'Google Login Failed: Missing required Google profile claims',
+      );
       throw new UnauthorizedException('Invalid Google profile response.');
     }
 
@@ -34,7 +44,8 @@ export class GoogleAuthService {
     };
 
     // 1. Resolve Identity via OAuthIdentityResolver (Cases A-D)
-    const { user, event } = await this.identityResolver.resolveUser(oauthProfile);
+    const { user, event } =
+      await this.identityResolver.resolveUser(oauthProfile);
 
     // 2. Issue Stateful Session & Access JWT via UserSessionService
     const iat = Math.floor(Date.now() / 1000);
@@ -50,7 +61,9 @@ export class GoogleAuthService {
       deviceMeta,
     );
 
-    this.logger.log(`Google OAuth authenticated: User=${user.id} Event=${event}`);
+    this.logger.log(
+      `Google OAuth authenticated: User=${user.id} Event=${event}`,
+    );
 
     return {
       accessToken,

@@ -37,15 +37,21 @@ export class GuestConversionService {
     const session = await this.sessionService.resumeSession(sessionToken);
 
     if (session.status === GuestSessionStatus.CONVERTED) {
-      throw new BadRequestException('Guest session has already been converted.');
+      throw new BadRequestException(
+        'Guest session has already been converted.',
+      );
     }
 
     if (!session.understandingJobId) {
-      throw new BadRequestException('No understanding job associated with guest session.');
+      throw new BadRequestException(
+        'No understanding job associated with guest session.',
+      );
     }
 
     // Non-blocking analytics tracking
-    void this.analyticsService.trackConversionStarted(session.id).catch(() => null);
+    void this.analyticsService
+      .trackConversionStarted(session.id)
+      .catch(() => null);
 
     // 2. Validate Understanding Job is COMPLETED
     const job = await this.prisma.understandingJob.findUnique({

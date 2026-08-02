@@ -9,9 +9,9 @@ const DEFAULT_LINKS: NavLinkItem[] = [
 
 export const Navbar: React.FC<NavbarProps> = ({
   links = DEFAULT_LINKS,
-  loginHref = '#login',
+  loginHref = '/auth/login',
   ctaText = 'Enter Nebula',
-  ctaHref = '#nebula',
+  ctaHref = '/guest',
 }) => {
   const displayLinks = links && links.length > 0 ? links : DEFAULT_LINKS;
 

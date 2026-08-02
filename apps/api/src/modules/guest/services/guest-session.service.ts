@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { GuestSession, GuestSessionStatus } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { GuestSessionRepository } from '../repositories/guest-session.repository';
@@ -25,7 +29,9 @@ export class GuestSessionService {
     });
 
     // Non-blocking analytics tracking
-    void this.analyticsService.trackSessionCreated(session.id).catch(() => null);
+    void this.analyticsService
+      .trackSessionCreated(session.id)
+      .catch(() => null);
 
     return session;
   }
@@ -37,10 +43,15 @@ export class GuestSessionService {
       throw new NotFoundException('Guest session not found.');
     }
 
-    if (session.status === GuestSessionStatus.EXPIRED || new Date() > session.expiresAt) {
+    if (
+      session.status === GuestSessionStatus.EXPIRED ||
+      new Date() > session.expiresAt
+    ) {
       if (session.status !== GuestSessionStatus.EXPIRED) {
         await this.repository.markExpired(session.id);
-        void this.analyticsService.trackSessionExpired(session.id).catch(() => null);
+        void this.analyticsService
+          .trackSessionExpired(session.id)
+          .catch(() => null);
       }
       throw new UnauthorizedException('Guest session has expired.');
     }
@@ -77,7 +88,9 @@ export class GuestSessionService {
       throw new NotFoundException('Guest session not found.');
     }
     const updated = await this.repository.markExpired(session.id);
-    void this.analyticsService.trackSessionExpired(session.id).catch(() => null);
+    void this.analyticsService
+      .trackSessionExpired(session.id)
+      .catch(() => null);
     return updated;
   }
 

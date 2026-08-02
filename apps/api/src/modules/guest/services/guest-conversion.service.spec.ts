@@ -126,13 +126,22 @@ describe('GuestConversionService', () => {
 
   it('should convert guest session into permanent workspace account', async () => {
     sessionService.resumeSession.mockResolvedValue(mockSession);
-    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(mockCompletedJob);
-    authService.register.mockResolvedValue({ message: 'User registered', user: mockAuthResult.user as any });
+    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(
+      mockCompletedJob,
+    );
+    authService.register.mockResolvedValue({
+      message: 'User registered',
+      user: mockAuthResult.user,
+    });
     authService.login.mockResolvedValue(mockAuthResult);
     materializer.materializeUserDomain.mockResolvedValue({} as any);
 
     const result = await service.convertGuestSession(
-      { fullName: 'Jane Doe', email: 'jane@example.com', password: 'password123' },
+      {
+        fullName: 'Jane Doe',
+        email: 'jane@example.com',
+        password: 'password123',
+      },
       'gst_valid_token',
     );
 

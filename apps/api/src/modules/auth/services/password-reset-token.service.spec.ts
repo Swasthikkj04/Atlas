@@ -36,7 +36,9 @@ describe('PasswordResetTokenService', () => {
   });
 
   it('should issue a reset token and delete prior tokens', async () => {
-    (prisma.passwordResetToken.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.passwordResetToken.deleteMany as jest.Mock).mockResolvedValue({
+      count: 1,
+    });
     (prisma.passwordResetToken.create as jest.Mock).mockResolvedValue({});
 
     const rawToken = await service.issueResetToken('usr-100');
@@ -58,7 +60,9 @@ describe('PasswordResetTokenService', () => {
       createdAt: new Date(),
     };
 
-    (prisma.passwordResetToken.findUnique as jest.Mock).mockResolvedValue(expiredToken);
+    (prisma.passwordResetToken.findUnique as jest.Mock).mockResolvedValue(
+      expiredToken,
+    );
 
     const result = await service.findValidTokenByRaw('raw_token');
     expect(result).toBeNull();

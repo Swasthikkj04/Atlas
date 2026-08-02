@@ -3,7 +3,8 @@ import { IsFQDN, IsNotEmpty } from 'class-validator';
 
 export class GuestUnderstandRequestDto {
   @ApiProperty({
-    description: 'Fully qualified domain name target for guest infrastructure understanding',
+    description:
+      'Fully qualified domain name target for guest infrastructure understanding',
     example: 'github.com',
   })
   @IsNotEmpty()

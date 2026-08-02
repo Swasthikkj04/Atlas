@@ -37,7 +37,9 @@ describe('VerificationTokenService', () => {
   });
 
   it('should issue a new token and invalidate previous user tokens', async () => {
-    (prisma.verificationToken.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.verificationToken.deleteMany as jest.Mock).mockResolvedValue({
+      count: 1,
+    });
     (prisma.verificationToken.create as jest.Mock).mockResolvedValue({});
 
     const rawToken = await service.issueVerificationToken('usr-123');
@@ -65,7 +67,9 @@ describe('VerificationTokenService', () => {
       createdAt: new Date(),
     };
 
-    (prisma.verificationToken.findUnique as jest.Mock).mockResolvedValue(expiredToken);
+    (prisma.verificationToken.findUnique as jest.Mock).mockResolvedValue(
+      expiredToken,
+    );
 
     const result = await service.findValidTokenByRaw('some_raw_token');
     expect(result).toBeNull();

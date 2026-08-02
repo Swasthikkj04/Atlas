@@ -156,7 +156,7 @@ export const FinalManifestoAndFooter: React.FC = () => {
           {/* Final CTA Bridge */}
           <div style={{ marginTop: '3.5rem' }}>
             <a
-              href="#launch"
+              href="/guest"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

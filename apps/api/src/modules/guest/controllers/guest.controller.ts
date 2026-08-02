@@ -51,7 +51,11 @@ export class GuestController {
     );
   }
 
-  @RateLimit({ limit: 60, windowSeconds: 60, name: 'guest_understanding_query' })
+  @RateLimit({
+    limit: 60,
+    windowSeconds: 60,
+    name: 'guest_understanding_query',
+  })
   @Get('understanding/:jobId')
   @ApiOperation({
     summary: 'Get guest understanding progress or result',
@@ -65,7 +69,8 @@ export class GuestController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Guest understanding presentation state retrieved successfully.',
+    description:
+      'Guest understanding presentation state retrieved successfully.',
     type: GuestUnderstandingStatusDto,
   })
   @ApiResponse({
@@ -96,12 +101,14 @@ export class GuestController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Guest session converted into registered user workspace successfully.',
+    description:
+      'Guest session converted into registered user workspace successfully.',
     type: GuestConvertResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Session already converted or understanding incomplete.',
+    description:
+      'Bad Request - Session already converted or understanding incomplete.',
   })
   @ApiResponse({
     status: 401,

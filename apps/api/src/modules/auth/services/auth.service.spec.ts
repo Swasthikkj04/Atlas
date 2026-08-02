@@ -86,7 +86,9 @@ describe('AuthService', () => {
     const mockEmail = {
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
       sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
-      sendPasswordResetConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetConfirmationEmail: jest
+        .fn()
+        .mockResolvedValue(undefined),
     };
 
     const mockPrisma = {
@@ -144,7 +146,10 @@ describe('AuthService', () => {
       mockDeviceMeta,
     );
 
-    expect(sessionService.createSession).toHaveBeenCalledWith('usr-123', mockDeviceMeta);
+    expect(sessionService.createSession).toHaveBeenCalledWith(
+      'usr-123',
+      mockDeviceMeta,
+    );
     expect(result.accessToken).toBe('jwt_token');
     expect(result.refreshToken).toBe('raw_refresh_token_999');
   });
@@ -152,7 +157,9 @@ describe('AuthService', () => {
   it('should rotate refresh token on refresh', async () => {
     const result = await service.refresh('raw_old_refresh_token');
 
-    expect(sessionService.rotateSession).toHaveBeenCalledWith('raw_old_refresh_token');
+    expect(sessionService.rotateSession).toHaveBeenCalledWith(
+      'raw_old_refresh_token',
+    );
     expect(result.accessToken).toBe('jwt_token');
     expect(result.refreshToken).toBe('rotated_refresh_token_111');
   });
@@ -160,7 +167,9 @@ describe('AuthService', () => {
   it('should revoke all sessions on logout-all', async () => {
     const result = await service.logoutAll('usr-123');
 
-    expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith('usr-123');
+    expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith(
+      'usr-123',
+    );
     expect(result.message).toContain('Logged out of all sessions');
   });
 });

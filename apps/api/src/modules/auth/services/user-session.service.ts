@@ -75,19 +75,24 @@ export class UserSessionService {
     // Emergency Revocation Kill-switch Enforcement
     if (
       session.user.tokenInvalidatedAt &&
-      session.createdAt.getTime() < new Date(session.user.tokenInvalidatedAt).getTime()
+      session.createdAt.getTime() <
+        new Date(session.user.tokenInvalidatedAt).getTime()
     ) {
       await this.prisma.userSession.update({
         where: { id: session.id },
         data: { revokedAt: now },
       });
-      throw new UnauthorizedException('Session has been revoked due to security update.');
+      throw new UnauthorizedException(
+        'Session has been revoked due to security update.',
+      );
     }
 
     // Mandatory Refresh Token Rotation
     const newRawRefreshToken = this.generateRawRefreshToken();
     const newHash = this.hashRefreshToken(newRawRefreshToken);
-    const newExpiresAt = new Date(now.getTime() + this.defaultTtlDays * 24 * 60 * 60 * 1000);
+    const newExpiresAt = new Date(
+      now.getTime() + this.defaultTtlDays * 24 * 60 * 60 * 1000,
+    );
 
     const updatedSession = await this.prisma.userSession.update({
       where: { id: session.id },

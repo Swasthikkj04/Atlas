@@ -1,9 +1,4 @@
 export * from './landing';
 export * from './auth';
-export * from './dashboard';
-export * from './domains';
-export * from './findings';
-export * from './timeline';
-export * from './search';
-export * from './workspace';
-export * from './settings';
+export * from './guest';
+

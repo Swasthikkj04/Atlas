@@ -185,7 +185,9 @@ export class AuthService {
     const token = await this.tokenService.findValidTokenByRaw(rawToken);
 
     if (!token) {
-      throw new BadRequestException('Verification link is invalid or has expired.');
+      throw new BadRequestException(
+        'Verification link is invalid or has expired.',
+      );
     }
 
     // Activate Account & Mark Email Verified

@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserAccountStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -74,8 +78,12 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
     }).compile();
 
     sessionService = module.get<UserSessionService>(UserSessionService);
-    verificationTokenService = module.get<VerificationTokenService>(VerificationTokenService);
-    resetTokenService = module.get<PasswordResetTokenService>(PasswordResetTokenService);
+    verificationTokenService = module.get<VerificationTokenService>(
+      VerificationTokenService,
+    );
+    resetTokenService = module.get<PasswordResetTokenService>(
+      PasswordResetTokenService,
+    );
     jwtStrategy = module.get<JwtStrategy>(JwtStrategy);
     prisma = module.get(PrismaService);
     usersService = module.get(UsersService);
@@ -116,9 +124,9 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
       // Once rotated, DB hash changes, so old raw token hash returns null
       (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(sessionService.rotateSession('old_rotated_raw_token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        sessionService.rotateSession('old_rotated_raw_token'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -131,7 +139,8 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
         consumedAt: new Date(), // Already consumed
       });
 
-      const token = await verificationTokenService.findValidTokenByRaw('raw_ver_token');
+      const token =
+        await verificationTokenService.findValidTokenByRaw('raw_ver_token');
       expect(token).toBeNull();
     });
 
@@ -143,7 +152,8 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
         consumedAt: new Date(), // Already consumed
       });
 
-      const token = await resetTokenService.findValidTokenByRaw('raw_rst_token');
+      const token =
+        await resetTokenService.findValidTokenByRaw('raw_rst_token');
       expect(token).toBeNull();
     });
   });
@@ -151,7 +161,9 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
   describe('3. Global Session Revocation (tokenInvalidatedAt)', () => {
     it('Regression: JWT issued BEFORE password reset (tokenInvalidatedAt) must be rejected', async () => {
       const resetTime = new Date('2026-07-31T20:00:00Z');
-      const tokenIssuedTimeSeconds = Math.floor(new Date('2026-07-31T19:55:00Z').getTime() / 1000); // 5m before reset
+      const tokenIssuedTimeSeconds = Math.floor(
+        new Date('2026-07-31T19:55:00Z').getTime() / 1000,
+      ); // 5m before reset
 
       usersService.findById.mockResolvedValue({
         ...mockUser,
@@ -170,7 +182,9 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
     });
 
     it('Regression: Logout-all must invalidate all stateful user sessions', async () => {
-      (prisma.userSession.updateMany as jest.Mock).mockResolvedValue({ count: 5 });
+      (prisma.userSession.updateMany as jest.Mock).mockResolvedValue({
+        count: 5,
+      });
 
       await sessionService.revokeAllUserSessions('usr-security-100');
 
@@ -201,7 +215,9 @@ describe('Security Regression Suite (AUTH-005.5)', () => {
         }),
       } as any;
 
-      expect(() => csrfGuard.canActivate(mockContext)).toThrow(ForbiddenException);
+      expect(() => csrfGuard.canActivate(mockContext)).toThrow(
+        ForbiddenException,
+      );
     });
   });
 });

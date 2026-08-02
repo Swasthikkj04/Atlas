@@ -77,9 +77,15 @@ describe('GuestCleanupService', () => {
   });
 
   it('should clean up expired guest session and temporary infrastructure', async () => {
-    (prisma.guestSession.findMany as jest.Mock).mockResolvedValue([mockExpiredSession]);
-    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(mockJob);
-    (prisma.infrastructureFinding.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.guestSession.findMany as jest.Mock).mockResolvedValue([
+      mockExpiredSession,
+    ]);
+    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(
+      mockJob,
+    );
+    (prisma.infrastructureFinding.deleteMany as jest.Mock).mockResolvedValue({
+      count: 1,
+    });
     (prisma.understandingJob.count as jest.Mock).mockResolvedValue(0);
 
     const summary = await service.cleanupExpiredSessions();
@@ -88,7 +94,9 @@ describe('GuestCleanupService', () => {
     expect(prisma.infrastructureFinding.deleteMany).toHaveBeenCalled();
     expect(prisma.infrastructureSnapshot.delete).toHaveBeenCalled();
     expect(prisma.understandingJob.delete).toHaveBeenCalled();
-    expect(prisma.guestSession.delete).toHaveBeenCalledWith({ where: { id: 'gst-expired-1' } });
+    expect(prisma.guestSession.delete).toHaveBeenCalledWith({
+      where: { id: 'gst-expired-1' },
+    });
     expect(summary.sessionsCleaned).toBe(1);
     expect(summary.jobsCleaned).toBe(1);
   });
@@ -107,15 +115,21 @@ describe('GuestCleanupService', () => {
       ...mockJob,
       domain: { id: 'dom-user', userId: 'usr-authenticated-user-123' },
     };
-    (prisma.guestSession.findMany as jest.Mock).mockResolvedValue([mockExpiredSession]);
-    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(authUserJob);
+    (prisma.guestSession.findMany as jest.Mock).mockResolvedValue([
+      mockExpiredSession,
+    ]);
+    (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(
+      authUserJob,
+    );
 
     const summary = await service.cleanupExpiredSessions();
 
     expect(prisma.infrastructureBrief.delete).not.toHaveBeenCalled();
     expect(prisma.understandingJob.delete).not.toHaveBeenCalled();
     // Session itself is still cleaned up if expired
-    expect(prisma.guestSession.delete).toHaveBeenCalledWith({ where: { id: 'gst-expired-1' } });
+    expect(prisma.guestSession.delete).toHaveBeenCalledWith({
+      where: { id: 'gst-expired-1' },
+    });
     expect(summary.jobsCleaned).toBe(0);
   });
 });

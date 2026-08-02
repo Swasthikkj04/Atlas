@@ -15,7 +15,9 @@ export class GuestCleanupWorker implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly cleanupService: GuestCleanupService) {}
 
   onModuleInit(): void {
-    this.logger.log('Guest Cleanup Worker initialized with 24h retention policy.');
+    this.logger.log(
+      'Guest Cleanup Worker initialized with 24h retention policy.',
+    );
     // Run initial cleanup tick after boot delay, then every 60 minutes
     setTimeout(() => void this.executeCleanup(), 5000);
     this.intervalTimer = setInterval(

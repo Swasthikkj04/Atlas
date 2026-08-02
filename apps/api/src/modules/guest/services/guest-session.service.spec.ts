@@ -102,7 +102,9 @@ describe('GuestSessionService', () => {
     const result = await service.refreshSession('gst_abc123', 48);
 
     expect(repository.refresh).toHaveBeenCalled();
-    expect(result.expiresAt.getTime()).toBeGreaterThan(mockSession.expiresAt.getTime());
+    expect(result.expiresAt.getTime()).toBeGreaterThan(
+      mockSession.expiresAt.getTime(),
+    );
   });
 
   it('should complete active session', async () => {

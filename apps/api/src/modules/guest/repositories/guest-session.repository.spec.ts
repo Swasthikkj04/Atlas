@@ -39,7 +39,9 @@ describe('GuestSessionRepository', () => {
   });
 
   it('should create a guest session', async () => {
-    (prisma.guestSession.create as jest.Mock).mockResolvedValue(mockGuestSession);
+    (prisma.guestSession.create as jest.Mock).mockResolvedValue(
+      mockGuestSession,
+    );
 
     const result = await repository.create({
       sessionToken: 'token-abc-123',
@@ -58,7 +60,9 @@ describe('GuestSessionRepository', () => {
   });
 
   it('should find session by token', async () => {
-    (prisma.guestSession.findUnique as jest.Mock).mockResolvedValue(mockGuestSession);
+    (prisma.guestSession.findUnique as jest.Mock).mockResolvedValue(
+      mockGuestSession,
+    );
 
     const result = await repository.findByToken('token-abc-123');
 
@@ -83,7 +87,10 @@ describe('GuestSessionRepository', () => {
   });
 
   it('should mark session completed', async () => {
-    const completed = { ...mockGuestSession, status: GuestSessionStatus.COMPLETED };
+    const completed = {
+      ...mockGuestSession,
+      status: GuestSessionStatus.COMPLETED,
+    };
     (prisma.guestSession.update as jest.Mock).mockResolvedValue(completed);
 
     const result = await repository.markCompleted('gst-12345');
@@ -92,7 +99,9 @@ describe('GuestSessionRepository', () => {
   });
 
   it('should delete expired sessions', async () => {
-    (prisma.guestSession.deleteMany as jest.Mock).mockResolvedValue({ count: 5 });
+    (prisma.guestSession.deleteMany as jest.Mock).mockResolvedValue({
+      count: 5,
+    });
 
     const deletedCount = await repository.deleteExpired();
 

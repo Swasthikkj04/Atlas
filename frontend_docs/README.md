@@ -1,35 +1,118 @@
-# Nebula Frontend Documentation Foundation
+# Nebula Frontend Documentation
 
-Welcome to the official frontend documentation workspace for Nebula. This directory serves as the single source of truth for all frontend architecture, user experience design, state management, backend integration, and component system specifications.
+## Overview
 
----
+This directory contains the complete frontend architecture and engineering documentation for **Nebula**, Argonion's Infrastructure Intelligence Platform.
 
-## 📚 Documentation Map & Recommended Reading Order
+The purpose of these documents is to define **how the frontend is designed, integrated, and implemented**. They serve as the canonical reference for frontend architecture, user experience, backend integration, authentication flows, engineering standards, and implementation decisions.
 
-| Document ID | File Name | Domain / Purpose | Status |
-| :--- | :--- | :--- | :---: |
-| **README** | `README.md` | Documentation index, sitemap, and reading guide | 🟢 Active |
-| **FE-00** | [`FE-00-Frontend-Architecture.md`](FE-00-Frontend-Architecture.md) | High-level system architecture, philosophy, and boundaries | 🟡 Foundation |
-| **FE-01** | [`FE-01-Development-Environment.md`](FE-01-Development-Environment.md) | Local environment setup, tooling, scripts, and environment variables | 🟡 Foundation |
-| **FE-02** | [`FE-02-Design-Foundation.md`](FE-02-Design-Foundation.md) | User experience principles, design philosophy, and visual aesthetics | 🟡 Foundation |
-| **FE-03** | [`FE-03-Design-System.md`](FE-03-Design-System.md) | Design tokens, typography, component library, and micro-animations | 🟡 Foundation |
-| **FE-04** | [`FE-04-Routing-Architecture.md`](FE-04-Routing-Architecture.md) | Routing structure, layouts, view transitions, and navigation guards | 🟡 Foundation |
-| **FE-05** | [`FE-05-Authentication-Experience.md`](FE-05-Authentication-Experience.md) | Authentication UX (Register, Login, OAuth, Sessions, Password Recovery) | 🟡 Foundation |
-| **FE-06** | [`FE-06-Guest-Experience.md`](FE-06-Guest-Experience.md) | Anonymous guest journey, domain analysis, and conversion workflow | 🟡 Foundation |
-| **FE-07** | [`FE-07-Workspace-Experience.md`](FE-07-Workspace-Experience.md) | Authenticated workspace, dashboard, domain monitoring, and findings | 🟡 Foundation |
-| **FE-08** | [`FE-08-API-Integration.md`](FE-08-API-Integration.md) | Backend HTTP-Only cookie integration, React Query, and error handling | 🟡 Foundation |
-| **FE-09** | [`FE-09-State-Management.md`](FE-09-State-Management.md) | Client-side state architecture, global stores, and local component state | 🟡 Foundation |
-| **FE-10** | [`FE-10-Responsive-Architecture.md`](FE-10-Responsive-Architecture.md) | Responsive layout breakpoints, mobile UX, and viewports | 🟡 Foundation |
-| **FE-11** | [`FE-11-Accessibility.md`](FE-11-Accessibility.md) | Accessibility standards, WCAG compliance, keyboard navigation, and ARIA | 🟡 Foundation |
-| **FE-12** | [`FE-12-Performance.md`](FE-12-Performance.md) | Core Web Vitals, code splitting, asset optimization, and bundle targets | 🟡 Foundation |
-| **FE-13** | [`FE-13-Implementation-Guide.md`](FE-13-Implementation-Guide.md) | Code conventions, file structure, component patterns, and guidelines | 🟡 Foundation |
-| **CHANGELOG** | [`FE-CHANGELOG.md`](FE-CHANGELOG.md) | Revision history and architectural freeze log | 🟢 Active |
+These documents complement the backend documentation and must remain aligned with the frozen backend API contracts.
 
 ---
 
-## 🎯 Documentation Standards
+# Objectives
 
-1. **Architecture-First:** Define structures, state contracts, and interfaces before implementation.
-2. **Experience-Driven:** Prioritize user perception, fluid motion, responsiveness, and dark-mode elegance.
-3. **Backend-Aligned:** Enforce strict alignment with NestJS API contracts, HTTP-only cookie security, and domain events.
-4. **Production-Focused:** Eliminate placeholder designs, speculative features, or mock shortcuts.
+- Define a production-grade frontend architecture.
+- Maintain consistency across the application.
+- Document user experiences instead of implementation details.
+- Ensure seamless integration with the backend platform.
+- Provide a single source of truth for frontend engineering.
+
+---
+
+# Scope
+
+This documentation covers:
+
+- Frontend Architecture
+- Development Environment
+- Design Foundation
+- Design System
+- Routing & Navigation
+- Authentication Experience
+- Guest Experience
+- Workspace Experience
+- Backend API Integration
+- State Management
+- Responsive Design
+- Accessibility
+- Performance
+- Frontend Engineering Standards
+
+---
+
+# Reading Order
+
+Read the documents in the following order:
+
+| Order | Document | Purpose |
+|--------|----------|---------|
+| FE-00 | Frontend Architecture | Overall frontend architecture and guiding principles |
+| FE-01 | Development Environment | Tooling, setup, environment configuration |
+| FE-02 | Design Foundation | Product philosophy, UX principles, visual language |
+| FE-03 | Design System | Design tokens, components, typography, spacing |
+| FE-04 | Routing Architecture | Navigation, layouts, route hierarchy |
+| FE-05 | Authentication Experience | Registration, login, OAuth, sessions, account recovery |
+| FE-06 | Guest Experience | Anonymous user journey and conversion flow |
+| FE-07 | Workspace Experience | Authenticated product experience |
+| FE-08 | API Integration | Backend communication, cookies, authentication, caching |
+| FE-09 | State Management | Client and server state architecture |
+| FE-10 | Responsive Architecture | Desktop, tablet, and mobile behavior |
+| FE-11 | Accessibility | Accessibility standards and requirements |
+| FE-12 | Performance | Performance architecture and optimization guidelines |
+| FE-13 | Implementation Guide | Frontend engineering conventions |
+| FE-CHANGELOG | Changelog | Documentation revision history |
+
+---
+
+# Documentation Principles
+
+Every document should be:
+
+- Architecture-first
+- Experience-driven
+- Backend-aligned
+- Production-focused
+- Concise
+- Version-controlled
+
+Avoid documenting framework-specific implementation details unless they influence architecture or user experience.
+
+---
+
+# Relationship with Backend Documentation
+
+The frontend documentation depends on the backend documentation but does not duplicate it.
+
+Backend documentation defines:
+
+- Product Architecture
+- Database
+- APIs
+- Security
+- Business Rules
+
+Frontend documentation defines:
+
+- User Experience
+- Presentation Layer
+- Frontend Architecture
+- Backend Integration
+- Interaction Patterns
+
+---
+
+# Engineering Principles
+
+- Backend APIs are the single source of truth.
+- Never bypass backend business rules.
+- Authentication is server-managed using HTTP-only cookies.
+- Frontend consumes stable API contracts.
+- User experience must remain consistent across the application.
+- Security, accessibility, responsiveness, and performance are first-class requirements.
+
+---
+
+# Ownership
+
+These documents are maintained alongside the frontend implementation and must evolve with architectural changes. Significant frontend decisions should be reflected in the appropriate document before or alongside implementation.

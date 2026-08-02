@@ -21,13 +21,19 @@ export function parseUserAgent(
 
   let operatingSystem = 'Unknown OS';
   if (ua.includes('Windows')) operatingSystem = 'Windows';
-  else if (ua.includes('Macintosh') || ua.includes('Mac OS')) operatingSystem = 'macOS';
+  else if (ua.includes('Macintosh') || ua.includes('Mac OS'))
+    operatingSystem = 'macOS';
   else if (ua.includes('Linux')) operatingSystem = 'Linux';
   else if (ua.includes('Android')) operatingSystem = 'Android';
-  else if (ua.includes('iPhone') || ua.includes('iPad')) operatingSystem = 'iOS';
+  else if (ua.includes('iPhone') || ua.includes('iPad'))
+    operatingSystem = 'iOS';
 
   let deviceType = 'Desktop';
-  if (ua.includes('Mobile') || ua.includes('Android') || ua.includes('iPhone')) {
+  if (
+    ua.includes('Mobile') ||
+    ua.includes('Android') ||
+    ua.includes('iPhone')
+  ) {
     deviceType = 'Mobile';
   } else if (ua.includes('Tablet') || ua.includes('iPad')) {
     deviceType = 'Tablet';

@@ -156,7 +156,7 @@ export const HeroSignature: React.FC = () => {
       {/* Anchored Primary CTA (5rem spacing above) */}
       <div style={{ marginTop: '5rem' }}>
         <a
-          href="#nebula"
+          href="/guest"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

@@ -102,7 +102,8 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Invalid credentials or email verification pending.',
+    description:
+      'Unauthorized - Invalid credentials or email verification pending.',
     type: ApiErrorResponseDto,
   })
   async login(
@@ -131,7 +132,9 @@ export class AuthController {
     status: 200,
     description: 'CSRF token cookie issued successfully.',
   })
-  getCsrfToken(@Res({ passthrough: true }) res: Response): { csrfToken: string } {
+  getCsrfToken(@Res({ passthrough: true }) res: Response): {
+    csrfToken: string;
+  } {
     const token = setCsrfCookie(res);
     return { csrfToken: token };
   }
@@ -384,7 +387,11 @@ export class AuthController {
     return this.authService.verifyEmail(verifyDto.token);
   }
 
-  @RateLimit({ limit: 3, windowSeconds: 3600, name: 'auth_resend_verification' })
+  @RateLimit({
+    limit: 3,
+    windowSeconds: 3600,
+    name: 'auth_resend_verification',
+  })
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -412,10 +419,12 @@ export class AuthController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Generic success response returned regardless of account existence to prevent email enumeration.',
+    description:
+      'Generic success response returned regardless of account existence to prevent email enumeration.',
     schema: {
       example: {
-        message: 'If an account exists for this email, password reset instructions have been sent.',
+        message:
+          'If an account exists for this email, password reset instructions have been sent.',
       },
     },
   })
@@ -426,7 +435,8 @@ export class AuthController {
   })
   @ApiResponse({
     status: 429,
-    description: 'Too Many Requests - Rate limit exceeded (3 requests per hour).',
+    description:
+      'Too Many Requests - Rate limit exceeded (3 requests per hour).',
     type: ApiErrorResponseDto,
   })
   async forgotPassword(
@@ -448,30 +458,37 @@ export class AuthController {
     description: 'Password reset successfully. All active sessions revoked.',
     schema: {
       example: {
-        message: 'Password has been reset successfully. All active sessions have been revoked. Please log in with your new password.',
+        message:
+          'Password has been reset successfully. All active sessions have been revoked. Please log in with your new password.',
       },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Password reset token is invalid or has expired.',
+    description:
+      'Bad Request - Password reset token is invalid or has expired.',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Account is not active or token has been revoked.',
+    description:
+      'Unauthorized - Account is not active or token has been revoked.',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 429,
-    description: 'Too Many Requests - Rate limit exceeded (5 requests per hour).',
+    description:
+      'Too Many Requests - Rate limit exceeded (5 requests per hour).',
     type: ApiErrorResponseDto,
   })
   async resetPassword(
     @Body() dto: ResetPasswordDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const result = await this.authService.resetPassword(dto.token, dto.password);
+    const result = await this.authService.resetPassword(
+      dto.token,
+      dto.password,
+    );
     clearAuthCookies(res);
     return result;
   }

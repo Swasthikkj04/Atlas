@@ -9,7 +9,7 @@ export const AuthCallbackPage: React.FC = () => {
       try {
         await apiClient.get('/api/v1/auth/me');
         window.location.href = '/dashboard';
-      } catch (err: any) {
+      } catch {
         setError('Authentication failed. Please log in again.');
       }
     }

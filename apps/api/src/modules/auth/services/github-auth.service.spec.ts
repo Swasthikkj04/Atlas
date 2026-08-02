@@ -85,7 +85,10 @@ describe('GitHubAuthService', () => {
       fullName: 'GitHub User',
       avatarUrl: 'https://avatars.githubusercontent.com/u/777',
     });
-    expect(sessionService.createSession).toHaveBeenCalledWith('usr-github-1', mockDeviceMeta);
+    expect(sessionService.createSession).toHaveBeenCalledWith(
+      'usr-github-1',
+      mockDeviceMeta,
+    );
     expect(result.accessToken).toBe('jwt_access_token');
     expect(result.refreshToken).toBe('raw_github_refresh_token');
     expect(result.event).toBe('GITHUB_LOGIN_SUCCESS');
@@ -98,7 +101,10 @@ describe('GitHubAuthService', () => {
     };
 
     await expect(
-      service.resolveAndAuthenticateGitHubUser(unverifiedProfile, mockDeviceMeta),
+      service.resolveAndAuthenticateGitHubUser(
+        unverifiedProfile,
+        mockDeviceMeta,
+      ),
     ).rejects.toThrow(UnauthorizedException);
   });
 
@@ -109,7 +115,10 @@ describe('GitHubAuthService', () => {
     };
 
     await expect(
-      service.resolveAndAuthenticateGitHubUser(missingEmailProfile, mockDeviceMeta),
+      service.resolveAndAuthenticateGitHubUser(
+        missingEmailProfile,
+        mockDeviceMeta,
+      ),
     ).rejects.toThrow(UnauthorizedException);
   });
 });

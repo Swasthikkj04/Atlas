@@ -8,3 +8,5 @@ export * from './Modal';
 export * from './Tooltip';
 export * from './Avatar';
 export * from './Spinner';
+export * from './ThemeToggle';
+export * from './FadeUp';

@@ -94,7 +94,9 @@ describe('GuestUnderstandingService', () => {
     const result = await service.orchestrateGuestUnderstanding('github.com');
 
     expect(sessionService.createSession).toHaveBeenCalled();
-    expect(domainResolver.resolveGuestDomain).toHaveBeenCalledWith('github.com');
+    expect(domainResolver.resolveGuestDomain).toHaveBeenCalledWith(
+      'github.com',
+    );
     expect(understandingRepository.create).toHaveBeenCalledWith({
       domainId: 'dom-999',
       trigger: TriggerType.MANUAL,
@@ -116,7 +118,10 @@ describe('GuestUnderstandingService', () => {
     domainResolver.resolveGuestDomain.mockResolvedValue(mockDomain);
     understandingRepository.findActiveJobByDomain.mockResolvedValue(mockJob);
 
-    const result = await service.orchestrateGuestUnderstanding('github.com', 'gst_token_123');
+    const result = await service.orchestrateGuestUnderstanding(
+      'github.com',
+      'gst_token_123',
+    );
 
     expect(sessionService.resumeSession).toHaveBeenCalledWith('gst_token_123');
     expect(understandingRepository.create).not.toHaveBeenCalled();

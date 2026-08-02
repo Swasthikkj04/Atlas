@@ -19,7 +19,9 @@ export class PasswordResetTokenService {
   async issueResetToken(userId: string): Promise<string> {
     const rawToken = this.generateRawToken();
     const tokenHash = this.hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + this.tokenTtlHours * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.tokenTtlHours * 60 * 60 * 1000,
+    );
 
     // Reissue Policy: Invalidate previous unused reset tokens for user
     await this.prisma.passwordResetToken.deleteMany({

@@ -37,7 +37,9 @@ export class GuestUnderstandingService {
     const domain = await this.domainResolver.resolveGuestDomain(targetDomain);
 
     // 3. Resolve existing active job or trigger a new UnderstandingJob
-    let job = await this.understandingRepository.findActiveJobByDomain(domain.id);
+    let job = await this.understandingRepository.findActiveJobByDomain(
+      domain.id,
+    );
 
     if (!job) {
       job = await this.understandingRepository.create({
@@ -48,11 +50,13 @@ export class GuestUnderstandingService {
 
     // 4. Attach understandingJobId to the GuestSession
     await this.sessionRepository.refresh(session.id, session.expiresAt);
-    await this.sessionRepository.create({
-      sessionToken: session.sessionToken,
-      expiresAt: session.expiresAt,
-      understandingJobId: job.id,
-    }).catch(() => null);
+    await this.sessionRepository
+      .create({
+        sessionToken: session.sessionToken,
+        expiresAt: session.expiresAt,
+        understandingJobId: job.id,
+      })
+      .catch(() => null);
 
     // Non-blocking analytics tracking
     void this.analyticsService

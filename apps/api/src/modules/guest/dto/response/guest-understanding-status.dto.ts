@@ -9,7 +9,9 @@ export class GuestProgressDto {
 }
 
 export class GuestSummaryDto {
-  @ApiProperty({ example: 'github.com operates a high-availability multi-region edge...' })
+  @ApiProperty({
+    example: 'github.com operates a high-availability multi-region edge...',
+  })
   executiveBrief: string;
 
   @ApiProperty({ example: ['Dual-layer CDN', 'HTTP/3 Enabled', 'Strict HSTS'] })
@@ -38,7 +40,8 @@ export class GuestNextActionDto {
 export class GuestUnderstandingStatusDto {
   @ApiProperty({
     example: 'COMPLETED',
-    description: 'Presentation state: PENDING | DISCOVERING | ANALYZING | GENERATING_SUMMARY | COMPLETED | FAILED',
+    description:
+      'Presentation state: PENDING | DISCOVERING | ANALYZING | GENERATING_SUMMARY | COMPLETED | FAILED',
   })
   status: string;
 
@@ -54,7 +57,9 @@ export class GuestUnderstandingStatusDto {
   @ApiPropertyOptional({ type: GuestNextActionDto })
   next?: GuestNextActionDto;
 
-  @ApiPropertyOptional({ example: 'We could not complete infrastructure understanding.' })
+  @ApiPropertyOptional({
+    example: 'We could not complete infrastructure understanding.',
+  })
   message?: string;
 
   @ApiPropertyOptional({ example: true })

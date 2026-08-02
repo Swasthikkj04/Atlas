@@ -102,7 +102,7 @@ export const RightRailNav: React.FC = () => {
 
       {/* Action Link: Launch Nebula */}
       <a
-        href="#launch"
+        href="/guest"
         style={{
           backgroundColor: '#090a10',
           color: '#ffffff',

@@ -1,6 +1,9 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { CsrfGuard } from './csrf.guard';
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../modules/auth/utils/csrf.util';
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
+} from '../../modules/auth/utils/csrf.util';
 
 describe('CsrfGuard', () => {
   let guard: CsrfGuard;

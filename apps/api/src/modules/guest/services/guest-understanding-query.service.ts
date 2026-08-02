@@ -62,7 +62,10 @@ export class GuestUnderstandingQueryService {
       const brief = snapshot?.brief || null;
       const findingsCount = snapshot?.findings?.length || 0;
 
-      return GuestUnderstandingPresenter.toCompletedResponse(brief, findingsCount);
+      return GuestUnderstandingPresenter.toCompletedResponse(
+        brief,
+        findingsCount,
+      );
     }
 
     // PENDING or RUNNING status

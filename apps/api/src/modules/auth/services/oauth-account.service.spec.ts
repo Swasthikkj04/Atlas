@@ -39,9 +39,14 @@ describe('OAuthAccountService', () => {
   });
 
   it('should find OAuth account by provider and providerUserId', async () => {
-    (prisma.oAuthAccount.findUnique as jest.Mock).mockResolvedValue(mockOAuthAccount);
+    (prisma.oAuthAccount.findUnique as jest.Mock).mockResolvedValue(
+      mockOAuthAccount,
+    );
 
-    const result = await service.findAccount(OAuthProvider.GOOGLE, 'google-sub-123');
+    const result = await service.findAccount(
+      OAuthProvider.GOOGLE,
+      'google-sub-123',
+    );
 
     expect(prisma.oAuthAccount.findUnique).toHaveBeenCalledWith({
       where: {
@@ -56,7 +61,9 @@ describe('OAuthAccountService', () => {
   });
 
   it('should create new OAuth account record', async () => {
-    (prisma.oAuthAccount.create as jest.Mock).mockResolvedValue(mockOAuthAccount);
+    (prisma.oAuthAccount.create as jest.Mock).mockResolvedValue(
+      mockOAuthAccount,
+    );
 
     const result = await service.createAccount({
       userId: 'usr-123',

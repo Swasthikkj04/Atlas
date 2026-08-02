@@ -41,9 +41,10 @@ export class GuestDomainMaterializer {
 
     if (sourceJob && sourceJob.infrastructureSnapshot) {
       // Ensure customer domain has an active understanding snapshot copy
-      const existingSnapshot = await this.prisma.infrastructureSnapshot.findFirst({
-        where: { domainId: domain.id },
-      });
+      const existingSnapshot =
+        await this.prisma.infrastructureSnapshot.findFirst({
+          where: { domainId: domain.id },
+        });
 
       if (!existingSnapshot) {
         try {

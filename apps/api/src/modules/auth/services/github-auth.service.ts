@@ -2,7 +2,10 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider } from '@prisma/client';
 import { UserSessionService } from './user-session.service';
-import { OAuthIdentityResolver, OAuthProfile } from '../resolvers/oauth-identity.resolver';
+import {
+  OAuthIdentityResolver,
+  OAuthProfile,
+} from '../resolvers/oauth-identity.resolver';
 import { NormalizedGitHubProfile } from '../mappers/github-profile.mapper';
 import { DeviceMetadata } from '../utils/user-agent.parser';
 
@@ -19,7 +22,12 @@ export class GitHubAuthService {
   async resolveAndAuthenticateGitHubUser(
     profile: NormalizedGitHubProfile,
     deviceMeta: DeviceMetadata,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any; event: string }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+    event: string;
+  }> {
     // AUTH-005.7 Security Rule: Verified email required for automatic account linking
     if (!profile.email || !profile.emailVerified) {
       this.logger.error(
@@ -39,7 +47,8 @@ export class GitHubAuthService {
     };
 
     // 1. Resolve Identity via provider-independent OAuthIdentityResolver (Cases A-D)
-    const { user, event } = await this.identityResolver.resolveUser(oauthProfile);
+    const { user, event } =
+      await this.identityResolver.resolveUser(oauthProfile);
 
     // Map provider event name
     const githubEvent = event.replace('GOOGLE_', 'GITHUB_');
@@ -58,7 +67,9 @@ export class GitHubAuthService {
       deviceMeta,
     );
 
-    this.logger.log(`GitHub OAuth authenticated: User=${user.id} Event=${githubEvent}`);
+    this.logger.log(
+      `GitHub OAuth authenticated: User=${user.id} Event=${githubEvent}`,
+    );
 
     return {
       accessToken,

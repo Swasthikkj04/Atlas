@@ -48,14 +48,22 @@ export class GuestUnderstandingPresenter {
   }
 
   static toCompletedResponse(
-    brief: { summary?: string; highlights?: any; overallHealth?: string } | null,
+    brief: {
+      summary?: string;
+      highlights?: any;
+      overallHealth?: string;
+    } | null,
     findingsCount: number,
   ): GuestUnderstandingStatusDto {
     const highlightsList = Array.isArray(brief?.highlights)
       ? (brief?.highlights as string[])
       : typeof brief?.highlights === 'string'
-      ? [brief.highlights]
-      : ['Multi-region CDN Edge', 'TLS 1.3 Strict HSTS', 'DNS Topology Verified'];
+        ? [brief.highlights]
+        : [
+            'Multi-region CDN Edge',
+            'TLS 1.3 Strict HSTS',
+            'DNS Topology Verified',
+          ];
 
     return {
       status: 'COMPLETED',
@@ -77,7 +85,9 @@ export class GuestUnderstandingPresenter {
     };
   }
 
-  static toFailedResponse(errorMessage?: string | null): GuestUnderstandingStatusDto {
+  static toFailedResponse(
+    errorMessage?: string | null,
+  ): GuestUnderstandingStatusDto {
     return {
       status: 'FAILED',
       message:

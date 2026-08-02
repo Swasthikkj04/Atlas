@@ -23,7 +23,9 @@ export class GuestCleanupService {
     private readonly analyticsService: GuestAnalyticsService,
   ) {}
 
-  async cleanupExpiredSessions(now: Date = new Date()): Promise<CleanupResultSummary> {
+  async cleanupExpiredSessions(
+    now: Date = new Date(),
+  ): Promise<CleanupResultSummary> {
     const summary: CleanupResultSummary = {
       sessionsCleaned: 0,
       jobsCleaned: 0,
@@ -45,11 +47,15 @@ export class GuestCleanupService {
     });
 
     if (expiredSessions.length === 0) {
-      this.logger.debug('Guest cleanup iteration: No expired guest sessions found.');
+      this.logger.debug(
+        'Guest cleanup iteration: No expired guest sessions found.',
+      );
       return summary;
     }
 
-    this.logger.log(`Starting guest cleanup for ${expiredSessions.length} expired sessions...`);
+    this.logger.log(
+      `Starting guest cleanup for ${expiredSessions.length} expired sessions...`,
+    );
 
     // 2. Iterate and purge temporary infrastructure per session with failure isolation
     for (const session of expiredSessions) {
@@ -91,9 +97,10 @@ export class GuestCleanupService {
 
               // Step B: Delete Findings
               try {
-                const findingsResult = await this.prisma.infrastructureFinding.deleteMany({
-                  where: { snapshotId: snapshot.id },
-                });
+                const findingsResult =
+                  await this.prisma.infrastructureFinding.deleteMany({
+                    where: { snapshotId: snapshot.id },
+                  });
                 summary.findingsCleaned += findingsResult.count;
               } catch {
                 // Ignore if already deleted
@@ -143,7 +150,9 @@ export class GuestCleanupService {
         summary.sessionsCleaned++;
 
         // Non-blocking analytics tracking
-        void this.analyticsService.trackSessionCleaned(session.id).catch(() => null);
+        void this.analyticsService
+          .trackSessionCleaned(session.id)
+          .catch(() => null);
       } catch (err: any) {
         this.logger.error(
           `Failed to clean up expired guest session ${session.id}: ${err.message}`,

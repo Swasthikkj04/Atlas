@@ -83,7 +83,10 @@ describe('GoogleAuthService', () => {
       fullName: 'Google User',
       avatarUrl: 'https://lh3.googleusercontent.com/photo.jpg',
     });
-    expect(sessionService.createSession).toHaveBeenCalledWith('usr-google-1', mockDeviceMeta);
+    expect(sessionService.createSession).toHaveBeenCalledWith(
+      'usr-google-1',
+      mockDeviceMeta,
+    );
     expect(result.accessToken).toBe('jwt_access_token');
     expect(result.refreshToken).toBe('raw_google_refresh_token');
   });

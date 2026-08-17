@@ -19,6 +19,15 @@ export class UnderstandingRepository {
     });
   }
 
+  async linkJobToSnapshot(jobId: string, snapshotId: string): Promise<void> {
+    await this.prisma.infrastructureSnapshot.update({
+      where: { id: snapshotId },
+      data: {
+        jobId,
+      },
+    });
+  }
+
   async findActiveJobByDomain(
     domainId: string,
   ): Promise<UnderstandingJob | null> {

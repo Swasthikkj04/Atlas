@@ -181,7 +181,10 @@ export class AuthService {
     return { message: 'Session revoked successfully.' };
   }
 
-  async verifyEmail(rawToken: string): Promise<VerifyEmailResponseDto> {
+  async verifyEmail(
+    rawToken: string,
+    deviceMeta?: DeviceMetadata,
+  ): Promise<VerifyEmailResponseDto> {
     const token = await this.tokenService.findValidTokenByRaw(rawToken);
 
     if (!token) {
@@ -191,7 +194,7 @@ export class AuthService {
     }
 
     // Activate Account & Mark Email Verified
-    await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: token.userId },
       data: {
         status: UserAccountStatus.ACTIVE,
@@ -202,9 +205,31 @@ export class AuthService {
     // Mark Token Consumed
     await this.tokenService.markTokenConsumed(token.id);
 
+    // AUTH-004: Immediately Establish Authenticated Session
+    const iat = Math.floor(Date.now() / 1000);
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      iat,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    const { rawRefreshToken } = await this.sessionService.createSession(
+      user.id,
+      deviceMeta,
+    );
+
     return {
       message: 'Email verified successfully. Your account is now active.',
       status: UserAccountStatus.ACTIVE,
+      accessToken,
+      refreshToken: rawRefreshToken,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+      },
     };
   }
 

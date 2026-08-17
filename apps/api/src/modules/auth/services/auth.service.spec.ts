@@ -93,7 +93,7 @@ describe('AuthService', () => {
 
     const mockPrisma = {
       user: {
-        update: jest.fn().mockResolvedValue({}),
+        update: jest.fn().mockResolvedValue(mockUser),
       },
     };
 
@@ -152,6 +152,40 @@ describe('AuthService', () => {
     );
     expect(result.accessToken).toBe('jwt_token');
     expect(result.refreshToken).toBe('raw_refresh_token_999');
+  });
+
+  it('should verify email, activate account, and immediately establish authenticated session (AUTH-004)', async () => {
+    tokenService.findValidTokenByRaw.mockResolvedValue({
+      id: 'token-123',
+      userId: 'usr-123',
+      tokenHash: 'hash-123',
+      consumedAt: null,
+      expiresAt: new Date(Date.now() + 100000),
+      createdAt: new Date(),
+      user: mockUser,
+    } as any);
+
+    const result = await service.verifyEmail('raw_valid_token', mockDeviceMeta);
+
+    expect(tokenService.markTokenConsumed).toHaveBeenCalledWith('token-123');
+    expect(sessionService.createSession).toHaveBeenCalledWith(
+      'usr-123',
+      mockDeviceMeta,
+    );
+    expect(result.status).toBe(UserAccountStatus.ACTIVE);
+    expect(result.accessToken).toBe('jwt_token');
+    expect(result.refreshToken).toBe('raw_refresh_token_999');
+    expect(result.user?.id).toBe('usr-123');
+    expect(result.user?.fullName).toBe('Test User');
+    expect(result.user?.email).toBe('test@example.com');
+  });
+
+  it('should reject email verification with invalid or expired token', async () => {
+    tokenService.findValidTokenByRaw.mockResolvedValue(null);
+
+    await expect(
+      service.verifyEmail('invalid_token', mockDeviceMeta),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should rotate refresh token on refresh', async () => {

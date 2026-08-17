@@ -1,6 +1,10 @@
 :root {
   /* Raw Primitive Color Scale */
+  --color-bg-base: #030712;
+  --color-bg-primary: #030712;
+
   --color-neutral-0: #ffffff;
+  --color-neutral-950: #030712;
   --color-neutral-900: #08090d;
   --color-neutral-800: #0f1117;
   --color-neutral-700: #161922;
@@ -9,6 +13,10 @@
   --color-neutral-400: #4b5563;
   --color-neutral-300: #9ca3af;
   --color-neutral-100: #f3f4f6;
+
+  --color-accent-violet: #8B5CF6;
+  --color-accent-cyan: #06B6D4;
+  --color-gradient-accent: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
 
   --color-blue-500: #3b82f6;
   --color-blue-500-12: rgba(59, 130, 246, 0.12);

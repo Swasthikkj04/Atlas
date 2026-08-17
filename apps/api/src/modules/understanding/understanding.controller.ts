@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -22,15 +23,19 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../common/interfaces/authenticated-request.interface';
 
 import { UnderstandingService } from './understanding.service';
+import { GuestUnderstandingService } from '../guest/guest-understanding.service';
 
 @ApiTags('Infrastructure Understanding')
-@ApiBearerAuth()
 @Controller()
-@UseGuards(JwtAuthGuard)
 export class UnderstandingController {
-  constructor(private readonly understandingService: UnderstandingService) {}
+  constructor(
+    private readonly understandingService: UnderstandingService,
+    private readonly guestService: GuestUnderstandingService,
+  ) {}
 
   @Post('domains/:domainId/understand')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: 'Trigger infrastructure understanding analysis',
@@ -94,10 +99,20 @@ export class UnderstandingController {
     @Req() request: AuthenticatedRequest,
     @Param('jobId') jobId: string,
   ) {
+    if (jobId.startsWith('gst_job_')) {
+      return this.guestService.getGuestJobStatus(jobId);
+    }
+
+    if (!request.user) {
+      throw new UnauthorizedException('Authentication required.');
+    }
+
     return this.understandingService.findById(request.user.id, jobId);
   }
 
   @Get('domains/:domainId/jobs')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'List understanding jobs for domain',
     description:

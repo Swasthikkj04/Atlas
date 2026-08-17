@@ -18,6 +18,9 @@ export class InfrastructureSnapshotRepository {
       where: {
         id: snapshotId,
       },
+      include: {
+        domain: true,
+      },
     });
   }
 

@@ -78,10 +78,12 @@ export function ThemeToggle({ mode, setMode, className = '' }: ThemeToggleProps)
       className={`
         fixed bottom-5 right-5 z-50
         flex items-center
-        rounded-full border border-border
-        bg-card
-        shadow-[0_1px_4px_rgba(0,0,0,0.07)]
+        rounded-full border border-border/60
+        bg-card/90 backdrop-blur-md
+        shadow-[0_1px_4px_rgba(0,0,0,0.08)]
+        p-0.5
         overflow-hidden
+        transition-colors duration-200
         ${className}
       `}
     >
@@ -95,12 +97,12 @@ export function ThemeToggle({ mode, setMode, className = '' }: ThemeToggleProps)
             aria-label={label}
             aria-pressed={active}
             className={`
-              w-[30px] h-[30px] flex items-center justify-center
-              transition-colors duration-200 focus-ring outline-none
+              w-[28px] h-[28px] flex items-center justify-center rounded-full
+              transition-all duration-200 focus-ring outline-none
               ${
                 active
-                  ? 'text-foreground font-medium'
-                  : 'text-muted-foreground/35 hover:text-muted-foreground'
+                  ? 'bg-foreground/10 text-foreground font-medium'
+                  : 'text-muted-foreground/40 hover:text-muted-foreground'
               }
             `}
           >

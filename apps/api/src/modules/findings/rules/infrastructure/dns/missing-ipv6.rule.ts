@@ -16,7 +16,7 @@ export class MissingIpv6Rule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
-    if (!dns) {
+    if (!dns || !Array.isArray(dns.aaaa)) {
       return [];
     }
 

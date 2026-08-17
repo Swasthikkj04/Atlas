@@ -4,10 +4,13 @@ import { SnapshotDetailDto } from '../dto/snapshot-detail.dto';
 import { SnapshotListDto } from '../dto/snapshot-list.dto';
 
 export class SnapshotMapper {
-  static toDetailDto(snapshot: InfrastructureSnapshot): SnapshotDetailDto {
+  static toDetailDto(
+    snapshot: InfrastructureSnapshot & { domain?: { domainName: string } },
+  ): SnapshotDetailDto {
     return {
       id: snapshot.id,
       domainId: snapshot.domainId,
+      domainName: snapshot.domain?.domainName,
       createdAt: snapshot.createdAt,
       responseTimeMs: snapshot.responseTimeMs,
       httpStatus: snapshot.httpStatus,

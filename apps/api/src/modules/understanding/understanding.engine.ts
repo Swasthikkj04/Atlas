@@ -10,6 +10,7 @@ import { InfrastructureFindingService } from '../infrastructure-findings/service
 import { InfrastructureSnapshotService } from '../infrastructure-snapshots/services/infrastructure-snapshot.service';
 import { InfrastructureVerificationService } from './services/infrastructure-verification.service';
 import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
+import { UnderstandingRepository } from './repositories/understanding.repository';
 
 @Injectable()
 export class UnderstandingEngine {
@@ -23,6 +24,7 @@ export class UnderstandingEngine {
     private readonly infrastructureBriefService: InfrastructureBriefService,
     private readonly snapshotEqualityEngine: SnapshotEqualityEngine,
     private readonly verificationService: InfrastructureVerificationService,
+    private readonly understandingRepository: UnderstandingRepository,
   ) {}
 
   async execute(
@@ -49,6 +51,21 @@ export class UnderstandingEngine {
         const completedAt = new Date();
         const durationMs = completedAt.getTime() - startedAt.getTime();
 
+        // 1. Link the current job to the existing unchanged snapshot so queries return the data
+        await this.understandingRepository.linkJobToSnapshot(
+          jobId,
+          latestSnapshot.id,
+        );
+
+        // 2. Ensure brief exists for latestSnapshot if it was missing
+        const existingBrief = await this.infrastructureBriefService
+          .getBySnapshot(latestSnapshot.id)
+          .catch(() => null);
+
+        if (!existingBrief) {
+          await this.infrastructureBriefService.generate(latestSnapshot.id);
+        }
+
         await this.verificationService.create({
           domainId,
           jobId,
@@ -61,7 +78,7 @@ export class UnderstandingEngine {
         });
 
         this.logger.log(
-          `No infrastructure changes detected for domain ${domainName}. Skipping snapshot creation.`,
+          `No infrastructure changes detected for domain ${domainName}. Linked job ${jobId} to existing snapshot ${latestSnapshot.id}.`,
         );
 
         return;
@@ -117,7 +134,10 @@ export class UnderstandingEngine {
   private async collectDiscovery(
     domainName: string,
   ): Promise<DiscoverySnapshot> {
-    const snapshot: DiscoverySnapshot = {};
+    const snapshot: DiscoverySnapshot = {
+      domainName,
+      domain: domainName,
+    } as any;
 
     for (const module of this.discoveryRegistry.getModules()) {
       snapshot[module.name] = await module.discover(domainName);

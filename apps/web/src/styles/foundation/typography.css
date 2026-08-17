@@ -1,10 +1,22 @@
 :root {
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-display: 'Newsreader', 'Instrument Serif', Georgia, serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* Typographic Hierarchy Tokens */
+  --font-size-h1: 3.25rem; /* 52px */
+  --line-height-h1: 1.1;
+  --fs-heading-h1: 3.25rem;
+  --lh-heading-h1: 1.1;
+
+  --font-size-body: 0.9375rem; /* 15px */
+  --line-height-body: 1.6;
+  --fs-body: 0.9375rem;
+  --lh-body: 1.6;
+
   --fs-eyebrow: 0.75rem;
   --fs-body-sm: 0.875rem;
-  --fs-body: 1rem;
   --fs-heading-s: 1.25rem;
   --fs-heading-m: 1.5rem;
   --fs-heading-l: 2.25rem;
@@ -14,4 +26,26 @@
   --fw-medium: 500;
   --fw-semibold: 600;
   --fw-bold: 700;
+
+  /* Custom Letter Spacing Tokens */
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.035em;
+}
+
+/* ── Typography Utility Classes & Optical Sizing ────────────────────────── */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
 }

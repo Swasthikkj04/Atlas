@@ -17,6 +17,7 @@ describe('UnderstandingEngine', () => {
   let infrastructureBriefService: jest.Mocked<InfrastructureBriefService>;
   let snapshotEqualityEngine: jest.Mocked<SnapshotEqualityEngine>;
   let verificationService: jest.Mocked<InfrastructureVerificationService>;
+  let understandingRepository: jest.Mocked<any>;
 
   const mockSnapshot: DiscoverySnapshot = {
     http: {
@@ -53,6 +54,7 @@ describe('UnderstandingEngine', () => {
 
     infrastructureBriefService = {
       generate: jest.fn().mockResolvedValue(undefined),
+      getBySnapshot: jest.fn().mockResolvedValue({} as any),
     } as unknown as jest.Mocked<InfrastructureBriefService>;
 
     snapshotEqualityEngine = {
@@ -63,6 +65,10 @@ describe('UnderstandingEngine', () => {
       create: jest.fn().mockResolvedValue({} as any),
     } as unknown as jest.Mocked<InfrastructureVerificationService>;
 
+    understandingRepository = {
+      linkJobToSnapshot: jest.fn().mockResolvedValue(undefined),
+    };
+
     engine = new UnderstandingEngine(
       discoveryRegistry,
       snapshotService,
@@ -71,6 +77,7 @@ describe('UnderstandingEngine', () => {
       infrastructureBriefService,
       snapshotEqualityEngine,
       verificationService,
+      understandingRepository,
     );
   });
 

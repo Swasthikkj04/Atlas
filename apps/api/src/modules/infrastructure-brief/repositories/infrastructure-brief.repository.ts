@@ -38,4 +38,11 @@ export class InfrastructureBriefRepository {
       },
     });
   }
+
+  async update(id: string, data: Prisma.InfrastructureBriefUpdateInput) {
+    return this.prisma.infrastructureBrief.update({
+      where: { id },
+      data,
+    });
+  }
 }

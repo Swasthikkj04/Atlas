@@ -16,14 +16,16 @@ export class MissingSpfRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
-    if (!dns) {
+    if (!dns || !Array.isArray(dns.txt)) {
       return [];
     }
 
-    const txtRecords = dns.txt.map((record) => record.join(''));
+    const txtRecords = dns.txt.map((record) =>
+      Array.isArray(record) ? record.join('') : String(record),
+    );
 
     const hasSpf = txtRecords.some((record) =>
-      record.toLowerCase().startsWith('v=spf1'),
+      record.toLowerCase().includes('v=spf1'),
     );
 
     if (hasSpf) {

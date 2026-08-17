@@ -19,3 +19,4 @@ export const LandingPage: React.FC = () => {
 };
 
 LandingPage.displayName = 'LandingPage';
+export default LandingPage;

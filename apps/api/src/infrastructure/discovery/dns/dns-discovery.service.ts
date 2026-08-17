@@ -22,15 +22,43 @@ export class DnsDiscoveryService
   readonly name = 'dns';
 
   async discover(domainName: string): Promise<DnsDiscoveryResult> {
-    const [a, aaaa, mx, ns, cname, txt, dmarc] = await Promise.all([
-      this.safeLookup(() => dns.resolve4(domainName), []),
-      this.safeLookup(() => dns.resolve6(domainName), []),
-      this.safeLookup(() => dns.resolveMx(domainName), []),
-      this.safeLookup(() => dns.resolveNs(domainName), []),
-      this.safeLookup(() => dns.resolveCname(domainName), []),
-      this.safeLookup(() => dns.resolveTxt(domainName), []),
-      this.safeLookup(() => dns.resolveTxt(`_dmarc.${domainName}`), []),
-    ]);
+    const parts = domainName.split('.');
+    const apexDomain =
+      parts.length > 2 ? parts.slice(-2).join('.') : domainName;
+
+    const [a, aaaa, mxInitial, nsInitial, cname, txtInitial, dmarcInitial] =
+      await Promise.all([
+        this.safeLookup(() => dns.resolve4(domainName), []),
+        this.safeLookup(() => dns.resolve6(domainName), []),
+        this.safeLookup(() => dns.resolveMx(domainName), []),
+        this.safeLookup(() => dns.resolveNs(domainName), []),
+        this.safeLookup(() => dns.resolveCname(domainName), []),
+        this.safeLookup(() => dns.resolveTxt(domainName), []),
+        this.safeLookup(() => dns.resolveTxt(`_dmarc.${domainName}`), []),
+      ]);
+
+    let txt = txtInitial;
+    if (txt.length === 0 && apexDomain !== domainName) {
+      txt = await this.safeLookup(() => dns.resolveTxt(apexDomain), []);
+    }
+
+    let dmarc = dmarcInitial;
+    if (dmarc.length === 0 && apexDomain !== domainName) {
+      dmarc = await this.safeLookup(
+        () => dns.resolveTxt(`_dmarc.${apexDomain}`),
+        [],
+      );
+    }
+
+    let mx = mxInitial;
+    if (mx.length === 0 && apexDomain !== domainName) {
+      mx = await this.safeLookup(() => dns.resolveMx(apexDomain), []);
+    }
+
+    let ns = nsInitial;
+    if (ns.length === 0 && apexDomain !== domainName) {
+      ns = await this.safeLookup(() => dns.resolveNs(apexDomain), []);
+    }
 
     return {
       a,

@@ -696,6 +696,8 @@ The status of an Engineering Decision Record reflects its engineering maturity r
 | EDR-020 | Adopt Structured Application Logging | Implemented |
 | EDR-021 | Adopt Type-Safe Backend Engineering Standards | Implemented |
 | EDR-022 | Adopt Sensitive Data Logging Restrictions | Implemented |
+| EDR-023 | Adopt Lineage-Preserving Guest Understanding Claim Bridge | Implemented |
+| EDR-024 | Adopt Immediate Authenticated Session Establishment upon Email Verification | Implemented |
 
 ---
 
@@ -875,6 +877,45 @@ Documentation should remain synchronized with accepted engineering decisions.
 ## Design Summary
 
 Engineering Decision Governance ensures that Atlas evolves predictably while preserving institutional knowledge and architectural consistency.
+
+---
+
+## EDR-023 — Adopt Lineage-Preserving Guest Understanding Claim Bridge
+
+### Context
+Guests explore domain intelligence anonymously on Nebula. Upon deciding to preserve this understanding ("Create Workspace"), the system must securely transfer the guest session's immutable understanding lineage (`Domain`, `UnderstandingJob`, `InfrastructureSnapshot`, `InfrastructureFinding`, `InfrastructureBrief`, `RawEvidence`, `InfrastructureVerification`) to the newly registered or authenticated `User.id` without duplicating records or corrupting the multi-tenant ownership model.
+
+### Decision
+1. Implement canonical `POST /api/v1/guest/claim` endpoint requiring authenticated JWT context.
+2. Transfer domain associations inside an atomic PostgreSQL transaction.
+3. Enforce strict security guards:
+   - **Replay & Cross-Account Defense**: Once marked `CONVERTED`, a guest session cannot be claimed by another user (`403 Forbidden`).
+   - **Idempotency**: Repeated claim calls by the owning user return `200 OK` with existing domain pointers.
+   - **Expiry Enforcement**: Expired sessions reject claims (`400 Bad Request`).
+   - **Lineage Integrity**: Snapshots, raw evidence hashes, and finding timestamps remain strictly immutable.
+4. Bridge frontend guest state via URL query params and resilient browser enclave storage (`sessionStorage.nebula_guest_claim`).
+
+### Status
+Implemented
+
+---
+
+## EDR-024 — Adopt Immediate Authenticated Session Establishment upon Email Verification
+
+### Context
+When a user signs up, the account is created in `PENDING_VERIFICATION` status. Upon clicking the cryptographic activation link in their email, requiring the user to re-enter their credentials on a separate login page introduced unnecessary friction and broke the continuous transition from Guest Understanding → Register → Workspace.
+
+### Decision
+1. Extend `POST /api/v1/auth/verify-email` so that valid token verification:
+   - Validates single-use token and marks it consumed.
+   - Transitions account status from `PENDING_VERIFICATION` to `ACTIVE`.
+   - Immediately creates a stateful session in `UserSessionService`.
+   - Signs and returns the access JWT while attaching secure HTTP-Only cookies (`nebula_access_token`, `nebula_refresh_token`).
+2. Update `VerifyEmailPage.tsx` to automatically hydrate the `useAuth()` application context and execute any pending `checkAndClaimGuestSession()` operation before smoothly routing the authenticated user to `/dashboard` / FMX.
+3. Preserve all security boundaries: single-use token consumption, zero token exposure to React/client storage, HTTP-Only cookies, and strict verification-before-session guarantees.
+
+### Status
+Implemented
 
 ---
 

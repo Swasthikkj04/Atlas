@@ -1,1 +1,1 @@
-// Auth services barrier export layer
+export * from './auth.service';

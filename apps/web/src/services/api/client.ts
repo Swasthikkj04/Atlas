@@ -28,6 +28,14 @@ export class InsufficientSignalError extends ApiError {
   }
 }
 
+function getCsrfCookieValue(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)(?:__Host-)?nebula_csrf_token=([^;]+)/);
+  if (match) return decodeURIComponent(match[1]);
+  const fallback = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  return fallback ? decodeURIComponent(fallback[1]) : null;
+}
+
 export class ApiClient {
   private baseUrl: string;
 
@@ -42,10 +50,15 @@ export class ApiClient {
         credentials: 'include',
       });
       if (!res.ok) {
-        if (res.status === 404 || res.status === 422) {
+        const errData = await res.json().catch(() => null);
+        if (endpoint.startsWith('/api/v1/guest') && (res.status === 404 || res.status === 422)) {
           throw new InsufficientSignalError();
         }
-        throw new ApiError(`API Error ${res.status}: ${res.statusText}`, res.status);
+        throw new ApiError(
+          errData?.message || `API Error ${res.status}: ${res.statusText}`,
+          res.status,
+          errData?.code
+        );
       }
       return res.json() as Promise<T>;
     } catch (err) {
@@ -54,23 +67,33 @@ export class ApiClient {
     }
   }
 
-  async post<T, B = unknown>(endpoint: string, body: B, signal?: AbortSignal): Promise<T> {
+  async post<T, B = unknown>(endpoint: string, body?: B, signal?: AbortSignal): Promise<T> {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      const csrfToken = getCsrfCookieValue();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const res = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
         signal,
         credentials: 'include',
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        if (res.status === 404 || res.status === 422) {
+        if (endpoint.startsWith('/api/v1/guest') && (res.status === 404 || res.status === 422)) {
           throw new InsufficientSignalError();
         }
         throw new ApiError(
           errData?.message || `API Error ${res.status}: ${res.statusText}`,
-          res.status
+          res.status,
+          errData?.code
         );
       }
       return res.json() as Promise<T>;
@@ -82,8 +105,15 @@ export class ApiClient {
 
   async delete<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
     try {
+      const headers: Record<string, string> = {};
+      const csrfToken = getCsrfCookieValue();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const res = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'DELETE',
+        headers,
         signal,
         credentials: 'include',
       });
@@ -91,7 +121,8 @@ export class ApiClient {
         const errData = await res.json().catch(() => null);
         throw new ApiError(
           errData?.message || `API Error ${res.status}: ${res.statusText}`,
-          res.status
+          res.status,
+          errData?.code
         );
       }
       return res.json() as Promise<T>;

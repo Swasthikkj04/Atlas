@@ -2,9 +2,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 9999px;
   font-family: var(--font-sans);
   font-weight: 500;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all var(--transition-smooth);
   border: 1px solid transparent;
@@ -44,6 +47,6 @@
   color: var(--text-primary);
 }
 
-.sm { padding: var(--space-2xs) var(--space-xs); font-size: 0.75rem; }
-.md { padding: var(--space-xs) var(--space-md); font-size: 0.875rem; }
-.lg { padding: var(--space-sm) var(--space-lg); font-size: 1rem; }
+.sm { height: 32px; padding: 0 12px; font-size: 0.75rem; }
+.md { height: 36px; padding: 0 16px; font-size: 0.875rem; }
+.lg { height: 44px; padding: 0 20px; font-size: 1rem; }

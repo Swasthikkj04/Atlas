@@ -16,7 +16,7 @@ export class MissingMxRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
-    if (!dns) {
+    if (!dns || !Array.isArray(dns.mx)) {
       return [];
     }
 

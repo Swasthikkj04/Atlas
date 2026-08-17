@@ -16,12 +16,14 @@ export class MissingDmarcRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const dns = context.snapshot.dns;
 
-    if (!dns) {
+    if (!dns || !Array.isArray(dns.dmarc)) {
       return [];
     }
 
-    const hasDmarc = (dns.dmarc ?? []).some((record) =>
-      record.join('').trim().toLowerCase().startsWith('v=dmarc1'),
+    const hasDmarc = dns.dmarc.some((record) =>
+      Array.isArray(record)
+        ? record.join('').trim().toLowerCase().startsWith('v=dmarc1')
+        : String(record).trim().toLowerCase().startsWith('v=dmarc1'),
     );
 
     if (hasDmarc) {

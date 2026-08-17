@@ -28,6 +28,44 @@ export class SnapshotEqualityEngine {
       return false;
     }
 
+    const prevDmarc = prev.dns?.dmarc
+      ? prev.dns.dmarc
+          .map((r) => (Array.isArray(r) ? r.join('') : String(r)))
+          .sort()
+      : [];
+    const currDmarc = curr.dns?.dmarc
+      ? curr.dns.dmarc
+          .map((r) => (Array.isArray(r) ? r.join('') : String(r)))
+          .sort()
+      : [];
+    if (!this.areArraysEqual(prevDmarc, currDmarc)) {
+      return false;
+    }
+
+    const prevTxt = prev.dns?.txt
+      ? prev.dns.txt
+          .map((r) => (Array.isArray(r) ? r.join('') : String(r)))
+          .sort()
+      : [];
+    const currTxt = curr.dns?.txt
+      ? curr.dns.txt
+          .map((r) => (Array.isArray(r) ? r.join('') : String(r)))
+          .sort()
+      : [];
+    if (!this.areArraysEqual(prevTxt, currTxt)) {
+      return false;
+    }
+
+    const prevMx = prev.dns?.mx
+      ? prev.dns.mx.map((r) => `${r.priority}:${r.exchange}`).sort()
+      : [];
+    const currMx = curr.dns?.mx
+      ? curr.dns.mx.map((r) => `${r.priority}:${r.exchange}`).sort()
+      : [];
+    if (!this.areArraysEqual(prevMx, currMx)) {
+      return false;
+    }
+
     return true;
   }
 

@@ -380,6 +380,7 @@ model RawEvidence {
 model GuestSession {
   id                 String             @id @default(uuid())
   sessionToken       String             @unique
+  domain             String?
   status             GuestSessionStatus @default(ACTIVE)
   understandingJobId String?
   expiresAt          DateTime

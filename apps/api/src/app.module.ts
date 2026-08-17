@@ -20,6 +20,7 @@ import { InfrastructureBriefModule } from './modules/infrastructure-brief/infras
 import { InfrastructureFindingsModule } from './modules/infrastructure-findings/infrastructure-findings.module';
 import { InfrastructureSnapshotsModule } from './modules/infrastructure-snapshots/infrastructure-snapshots.module';
 import { UnderstandingModule } from './modules/understanding/understanding.module';
+import { GuestModule } from './modules/guest/guest.module';
 import { UsersModule } from './modules/users/users.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { TimelineModule } from './modules/timeline/timeline.module';
@@ -27,7 +28,6 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { SearchModule } from './modules/search/search.module';
 import { ExplorerModule } from './modules/explorer/explorer.module';
 import { QueueModule } from './modules/queue/queue.module';
-import { GuestModule } from './modules/guest/guest.module';
 
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -60,6 +60,7 @@ import { validateEnvironment } from './config/env.validation';
     DomainsModule,
     HealthModule,
     UnderstandingModule,
+    GuestModule,
     DiscoveryModule,
     InfrastructureSnapshotsModule,
     InfrastructureFindingsModule,
@@ -72,7 +73,6 @@ import { validateEnvironment } from './config/env.validation';
     SearchModule,
     ExplorerModule,
     QueueModule,
-    GuestModule,
   ],
   providers: [
     {

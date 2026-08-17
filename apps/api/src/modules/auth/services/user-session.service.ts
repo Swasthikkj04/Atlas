@@ -25,7 +25,7 @@ export class UserSessionService {
 
   async createSession(
     userId: string,
-    deviceMeta: DeviceMetadata,
+    deviceMeta?: Partial<DeviceMetadata>,
     ttlDays = this.defaultTtlDays,
   ): Promise<{ session: UserSession; rawRefreshToken: string }> {
     const rawRefreshToken = this.generateRawRefreshToken();
@@ -37,12 +37,12 @@ export class UserSessionService {
       data: {
         userId,
         refreshTokenHash,
-        deviceName: deviceMeta.deviceName,
-        deviceType: deviceMeta.deviceType,
-        browser: deviceMeta.browser,
-        operatingSystem: deviceMeta.operatingSystem,
-        ipAddress: deviceMeta.ipAddress,
-        userAgent: deviceMeta.userAgent,
+        deviceName: deviceMeta?.deviceName || 'Unknown Device',
+        deviceType: deviceMeta?.deviceType || 'Desktop',
+        browser: deviceMeta?.browser || 'Unknown Browser',
+        operatingSystem: deviceMeta?.operatingSystem || 'Unknown OS',
+        ipAddress: deviceMeta?.ipAddress,
+        userAgent: deviceMeta?.userAgent,
         lastActivityAt: now,
         expiresAt,
       },

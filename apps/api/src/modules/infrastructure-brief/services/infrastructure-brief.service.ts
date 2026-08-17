@@ -75,6 +75,16 @@ export class InfrastructureBriefService {
 
     const brief = this.briefBuilder.build(snapshot, findingsResponse.data);
 
+    const existing = await this.repository.findBySnapshot(snapshotId);
+    if (existing) {
+      return this.repository.update(existing.id, {
+        overallHealth: brief.overallHealth,
+        summary: brief.summary,
+        highlights: this.toJson(brief.highlights),
+        recommendations: this.toJson(brief.recommendations),
+      });
+    }
+
     return this.create(
       snapshotId,
       brief.overallHealth,

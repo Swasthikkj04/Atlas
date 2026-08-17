@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 import { DnsModule } from '../../infrastructure/discovery/dns/dns.module';
@@ -21,10 +21,13 @@ import { InfrastructureFindingsModule } from '../infrastructure-findings/infrast
 import { InfrastructureBriefModule } from '../infrastructure-brief/infrastructure-brief.module';
 import { WorkerReliabilityService } from './services/worker-reliability.service';
 
+import { GuestModule } from '../guest/guest.module';
+
 @Module({
   imports: [
     PrismaModule,
     DomainsModule,
+    forwardRef(() => GuestModule),
     DnsModule,
     HttpModule,
     DiscoveryModule,
@@ -46,10 +49,12 @@ import { WorkerReliabilityService } from './services/worker-reliability.service'
   ],
   exports: [
     UnderstandingService,
+    UnderstandingRepository,
     InfrastructureVerificationRepository,
     InfrastructureVerificationService,
     SnapshotEqualityEngine,
     WorkerReliabilityService,
+    UnderstandingEngine,
   ],
 })
 export class UnderstandingModule {}

@@ -22,6 +22,7 @@ export class CsrfGuard implements CanActivate {
     '/api/v1/auth/google',
     '/api/v1/auth/github',
     '/api/v1/auth/csrf',
+    '/api/v1/guest',
   ];
 
   canActivate(context: ExecutionContext): boolean {

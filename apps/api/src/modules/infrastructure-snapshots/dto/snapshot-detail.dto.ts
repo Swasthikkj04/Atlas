@@ -3,6 +3,8 @@ export class SnapshotDetailDto {
 
   domainId: string;
 
+  domainName?: string;
+
   createdAt: Date;
 
   responseTimeMs: number;

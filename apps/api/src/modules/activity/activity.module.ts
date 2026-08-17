@@ -15,6 +15,10 @@ import { ActivityQueryService } from './services/activity-query.service';
     ActivityQueryService,
     ActivityExperienceService,
   ],
-  exports: [ActivityQueryService, ActivityExperienceService],
+  exports: [
+    ActivityRepository,
+    ActivityQueryService,
+    ActivityExperienceService,
+  ],
 })
 export class ActivityModule {}

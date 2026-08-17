@@ -367,13 +367,14 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Verify user email address',
+    summary: 'Verify user email address and establish authenticated session',
     description:
-      'Validates a raw single-use verification token, marks email verified, and transitions account status to ACTIVE.',
+      'Validates a raw single-use verification token, marks email verified, transitions account status to ACTIVE, creates an authenticated session, and sets HTTP-Only security cookies.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Email verified successfully. Account activated.',
+    description:
+      'Email verified successfully. Authenticated session established.',
     type: VerifyEmailResponseDto,
   })
   @ApiResponse({
@@ -383,8 +384,22 @@ export class AuthController {
   })
   async verifyEmail(
     @Body() verifyDto: VerifyEmailDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyEmailResponseDto> {
-    return this.authService.verifyEmail(verifyDto.token);
+    const userAgent = req.headers['user-agent'];
+    const clientIp = req.ip || req.socket.remoteAddress;
+    const deviceMeta = parseUserAgent(userAgent, clientIp);
+
+    const result = await this.authService.verifyEmail(
+      verifyDto.token,
+      deviceMeta,
+    );
+    if (result.accessToken && result.refreshToken) {
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+    }
+
+    return result;
   }
 
   @RateLimit({

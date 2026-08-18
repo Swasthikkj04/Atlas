@@ -1,6 +1,6 @@
 # Guest Feature Module
 
-This module houses the Guest Experience presentation layer adopted from the Presentation Reference Implementation (`apps/SaaS Experience Design for Nebula (1)`).
+This module houses the canonical Guest Experience presentation layer.
 
 ## Directory Structure
 - `components/`: UI components (Header, Hero, UnderstandingStage, ExecutiveBrief, etc.)

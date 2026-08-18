@@ -97,20 +97,19 @@ export class AuthService {
     user: { id: string; email: string },
     deviceMeta?: DeviceMetadata,
   ): Promise<{ accessToken: string; refreshToken: string }> {
+    // AUTH-003 Stateful Session Platform: Create DB Session & Issue Hashed Refresh Token
+    const { session, rawRefreshToken } =
+      await this.sessionService.createSession(user.id, deviceMeta);
+
     const iat = Math.floor(Date.now() / 1000);
     const payload = {
       sub: user.id,
       email: user.email,
+      sessionId: session?.id,
       iat,
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
-
-    // AUTH-003 Stateful Session Platform: Create DB Session & Issue Hashed Refresh Token
-    const { rawRefreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceMeta,
-    );
 
     return {
       accessToken,
@@ -161,13 +160,14 @@ export class AuthService {
     rawRefreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     // AUTH-003 Refresh Token Rotation: Validate, Rotate & Issue New Tokens
-    const { user, newRawRefreshToken } =
+    const { user, session, newRawRefreshToken } =
       await this.sessionService.rotateSession(rawRefreshToken);
 
     const iat = Math.floor(Date.now() / 1000);
     const payload = {
       sub: user.id,
       email: user.email,
+      sessionId: session?.id,
       iat,
     };
 
@@ -398,11 +398,12 @@ export class AuthService {
     const passwordHash = await this.passwordService.hash(newPassword);
 
     // 2. Update Password Hash and Force Instant Session Revocation
+    const now = new Date();
     await this.prisma.user.update({
       where: { id: token.userId },
       data: {
         passwordHash,
-        tokenInvalidatedAt: new Date(),
+        tokenInvalidatedAt: now,
       },
     });
 
@@ -413,7 +414,12 @@ export class AuthService {
     await this.resetTokenService.markTokenConsumed(token.id);
     await this.resetTokenService.invalidateUserTokens(token.userId);
 
-    // 4. Send Security Confirmation Notice (Non-blocking)
+    // 4. Structured Security Log
+    this.logger.log(
+      `[SecurityEvent:PASSWORD_RESET_SUCCESS] userId=${token.userId}`,
+    );
+
+    // 5. Send Security Confirmation Notice (Non-blocking)
     void this.emailService
       .sendPasswordResetConfirmationEmail(token.user.email, token.user.fullName)
       .catch(() => null);

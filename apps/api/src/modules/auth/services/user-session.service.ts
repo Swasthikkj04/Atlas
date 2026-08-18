@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { DeviceMetadata } from '../utils/user-agent.parser';
 
 @Injectable()
 export class UserSessionService {
+  private readonly logger = new Logger(UserSessionService.name);
   readonly defaultTtlDays = 7;
 
   constructor(private readonly prisma: PrismaService) {}
@@ -121,6 +123,9 @@ export class UserSessionService {
         where: { id: session.id },
         data: { revokedAt: new Date() },
       });
+      this.logger.log(
+        `[SecurityEvent:SESSION_REVOKED] sessionId=${session.id} userId=${session.userId}`,
+      );
     }
   }
 
@@ -137,11 +142,15 @@ export class UserSessionService {
       where: { id: sessionId },
       data: { revokedAt: new Date() },
     });
+
+    this.logger.log(
+      `[SecurityEvent:SESSION_REVOKED] sessionId=${sessionId} userId=${userId}`,
+    );
   }
 
   async revokeAllUserSessions(userId: string): Promise<void> {
     const now = new Date();
-    await this.prisma.userSession.updateMany({
+    const result = await this.prisma.userSession.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: now },
     });
@@ -150,6 +159,10 @@ export class UserSessionService {
       where: { id: userId },
       data: { tokenInvalidatedAt: now },
     });
+
+    this.logger.log(
+      `[SecurityEvent:GLOBAL_SESSION_REVOCATION] userId=${userId} sessionsRevoked=${result.count}`,
+    );
   }
 
   async getUserSessions(userId: string): Promise<UserSession[]> {

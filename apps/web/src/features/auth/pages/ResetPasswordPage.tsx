@@ -5,6 +5,7 @@ import { useTheme } from '../../guest/hooks/useTheme';
 import { NetworkBg } from '../components/NetworkBg';
 import { NebulaAuthHeader } from '../components/NebulaAuthHeader';
 import { Field } from '../components/Field';
+import { useAuth } from '../hooks/useAuth';
 import {
   validatePassword,
   validateConfirmPassword,
@@ -14,6 +15,7 @@ import {
 
 export const ResetPasswordPage: React.FC = () => {
   const { theme } = useTheme();
+  const { refetchUser } = useAuth();
   const [token] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -77,6 +79,7 @@ export const ResetPasswordPage: React.FC = () => {
         token,
         password,
       });
+      void refetchUser();
       setResetSuccess(true);
     } catch (err: unknown) {
       const msg =

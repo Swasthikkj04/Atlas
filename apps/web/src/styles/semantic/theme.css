@@ -161,7 +161,8 @@
 
 @theme inline {
   --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-display: "Newsreader", Georgia, serif;
+  --font-display: "Newsreader", "Lora", Georgia, serif;
+  --font-serif: "Lora", "Newsreader", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --color-background: var(--background);

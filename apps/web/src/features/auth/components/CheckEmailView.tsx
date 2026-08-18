@@ -3,9 +3,6 @@ import { Mail, RefreshCw, Loader2, Check } from 'lucide-react';
 import { authService } from '../../../services/auth';
 import { maskEmail } from '../utils/email.util';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export interface CheckEmailViewProps {
   email: string;
   isContextAware?: boolean;
@@ -59,8 +56,7 @@ export const CheckEmailView: React.FC<CheckEmailViewProps> = ({
 
       <h2
         id="check-email-title"
-        style={{ fontFamily: SERIF }}
-        className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+        className="font-serif text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
       >
         Check your<br />
         <em>email.</em>
@@ -70,8 +66,7 @@ export const CheckEmailView: React.FC<CheckEmailViewProps> = ({
         We&apos;ve sent a verification link to
       </p>
       <p
-        style={{ fontFamily: MONO }}
-        className="text-[13px] text-foreground mb-4 font-semibold"
+        className="font-mono text-[13px] text-foreground mb-4 font-semibold"
       >
         {maskEmail(email)}
       </p>
@@ -114,7 +109,7 @@ export const CheckEmailView: React.FC<CheckEmailViewProps> = ({
         </button>
 
         <div className="flex items-center justify-between text-[10.5px] text-muted-foreground pt-1.5">
-          <span style={{ fontFamily: MONO }}>
+          <span className="font-mono">
             Check spam if delayed
           </span>
           {onEditEmail && (

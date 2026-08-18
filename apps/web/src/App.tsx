@@ -9,6 +9,7 @@ import {
   AuthCallbackPage,
 } from './features/auth';
 import { WorkspacePage } from './features/workspace';
+import { resolveAppRoute } from './routes/routes';
 
 const AppRoutes: React.FC = () => {
   const [pathname, setPathname] = useState(() => window.location.pathname);
@@ -44,35 +45,25 @@ const AppRoutes: React.FC = () => {
     };
   }, []);
 
-  if (pathname.startsWith('/auth/callback')) {
-    return <AuthCallbackPage />;
-  }
+  const route = resolveAppRoute(pathname);
 
-  if (
-    pathname === '/create-workspace' ||
-    pathname === '/auth/register' ||
-    pathname === '/register'
-  ) {
-    return <CreateWorkspacePage />;
+  switch (route) {
+    case 'AUTH_CALLBACK':
+      return <AuthCallbackPage />;
+    case 'CREATE_WORKSPACE':
+      return <CreateWorkspacePage />;
+    case 'LOGIN':
+      return <LoginPage />;
+    case 'VERIFY_EMAIL':
+      return <VerifyEmailPage />;
+    case 'GUEST':
+      return <GuestPage />;
+    case 'WORKSPACE':
+      return <WorkspacePage />;
+    case 'LANDING':
+    default:
+      return <LandingPage />;
   }
-
-  if (pathname === '/auth/login' || pathname === '/login') {
-    return <LoginPage />;
-  }
-
-  if (pathname === '/auth/verify-email' || pathname === '/verify-email') {
-    return <VerifyEmailPage />;
-  }
-
-  if (pathname.startsWith('/guest')) {
-    return <GuestPage />;
-  }
-
-  if (pathname.startsWith('/workspace') || pathname.startsWith('/dashboard')) {
-    return <WorkspacePage />;
-  }
-
-  return <LandingPage />;
 };
 
 export const App: React.FC = () => {

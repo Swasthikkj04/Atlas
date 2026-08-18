@@ -16,9 +16,6 @@ import { getGreetingName } from '../auth/utils/name.util';
 import { useTheme } from '../guest/hooks/useTheme';
 import { NetworkBg } from '../auth/components/NetworkBg';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export const WorkspacePage: React.FC = () => {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { theme, setMode } = useTheme();
@@ -42,10 +39,10 @@ export const WorkspacePage: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
           <div className="space-y-1">
-            <p style={{ fontFamily: SERIF }} className="text-xl font-medium text-foreground">
+            <p className="font-serif text-xl font-medium text-foreground">
               Opening Nebula Workspace...
             </p>
-            <p style={{ fontFamily: MONO }} className="text-xs text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               Verifying authenticated session credentials
             </p>
           </div>
@@ -88,8 +85,7 @@ export const WorkspacePage: React.FC = () => {
         <div className="flex items-center gap-3">
           <a
             href="/workspace"
-            style={{ fontFamily: MONO }}
-            className="text-xs tracking-[0.2em] uppercase font-semibold text-foreground hover:opacity-80 transition-opacity flex items-center gap-2"
+            className="font-mono text-xs tracking-[0.2em] uppercase font-semibold text-foreground hover:opacity-80 transition-opacity flex items-center gap-2"
           >
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>ARGONION</span>
@@ -97,8 +93,7 @@ export const WorkspacePage: React.FC = () => {
             <span>NEBULA</span>
           </a>
           <span
-            style={{ fontFamily: MONO }}
-            className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded bg-muted/60 border border-border text-muted-foreground uppercase tracking-wider"
+            className="font-mono hidden sm:inline-block text-[10px] px-2 py-0.5 rounded bg-muted/60 border border-border text-muted-foreground uppercase tracking-wider"
           >
             Workspace
           </span>
@@ -121,7 +116,7 @@ export const WorkspacePage: React.FC = () => {
               <p className="text-xs font-medium leading-none text-foreground">
                 {user?.fullName || 'User'}
               </p>
-              <p style={{ fontFamily: MONO }} className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                 {user?.email}
               </p>
             </div>
@@ -146,16 +141,14 @@ export const WorkspacePage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <span
-                style={{ fontFamily: MONO }}
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
+                className="font-mono text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
                 Infrastructure Intelligence Platform
               </span>
             </div>
             <h1
-              style={{ fontFamily: SERIF }}
-              className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-foreground leading-[1.1]"
+              className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-foreground leading-[1.1]"
             >
               Hi, {greetingName}.<br />
               <em className="text-foreground/90 font-normal italic">
@@ -212,8 +205,7 @@ export const WorkspacePage: React.FC = () => {
               </p>
               <div className="pt-1">
                 <span
-                  style={{ fontFamily: MONO }}
-                  className="text-[10px] text-muted-foreground/80 uppercase tracking-wider"
+                  className="font-mono text-[10px] text-muted-foreground/80 uppercase tracking-wider"
                 >
                   Continuous Monitoring: Active
                 </span>
@@ -231,8 +223,7 @@ export const WorkspacePage: React.FC = () => {
               </p>
               <div className="pt-1">
                 <span
-                  style={{ fontFamily: MONO }}
-                  className="text-[10px] text-muted-foreground/80 uppercase tracking-wider"
+                  className="font-mono text-[10px] text-muted-foreground/80 uppercase tracking-wider"
                 >
                   Zero Unchecked Drift
                 </span>
@@ -250,8 +241,7 @@ export const WorkspacePage: React.FC = () => {
               </p>
               <div className="pt-1">
                 <span
-                  style={{ fontFamily: MONO }}
-                  className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wider"
+                  className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wider"
                 >
                   ● Session Verified
                 </span>
@@ -262,7 +252,7 @@ export const WorkspacePage: React.FC = () => {
 
         {/* Footer info */}
         <div className="pt-12 mt-12 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p style={{ fontFamily: MONO }}>
+          <p className="font-mono">
             Nebula Workspace &bull; Authenticated as {user?.email}
           </p>
           <div className="flex items-center gap-6">

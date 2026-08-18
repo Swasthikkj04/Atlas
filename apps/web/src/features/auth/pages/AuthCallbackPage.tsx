@@ -10,9 +10,6 @@ import {
 } from '../components/UnderstandingContextCard';
 import { getGreetingName } from '../utils/name.util';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export const AuthCallbackPage: React.FC = () => {
   const { theme } = useTheme();
   const { user, refetchUser, checkAndClaimGuestSession } = useAuth();
@@ -23,73 +20,66 @@ export const AuthCallbackPage: React.FC = () => {
 
   // Read guest context from storage if present
   const [context] = useState<GuestUnderstandingContext | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = sessionStorage.getItem('nebula_guest_claim');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.domain) {
-            return {
-              domain: parsed.domain,
-              understandingType: 'Infrastructure Understanding',
-              expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
-            };
-          }
-        }
-      } catch {
-        // ignore
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('nebula_guest_claim');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          domain: parsed.domain || '',
+          understandingType: 'Infrastructure Understanding',
+          expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+        };
       }
+    } catch {
+      // ignore
     }
     return null;
   });
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function handleAuthCallback() {
+    const handleCallback = async () => {
       try {
-        // 1. Refetch current profile to verify session established by OAuth cookie
-        const resolvedUser = await refetchUser();
-        if (!resolvedUser) {
-          throw new Error('Failed to resolve authenticated session from OAuth provider.');
+        // Refetch user identity to hydrate current auth session established by backend callback cookie
+        const authenticatedUser = await refetchUser();
+
+        if (!authenticatedUser) {
+          throw new Error('Failed to retrieve authenticated session profile.');
         }
 
-        // 2. Claim guest understanding if a pending session is held in storage
-        try {
-          const claimResult = await checkAndClaimGuestSession();
-          if (claimResult?.domainName && isMounted) {
-            setClaimedDomain(claimResult.domainName);
-          }
-        } catch (claimErr) {
-          console.error('Non-blocking guest session claim error:', claimErr);
-        }
-
-        if (isMounted) {
-          setStatus('success');
-          const timer = setTimeout(() => {
-            if (isMounted) {
-              window.location.href = '/workspace';
+        // Context-Aware flow: claim guest session if claim record is present
+        if (typeof window !== 'undefined') {
+          const raw = sessionStorage.getItem('nebula_guest_claim');
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed.sessionId || parsed.domain) {
+                await checkAndClaimGuestSession();
+                setClaimedDomain(parsed.domain || 'your domain');
+              }
+            } catch {
+              // ignore
             }
-          }, 1400);
-          return () => clearTimeout(timer);
+          }
         }
+
+        setStatus('success');
+
+        // Automatic redirect to workspace after brief feedback pause
+        setTimeout(() => {
+          window.location.href = '/workspace';
+        }, 1500);
       } catch (err: unknown) {
-        if (isMounted) {
-          setStatus('error');
-          const msg =
-            err instanceof Error
-              ? err.message
-              : 'OAuth authentication failed. Please try signing in again.';
-          setErrorMessage(msg);
-        }
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Authentication verification failed. Please try signing in again.';
+        setErrorMessage(msg);
+        setStatus('error');
       }
-    }
-
-    void handleAuthCallback();
-
-    return () => {
-      isMounted = false;
     };
+
+    handleCallback();
   }, [refetchUser, checkAndClaimGuestSession]);
 
   const greetingName = getGreetingName(user?.fullName);
@@ -105,6 +95,7 @@ export const AuthCallbackPage: React.FC = () => {
         aria-label="OAuth Authentication Callback"
       >
         <div className="w-full max-w-[420px] mx-auto px-6 md:px-0 py-10 md:py-16 relative z-10">
+          {/* Context Card (if claiming guest understanding) */}
           {context && (
             <UnderstandingContextCard context={context} step="verify" />
           )}
@@ -117,15 +108,13 @@ export const AuthCallbackPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <h1
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight"
+                  className="font-serif text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight"
                 >
                   Completing your<br />
                   <em>sign in.</em>
                 </h1>
                 <p
-                  style={{ fontFamily: MONO }}
-                  className="text-xs text-muted-foreground pt-1"
+                  className="font-mono text-xs text-muted-foreground pt-1"
                 >
                   Establishing session and preserving workspace understanding...
                 </p>
@@ -141,8 +130,7 @@ export const AuthCallbackPage: React.FC = () => {
               </div>
 
               <h1
-                style={{ fontFamily: SERIF }}
-                className="text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                className="font-serif text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
               >
                 Authenticated.<br />
                 <em>

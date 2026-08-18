@@ -1,7 +1,5 @@
 import React from 'react';
 
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export interface OAuthButtonsProps {
   onInitiateOAuth?: (provider: 'google' | 'github') => void;
   disabled?: boolean;
@@ -58,8 +56,7 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({
           <div className="w-full border-t border-border" />
         </div>
         <span
-          style={{ fontFamily: MONO }}
-          className="relative bg-background px-3 text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/60"
+          className="font-mono relative bg-background px-3 text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/60"
         >
           or continue with
         </span>

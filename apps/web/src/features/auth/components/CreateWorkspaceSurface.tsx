@@ -17,8 +17,6 @@ import { OAuthButtons } from './OAuthButtons';
 import { RegistrationForm } from './RegistrationForm';
 import { CheckEmailView } from './CheckEmailView';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-
 export interface CreateWorkspaceSurfaceProps {
   domain?: string;
   sessionId?: string;
@@ -172,8 +170,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               <>
                 <h2
                   id="create-workspace-title"
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+                  className="font-serif text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
                 >
                   Your understanding<br />
                   <em>is ready to preserve.</em>
@@ -186,8 +183,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               <>
                 <h2
                   id="create-workspace-title"
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+                  className="font-serif text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
                 >
                   Create your workspace.
                 </h2>
@@ -237,8 +233,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
           <div className="mb-6">
             <h2
               id="create-workspace-title"
-              style={{ fontFamily: SERIF }}
-              className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+              className="font-serif text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
             >
               Welcome back.<br />
               <em>Claim your understanding.</em>

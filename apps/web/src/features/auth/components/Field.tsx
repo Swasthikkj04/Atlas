@@ -1,7 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
 
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export interface FieldProps {
   label: string;
   type?: string;
@@ -34,8 +32,7 @@ export const Field: React.FC<FieldProps> = ({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={id}
-        style={{ fontFamily: MONO }}
-        className="text-[10px] tracking-[0.16em] uppercase font-medium text-muted-foreground"
+        className="font-mono text-[10px] tracking-[0.16em] uppercase font-medium text-muted-foreground"
       >
         {label}
       </label>

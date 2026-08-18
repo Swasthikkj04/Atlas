@@ -2,8 +2,6 @@ import React from 'react';
 import { Globe } from 'lucide-react';
 import { useCountdown } from '../hooks/useCountdown';
 
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export interface GuestUnderstandingContext {
   domain: string;
   understandingType?: string;
@@ -40,8 +38,7 @@ export const UnderstandingContextCard: React.FC<UnderstandingContextCardProps> =
         </div>
         <div className="min-w-0">
           <p
-            style={{ fontFamily: MONO }}
-            className="text-sm font-medium text-foreground leading-tight truncate"
+            className="font-mono text-sm font-medium text-foreground leading-tight truncate"
           >
             {context.domain}
           </p>
@@ -62,8 +59,7 @@ export const UnderstandingContextCard: React.FC<UnderstandingContextCardProps> =
           }`}
         />
         <span
-          style={{ fontFamily: MONO }}
-          className="text-[11px] text-muted-foreground"
+          className="font-mono text-[11px] text-muted-foreground"
         >
           {statusLabel}
         </span>

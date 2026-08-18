@@ -9,8 +9,6 @@ import {
 import { RegistrationForm } from '../components/RegistrationForm';
 import { CheckEmailView } from '../components/CheckEmailView';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-
 export type CreateWorkspaceMode = 'context-aware' | 'direct';
 
 export interface CreateWorkspacePageProps {
@@ -144,8 +142,7 @@ export const CreateWorkspacePage: React.FC<CreateWorkspacePageProps> = ({ mode: 
                 {isContextAware ? (
                   <>
                     <h1
-                      style={{ fontFamily: SERIF }}
-                      className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                      className="font-serif text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
                     >
                       Your understanding<br />
                       <em>is ready to preserve.</em>
@@ -157,8 +154,7 @@ export const CreateWorkspacePage: React.FC<CreateWorkspacePageProps> = ({ mode: 
                 ) : (
                   <>
                     <h1
-                      style={{ fontFamily: SERIF }}
-                      className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                      className="font-serif text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
                     >
                       Create your workspace.
                     </h1>

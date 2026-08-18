@@ -10,8 +10,6 @@ import {
   type RegistrationErrors,
 } from '../utils/validation';
 
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export interface RegistrationFormProps {
   onRegistrationSuccess: (email: string) => void;
   onInitiateOAuth?: (provider: 'google' | 'github') => void;
@@ -209,8 +207,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               />
             </div>
             <span
-              style={{ fontFamily: MONO }}
-              className="text-[10px] text-muted-foreground uppercase tracking-wider"
+              className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider"
             >
               {strength === 'weak'
                 ? 'Needs Strength'

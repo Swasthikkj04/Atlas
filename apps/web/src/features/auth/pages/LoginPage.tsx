@@ -12,8 +12,6 @@ import {
 import { Field } from '../components/Field';
 import { OAuthButtons } from '../components/OAuthButtons';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-
 export const LoginPage: React.FC = () => {
   const { theme } = useTheme();
   const { login, checkAndClaimGuestSession } = useAuth();
@@ -148,8 +146,7 @@ export const LoginPage: React.FC = () => {
 
           <div className="mb-8">
             <h1
-              style={{ fontFamily: SERIF }}
-              className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+              className="font-serif text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
             >
               Welcome back.<br />
               <em>Continue understanding.</em>

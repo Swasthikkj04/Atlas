@@ -21,9 +21,6 @@ import {
 import { getGreetingName } from '../utils/name.util';
 import { maskEmail } from '../utils/email.util';
 
-const SERIF = "'Lora', 'Newsreader', Georgia, serif";
-const MONO = "'JetBrains Mono', 'Courier New', monospace";
-
 export type VerificationState =
   | 'verifying'
   | 'success'
@@ -243,16 +240,14 @@ export const VerifyEmailPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <h1
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight"
+                  className="font-serif text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight"
                 >
                   Verifying your
                   <br />
                   <em>identity.</em>
                 </h1>
                 <p
-                  style={{ fontFamily: MONO }}
-                  className="text-xs text-muted-foreground pt-1"
+                  className="font-mono text-xs text-muted-foreground pt-1"
                 >
                   Validating security token and establishing session...
                 </p>
@@ -272,8 +267,7 @@ export const VerifyEmailPage: React.FC = () => {
               </div>
 
               <h1
-                style={{ fontFamily: SERIF }}
-                className="text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                className="font-serif text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
               >
                 Email verified.
                 <br />
@@ -312,8 +306,7 @@ export const VerifyEmailPage: React.FC = () => {
               </div>
 
               <h1
-                style={{ fontFamily: SERIF }}
-                className="text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                className="font-serif text-[2.3rem] md:text-[2.5rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
               >
                 Email already
                 <br />
@@ -517,8 +510,7 @@ export const VerifyEmailPage: React.FC = () => {
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="mb-6">
                 <h1
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight mb-2"
+                  className="font-serif text-[2.2rem] font-medium text-foreground leading-[1.1] tracking-tight mb-2"
                 >
                   Verify your
                   <br />
@@ -533,8 +525,7 @@ export const VerifyEmailPage: React.FC = () => {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="token-input"
-                  style={{ fontFamily: MONO }}
-                  className="text-[10px] tracking-[0.16em] uppercase font-medium text-muted-foreground"
+                  className="font-mono text-[10px] tracking-[0.16em] uppercase font-medium text-muted-foreground"
                 >
                   Security Token
                 </label>
@@ -545,8 +536,7 @@ export const VerifyEmailPage: React.FC = () => {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Paste token here"
-                  style={{ fontFamily: MONO }}
-                  className="bg-card border border-border text-foreground placeholder:text-muted-foreground/35 rounded-lg px-3.5 py-2.5 text-xs focus:outline-none focus:border-foreground/30"
+                  className="font-mono bg-card border border-border text-foreground placeholder:text-muted-foreground/35 rounded-lg px-3.5 py-2.5 text-xs focus:outline-none focus:border-foreground/30"
                 />
               </div>
 

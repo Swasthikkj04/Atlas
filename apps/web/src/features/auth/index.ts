@@ -13,6 +13,8 @@ export * from './pages/CreateWorkspacePage';
 export * from './pages/LoginPage';
 export * from './pages/VerifyEmailPage';
 export * from './pages/AuthCallbackPage';
+export * from './pages/ForgotPasswordPage';
+export * from './pages/ResetPasswordPage';
 export * from './components/RegistrationForm';
 export * from './components/CheckEmailView';
 export * from './components/CreateWorkspaceSurface';

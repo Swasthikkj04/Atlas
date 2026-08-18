@@ -197,30 +197,40 @@ export const LoginPage: React.FC = () => {
               disabled={submitting}
               required
             />
-            <Field
-              label="Password"
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              disabled={submitting}
-              required
-              suffix={
-                <button
-                  type="button"
-                  onClick={() => setShowPw((v) => !v)}
-                  aria-label={showPw ? 'Hide password' : 'Show password'}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            <div>
+              <Field
+                label="Password"
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={setPassword}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={submitting}
+                required
+                suffix={
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                  >
+                    {showPw ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                }
+              />
+              <div className="flex justify-end mt-1.5">
+                <a
+                  href="/auth/forgot-password"
+                  className="text-[11.5px] font-mono text-muted-foreground hover:text-foreground transition-colors underline focus-visible:ring-2 focus-visible:ring-ring rounded"
                 >
-                  {showPw ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              }
-            />
+                  Forgot password?
+                </a>
+              </div>
+            </div>
 
             <button
               type="submit"

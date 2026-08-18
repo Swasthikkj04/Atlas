@@ -51,6 +51,18 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
       assert.equal(resolveAppRoute('/verify-email'), 'VERIFY_EMAIL');
     });
 
+    it('resolves /auth/forgot-password and /forgot-password to FORGOT_PASSWORD', () => {
+      assert.equal(resolveAppRoute('/auth/forgot-password'), 'FORGOT_PASSWORD');
+      assert.equal(resolveAppRoute('/forgot-password'), 'FORGOT_PASSWORD');
+      assert.equal(resolveAppRoute('/auth/forgot-password/'), 'FORGOT_PASSWORD');
+    });
+
+    it('resolves /auth/reset-password and /reset-password to RESET_PASSWORD', () => {
+      assert.equal(resolveAppRoute('/auth/reset-password'), 'RESET_PASSWORD');
+      assert.equal(resolveAppRoute('/reset-password'), 'RESET_PASSWORD');
+      assert.equal(resolveAppRoute('/auth/reset-password/'), 'RESET_PASSWORD');
+    });
+
     it('resolves /auth/callback to AUTH_CALLBACK', () => {
       assert.equal(resolveAppRoute('/auth/callback'), 'AUTH_CALLBACK');
     });
@@ -83,6 +95,8 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
       assert.equal(ROUTES.AUTH.REGISTER, '/auth/register');
       assert.equal(ROUTES.AUTH.CALLBACK, '/auth/callback');
       assert.equal(ROUTES.AUTH.VERIFY_EMAIL, '/auth/verify-email');
+      assert.equal(ROUTES.AUTH.FORGOT_PASSWORD, '/auth/forgot-password');
+      assert.equal(ROUTES.AUTH.RESET_PASSWORD, '/auth/reset-password');
     });
   });
 });

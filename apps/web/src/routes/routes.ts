@@ -16,6 +16,10 @@ export const ROUTES = {
     CALLBACK: '/auth/callback',
     VERIFY_EMAIL: '/auth/verify-email',
     VERIFY_EMAIL_ALIAS: '/verify-email',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    FORGOT_PASSWORD_ALIAS: '/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    RESET_PASSWORD_ALIAS: '/reset-password',
   },
   WORKSPACE: {
     ROOT: '/workspace',
@@ -30,6 +34,8 @@ export type AppRouteType =
   | 'CREATE_WORKSPACE'
   | 'LOGIN'
   | 'VERIFY_EMAIL'
+  | 'FORGOT_PASSWORD'
+  | 'RESET_PASSWORD'
   | 'GUEST'
   | 'WORKSPACE'
   | 'LANDING';
@@ -40,11 +46,12 @@ export type AppRouteType =
  * Evaluation Order:
  * 1. /auth/callback (OAuth redirect hydration)
  * 2. Specific Create Workspace routes (/workspace/create, /create-workspace, /auth/register, /register)
- * 3. Login routes (/auth/login, /login)
- * 4. Verify Email routes (/auth/verify-email, /verify-email)
- * 5. Guest Experience (/guest)
- * 6. Authenticated Workspace (/workspace, /dashboard)
- * 7. Public Landing fallback (/)
+ * 3. Forgot / Reset Password routes (/auth/forgot-password, /forgot-password, /auth/reset-password, /reset-password)
+ * 4. Login routes (/auth/login, /login)
+ * 5. Verify Email routes (/auth/verify-email, /verify-email)
+ * 6. Guest Experience (/guest)
+ * 7. Authenticated Workspace (/workspace, /dashboard)
+ * 8. Public Landing fallback (/)
  */
 export function resolveAppRoute(rawPathname: string): AppRouteType {
   if (!rawPathname) return 'LANDING';
@@ -72,7 +79,27 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'CREATE_WORKSPACE';
   }
 
-  // 3. Authentication: Login
+  // 3. Authentication: Forgot Password
+  if (
+    pathname === ROUTES.AUTH.FORGOT_PASSWORD ||
+    pathname.startsWith(`${ROUTES.AUTH.FORGOT_PASSWORD}/`) ||
+    pathname === ROUTES.AUTH.FORGOT_PASSWORD_ALIAS ||
+    pathname.startsWith(`${ROUTES.AUTH.FORGOT_PASSWORD_ALIAS}/`)
+  ) {
+    return 'FORGOT_PASSWORD';
+  }
+
+  // 4. Authentication: Reset Password
+  if (
+    pathname === ROUTES.AUTH.RESET_PASSWORD ||
+    pathname.startsWith(`${ROUTES.AUTH.RESET_PASSWORD}/`) ||
+    pathname === ROUTES.AUTH.RESET_PASSWORD_ALIAS ||
+    pathname.startsWith(`${ROUTES.AUTH.RESET_PASSWORD_ALIAS}/`)
+  ) {
+    return 'RESET_PASSWORD';
+  }
+
+  // 5. Authentication: Login
   if (
     pathname === ROUTES.AUTH.LOGIN ||
     pathname === ROUTES.AUTH.LOGIN_ALIAS
@@ -80,7 +107,7 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'LOGIN';
   }
 
-  // 4. Authentication: Verify Email
+  // 6. Authentication: Verify Email
   if (
     pathname === ROUTES.AUTH.VERIFY_EMAIL ||
     pathname.startsWith(`${ROUTES.AUTH.VERIFY_EMAIL}/`) ||

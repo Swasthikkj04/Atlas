@@ -18,6 +18,8 @@ describe('AuthService', () => {
   let tokenService: jest.Mocked<VerificationTokenService>;
   let resetTokenService: jest.Mocked<PasswordResetTokenService>;
   let sessionService: jest.Mocked<UserSessionService>;
+  let emailService: jest.Mocked<EmailService>;
+  let prisma: jest.Mocked<PrismaService>;
 
   const mockUser = {
     id: 'usr-123',
@@ -126,6 +128,8 @@ describe('AuthService', () => {
     tokenService = module.get(VerificationTokenService);
     resetTokenService = module.get(PasswordResetTokenService);
     sessionService = module.get(UserSessionService);
+    emailService = module.get(EmailService);
+    prisma = module.get(PrismaService);
   });
 
   it('should register a new user in PENDING_VERIFICATION status when passwords match', async () => {
@@ -320,5 +324,115 @@ describe('AuthService', () => {
       'usr-123',
     );
     expect(result.message).toContain('Logged out of all sessions');
+  });
+
+  describe('forgotPassword', () => {
+    it('should issue reset token and dispatch email for active user', async () => {
+      usersService.findByEmail.mockResolvedValue(mockUser);
+      resetTokenService.issueResetToken.mockResolvedValue('raw_reset_token_abc');
+
+      const result = await service.forgotPassword('test@example.com');
+
+      expect(usersService.findByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(resetTokenService.issueResetToken).toHaveBeenCalledWith('usr-123');
+      expect(emailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        'raw_reset_token_abc',
+        'Test User',
+      );
+      expect(result.message).toContain('If an account exists for this email');
+    });
+
+    it('should not issue reset token for non-existent user but return generic message (anti-enumeration)', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      const result = await service.forgotPassword('nonexistent@example.com');
+
+      expect(resetTokenService.issueResetToken).not.toHaveBeenCalled();
+      expect(emailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(result.message).toContain('If an account exists for this email');
+    });
+
+    it('should not issue reset token for pending verification user but return generic message (anti-enumeration)', async () => {
+      usersService.findByEmail.mockResolvedValue({
+        ...mockUser,
+        status: UserAccountStatus.PENDING_VERIFICATION,
+      });
+
+      const result = await service.forgotPassword('pending@example.com');
+
+      expect(resetTokenService.issueResetToken).not.toHaveBeenCalled();
+      expect(emailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(result.message).toContain('If an account exists for this email');
+    });
+  });
+
+  describe('resetPassword', () => {
+    const validMockResetToken = {
+      id: 'tok-reset-1',
+      userId: 'usr-123',
+      tokenHash: 'hashed_token',
+      expiresAt: new Date(Date.now() + 3600000),
+      consumedAt: null,
+      createdAt: new Date(),
+      user: mockUser,
+    };
+
+    it('should reset password, hash with Argon2, revoke sessions, and send confirmation notice', async () => {
+      resetTokenService.findValidTokenByRaw.mockResolvedValue(
+        validMockResetToken as any,
+      );
+      passwordService.hash.mockResolvedValue('argon2_new_password_hash');
+
+      const result = await service.resetPassword(
+        'raw_valid_token',
+        'ValidNewPass123!',
+      );
+
+      expect(resetTokenService.findValidTokenByRaw).toHaveBeenCalledWith(
+        'raw_valid_token',
+      );
+      expect(passwordService.hash).toHaveBeenCalledWith('ValidNewPass123!');
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'usr-123' },
+          data: expect.objectContaining({
+            passwordHash: 'argon2_new_password_hash',
+          }),
+        }),
+      );
+      expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith(
+        'usr-123',
+      );
+      expect(resetTokenService.markTokenConsumed).toHaveBeenCalledWith(
+        'tok-reset-1',
+      );
+      expect(resetTokenService.invalidateUserTokens).toHaveBeenCalledWith(
+        'usr-123',
+      );
+      expect(emailService.sendPasswordResetConfirmationEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        'Test User',
+      );
+      expect(result.message).toContain('Password has been reset successfully');
+    });
+
+    it('should reject invalid or expired reset token', async () => {
+      resetTokenService.findValidTokenByRaw.mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword('invalid_token', 'ValidNewPass123!'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject weak password violating canonical policy', async () => {
+      resetTokenService.findValidTokenByRaw.mockResolvedValue(
+        validMockResetToken as any,
+      );
+
+      await expect(
+        service.resetPassword('valid_token', '12345678'),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 });

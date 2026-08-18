@@ -7,6 +7,8 @@ import {
   LoginPage,
   VerifyEmailPage,
   AuthCallbackPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
 } from './features/auth';
 import { WorkspacePage } from './features/workspace';
 import { resolveAppRoute } from './routes/routes';
@@ -52,6 +54,10 @@ const AppRoutes: React.FC = () => {
       return <AuthCallbackPage />;
     case 'CREATE_WORKSPACE':
       return <CreateWorkspacePage />;
+    case 'FORGOT_PASSWORD':
+      return <ForgotPasswordPage />;
+    case 'RESET_PASSWORD':
+      return <ResetPasswordPage />;
     case 'LOGIN':
       return <LoginPage />;
     case 'VERIFY_EMAIL':

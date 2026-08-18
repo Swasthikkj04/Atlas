@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test src/features/auth/utils/validation.spec.ts src/features/auth/utils/email.util.spec.ts",
+    "test": "node --test src/features/auth/utils/validation.spec.ts src/features/auth/utils/email.util.spec.ts src/features/auth/components/registration-core.spec.ts",
     "preview": "vite preview"
   },
   "dependencies": {

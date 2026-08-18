@@ -9,6 +9,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -45,6 +46,7 @@ import { GitHubAuthService } from './services/github-auth.service';
 import { parseUserAgent } from './utils/user-agent.parser';
 import {
   clearAuthCookies,
+  extractRefreshToken,
   REFRESH_COOKIE_NAME,
   setAuthCookies,
 } from './utils/auth-cookie.util';
@@ -112,7 +114,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const userAgent = req.headers['user-agent'];
-    const clientIp = req.ip || req.socket.remoteAddress;
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip ||
+      req.socket.remoteAddress;
     const deviceMeta = parseUserAgent(userAgent, clientIp);
 
     const result = await this.authService.login(loginDto, deviceMeta);
@@ -169,7 +174,10 @@ export class AuthController {
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const googleProfile = req.user as any;
     const userAgent = req.headers['user-agent'];
-    const clientIp = req.ip || req.socket.remoteAddress;
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip ||
+      req.socket.remoteAddress;
     const deviceMeta = parseUserAgent(userAgent, clientIp);
 
     const { accessToken, refreshToken } =
@@ -214,7 +222,10 @@ export class AuthController {
   async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
     const githubProfile = req.user as any;
     const userAgent = req.headers['user-agent'];
-    const clientIp = req.ip || req.socket.remoteAddress;
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip ||
+      req.socket.remoteAddress;
     const deviceMeta = parseUserAgent(userAgent, clientIp);
 
     const { accessToken, refreshToken } =
@@ -251,11 +262,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto?: RefreshTokenDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const token =
-      req.cookies?.[REFRESH_COOKIE_NAME] ||
-      req.cookies?.nebula_refresh_token ||
-      req.cookies?.refresh_token ||
-      dto?.refreshToken;
+    const token = extractRefreshToken(req) || dto?.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('Refresh token is required.');
+    }
 
     const result = await this.authService.refresh(token);
     setAuthCookies(res, result.accessToken, result.refreshToken);
@@ -279,11 +289,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto?: LogoutDto,
   ): Promise<{ message: string }> {
-    const token =
-      req.cookies?.[REFRESH_COOKIE_NAME] ||
-      req.cookies?.nebula_refresh_token ||
-      req.cookies?.refresh_token ||
-      dto?.refreshToken;
+    const token = extractRefreshToken(req) || dto?.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('Refresh token is required.');
+    }
 
     const result = await this.authService.logout(token);
     clearAuthCookies(res);
@@ -382,13 +391,21 @@ export class AuthController {
     description: 'Bad Request - Token is invalid or has expired.',
     type: ApiErrorResponseDto,
   })
+  @RateLimit({
+    limit: 15,
+    windowSeconds: 900,
+    name: 'auth_verify_email',
+  })
   async verifyEmail(
     @Body() verifyDto: VerifyEmailDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyEmailResponseDto> {
     const userAgent = req.headers['user-agent'];
-    const clientIp = req.ip || req.socket.remoteAddress;
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip ||
+      req.socket.remoteAddress;
     const deviceMeta = parseUserAgent(userAgent, clientIp);
 
     const result = await this.authService.verifyEmail(

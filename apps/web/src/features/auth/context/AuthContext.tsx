@@ -1,6 +1,4 @@
 import React, {
-  createContext,
-  useContext,
   useState,
   useEffect,
   useCallback,
@@ -8,6 +6,7 @@ import React, {
 } from 'react';
 import { authService } from '../../../services/auth';
 import { claimGuestSession as apiClaimGuestSession } from '../../../services/api/guest';
+import { AuthContext } from './auth-context';
 import type {
   User,
   LoginCredentials,
@@ -18,7 +17,7 @@ import type {
   ClaimGuestSessionResponse,
 } from '../../../types/auth.types';
 
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export { AuthContext };
 
 export interface AuthProviderProps {
   children: React.ReactNode;
@@ -191,11 +190,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}

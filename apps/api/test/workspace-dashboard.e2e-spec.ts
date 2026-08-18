@@ -62,6 +62,7 @@ describe('Workspace Dashboard Platinum Certification Suite (E2E)', () => {
       await request(app.getHttpServer()).post('/api/v1/auth/register').send({
         email,
         password,
+        confirmPassword: password,
         fullName: 'Dashboard QA Tester',
       });
 

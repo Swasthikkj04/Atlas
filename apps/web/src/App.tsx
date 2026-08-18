@@ -8,6 +8,7 @@ import {
   VerifyEmailPage,
   AuthCallbackPage,
 } from './features/auth';
+import { WorkspacePage } from './features/workspace';
 
 const AppRoutes: React.FC = () => {
   const [pathname, setPathname] = useState(() => window.location.pathname);
@@ -65,6 +66,10 @@ const AppRoutes: React.FC = () => {
 
   if (pathname.startsWith('/guest')) {
     return <GuestPage />;
+  }
+
+  if (pathname.startsWith('/workspace') || pathname.startsWith('/dashboard')) {
+    return <WorkspacePage />;
   }
 
   return <LandingPage />;

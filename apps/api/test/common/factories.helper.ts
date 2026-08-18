@@ -7,9 +7,11 @@ export function randomDomain(prefix: string = 'domain'): string {
 }
 
 export function createUserDto(overrides: Record<string, any> = {}) {
+  const password = overrides.password || 'SuperSecurePassword123!';
   return {
     email: randomEmail('user'),
-    password: 'SuperSecurePassword123!',
+    password,
+    confirmPassword: overrides.confirmPassword ?? password,
     fullName: 'Test User',
     ...overrides,
   };

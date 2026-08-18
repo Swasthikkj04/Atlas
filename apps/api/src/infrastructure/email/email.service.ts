@@ -1,41 +1,129 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EMAIL_PROVIDER } from './providers/email-provider.interface';
+import type { EmailProvider } from './providers/email-provider.interface';
+import { buildVerificationEmailTemplate } from './templates/verification-email.template';
+import { buildPasswordResetEmailTemplate } from './templates/password-reset-email.template';
+import { buildPasswordResetConfirmationTemplate } from './templates/password-reset-confirmation.template';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @Inject(EMAIL_PROVIDER) private readonly emailProvider: EmailProvider,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private getSender(): string {
+    const fromAddress =
+      this.configService.get<string>('EMAIL_FROM') || 'no-reply@argonion.com';
+    const appName = this.configService.get<string>('APP_NAME') || 'Nebula';
+    return `${appName} <${fromAddress}>`;
+  }
+
+  private getReplyTo(): string | undefined {
+    return this.configService.get<string>('REPLY_TO_EMAIL') || undefined;
+  }
+
+  private getAppUrl(): string {
+    return (
+      this.configService.get<string>('APP_URL') ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      'http://localhost:5173'
+    );
+  }
 
   async sendVerificationEmail(
     toEmail: string,
     rawVerificationToken: string,
+    recipientName?: string,
   ): Promise<void> {
-    const baseUrl =
-      this.configService.get<string>('APP_URL') || 'http://localhost:5173';
-    const verificationUrl = `${baseUrl}/verify-email?token=${rawVerificationToken}`;
+    const baseUrl = this.getAppUrl();
+    const verificationUrl = `${baseUrl}/auth/verify-email?token=${rawVerificationToken}`;
 
-    this.logger.log(
-      `[Email Service] Verification email dispatched to ${toEmail}. Verification URL: ${verificationUrl}`,
-    );
+    const { subject, html, text } = buildVerificationEmailTemplate({
+      recipientName,
+      verificationUrl,
+      expiryHours: 24,
+    });
+
+    try {
+      await this.emailProvider.send({
+        to: toEmail,
+        from: this.getSender(),
+        replyTo: this.getReplyTo(),
+        subject,
+        html,
+        text,
+      });
+
+      this.logger.log(`Verification email dispatched to ${toEmail}.`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to deliver verification email to ${toEmail}: ${error?.message || error}`,
+      );
+    }
   }
 
   async sendPasswordResetEmail(
     toEmail: string,
     rawResetToken: string,
+    recipientName?: string,
   ): Promise<void> {
-    const baseUrl =
-      this.configService.get<string>('APP_URL') || 'http://localhost:5173';
-    const resetUrl = `${baseUrl}/reset-password?token=${rawResetToken}`;
+    const baseUrl = this.getAppUrl();
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${rawResetToken}`;
 
-    this.logger.log(
-      `[Email Service] Password reset instructions dispatched to ${toEmail}. Reset URL: ${resetUrl}`,
-    );
+    const { subject, html, text } = buildPasswordResetEmailTemplate({
+      recipientName,
+      resetUrl,
+      expiryHours: 1,
+    });
+
+    try {
+      await this.emailProvider.send({
+        to: toEmail,
+        from: this.getSender(),
+        replyTo: this.getReplyTo(),
+        subject,
+        html,
+        text,
+      });
+
+      this.logger.log(`Password reset email dispatched to ${toEmail}.`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to deliver password reset email to ${toEmail}: ${error?.message || error}`,
+      );
+    }
   }
 
-  async sendPasswordResetConfirmationEmail(toEmail: string): Promise<void> {
-    this.logger.log(
-      `[Email Service] Password reset confirmation security notice sent to ${toEmail}.`,
-    );
+  async sendPasswordResetConfirmationEmail(
+    toEmail: string,
+    recipientName?: string,
+  ): Promise<void> {
+    const { subject, html, text } = buildPasswordResetConfirmationTemplate({
+      recipientName,
+      timestamp: new Date().toUTCString(),
+    });
+
+    try {
+      await this.emailProvider.send({
+        to: toEmail,
+        from: this.getSender(),
+        replyTo: this.getReplyTo(),
+        subject,
+        html,
+        text,
+      });
+
+      this.logger.log(
+        `Password reset confirmation notice dispatched to ${toEmail}.`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to deliver password reset confirmation to ${toEmail}: ${error?.message || error}`,
+      );
+    }
   }
 }

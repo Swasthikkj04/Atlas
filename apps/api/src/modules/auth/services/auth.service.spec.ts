@@ -57,6 +57,7 @@ describe('AuthService', () => {
     const mockTokenSvc = {
       issueVerificationToken: jest.fn().mockResolvedValue('raw_token_123'),
       findValidTokenByRaw: jest.fn(),
+      hashToken: jest.fn().mockReturnValue('mock_sha256_hash'),
       markTokenConsumed: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -95,6 +96,14 @@ describe('AuthService', () => {
       user: {
         update: jest.fn().mockResolvedValue(mockUser),
       },
+      verificationToken: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        deleteMany: jest.fn(),
+      },
+      $transaction: jest.fn().mockImplementation(async (callback) => {
+        return callback(mockPrisma);
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -119,7 +128,7 @@ describe('AuthService', () => {
     sessionService = module.get(UserSessionService);
   });
 
-  it('should register a new user in PENDING_VERIFICATION status', async () => {
+  it('should register a new user in PENDING_VERIFICATION status when passwords match', async () => {
     usersService.findByEmail.mockResolvedValue(null);
     passwordService.hash.mockResolvedValue('hashed_pw');
     usersService.create.mockResolvedValue({
@@ -130,11 +139,56 @@ describe('AuthService', () => {
     const result = await service.register({
       fullName: 'Test User',
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Nebula#2026!Atlas',
+      confirmPassword: 'Nebula#2026!Atlas',
     });
 
+    expect(passwordService.hash).toHaveBeenCalledWith('Nebula#2026!Atlas');
+    expect(usersService.create).toHaveBeenCalledWith({
+      fullName: 'Test User',
+      email: 'test@example.com',
+      passwordHash: 'hashed_pw',
+    });
     expect(tokenService.issueVerificationToken).toHaveBeenCalledWith('usr-123');
     expect(result.message).toContain('Please check your email');
+  });
+
+  it('should reject registration when password violates canonical password policy', async () => {
+    await expect(
+      service.register({
+        fullName: 'Test User',
+        email: 'test@example.com',
+        password: '12345678',
+        confirmPassword: '12345678',
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should reject registration with BadRequestException when passwords do not match', async () => {
+    await expect(
+      service.register({
+        fullName: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        confirmPassword: 'differentPassword456',
+      }),
+    ).rejects.toThrow(new BadRequestException('Passwords do not match.'));
+
+    expect(usersService.findByEmail).not.toHaveBeenCalled();
+    expect(passwordService.hash).not.toHaveBeenCalled();
+    expect(usersService.create).not.toHaveBeenCalled();
+    expect(tokenService.issueVerificationToken).not.toHaveBeenCalled();
+  });
+
+  it('should establish canonical stateful session and sign access JWT', async () => {
+    const session = await service.establishSession(mockUser, mockDeviceMeta);
+
+    expect(sessionService.createSession).toHaveBeenCalledWith(
+      'usr-123',
+      mockDeviceMeta,
+    );
+    expect(session.accessToken).toBe('jwt_token');
+    expect(session.refreshToken).toBe('raw_refresh_token_999');
   });
 
   it('should allow login for ACTIVE verified users and issue stateful session token', async () => {
@@ -155,24 +209,24 @@ describe('AuthService', () => {
   });
 
   it('should verify email, activate account, and immediately establish authenticated session (AUTH-004)', async () => {
-    tokenService.findValidTokenByRaw.mockResolvedValue({
+    (service as any).prisma.verificationToken.findUnique.mockResolvedValue({
       id: 'token-123',
       userId: 'usr-123',
-      tokenHash: 'hash-123',
+      tokenHash: 'mock_sha256_hash',
       consumedAt: null,
       expiresAt: new Date(Date.now() + 100000),
       createdAt: new Date(),
-      user: mockUser,
-    } as any);
+      user: { ...mockUser, status: UserAccountStatus.PENDING_VERIFICATION },
+    });
 
     const result = await service.verifyEmail('raw_valid_token', mockDeviceMeta);
 
-    expect(tokenService.markTokenConsumed).toHaveBeenCalledWith('token-123');
     expect(sessionService.createSession).toHaveBeenCalledWith(
       'usr-123',
       mockDeviceMeta,
     );
     expect(result.status).toBe(UserAccountStatus.ACTIVE);
+    expect(result.alreadyVerified).toBe(false);
     expect(result.accessToken).toBe('jwt_token');
     expect(result.refreshToken).toBe('raw_refresh_token_999');
     expect(result.user?.id).toBe('usr-123');
@@ -180,12 +234,73 @@ describe('AuthService', () => {
     expect(result.user?.email).toBe('test@example.com');
   });
 
-  it('should reject email verification with invalid or expired token', async () => {
-    tokenService.findValidTokenByRaw.mockResolvedValue(null);
+  it('should handle already-verified active accounts gracefully without error', async () => {
+    (service as any).prisma.verificationToken.findUnique.mockResolvedValue({
+      id: 'token-123',
+      userId: 'usr-123',
+      tokenHash: 'mock_sha256_hash',
+      consumedAt: new Date(),
+      expiresAt: new Date(Date.now() + 100000),
+      createdAt: new Date(),
+      user: { ...mockUser, status: UserAccountStatus.ACTIVE },
+    });
+
+    const result = await service.verifyEmail('raw_valid_token', mockDeviceMeta);
+
+    expect(result.status).toBe(UserAccountStatus.ACTIVE);
+    expect(result.alreadyVerified).toBe(true);
+    expect(result.message).toBe('Your email is already verified.');
+  });
+
+  it('should reject email verification when token is expired', async () => {
+    (service as any).prisma.verificationToken.findUnique.mockResolvedValue({
+      id: 'token-123',
+      userId: 'usr-123',
+      tokenHash: 'mock_sha256_hash',
+      consumedAt: null,
+      expiresAt: new Date(Date.now() - 100000), // Expired
+      createdAt: new Date(),
+      user: { ...mockUser, status: UserAccountStatus.PENDING_VERIFICATION },
+    });
+
+    await expect(
+      service.verifyEmail('expired_token', mockDeviceMeta),
+    ).rejects.toThrow('This verification link has expired.');
+  });
+
+  it('should reject email verification with unknown or invalid token', async () => {
+    (service as any).prisma.verificationToken.findUnique.mockResolvedValue(null);
 
     await expect(
       service.verifyEmail('invalid_token', mockDeviceMeta),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toThrow('This verification link is no longer valid.');
+  });
+
+  it('should reject email verification with empty or malformed token', async () => {
+    await expect(
+      service.verifyEmail('', mockDeviceMeta),
+    ).rejects.toThrow('This verification link is no longer valid.');
+  });
+
+  it('should resend verification email for pending user and issue new token', async () => {
+    usersService.findByEmail.mockResolvedValue({
+      ...mockUser,
+      status: UserAccountStatus.PENDING_VERIFICATION,
+    });
+
+    const result = await service.resendVerification('test@example.com');
+
+    expect(tokenService.issueVerificationToken).toHaveBeenCalledWith('usr-123');
+    expect(result.message).toContain('If a pending account exists');
+  });
+
+  it('should return anti-enumeration generic message for non-existent user on resend', async () => {
+    usersService.findByEmail.mockResolvedValue(null);
+
+    const result = await service.resendVerification('unknown@example.com');
+
+    expect(tokenService.issueVerificationToken).not.toHaveBeenCalled();
+    expect(result.message).toContain('If a pending account exists');
   });
 
   it('should rotate refresh token on refresh', async () => {

@@ -68,17 +68,19 @@ export const AuthCallbackPage: React.FC = () => {
           setStatus('success');
           const timer = setTimeout(() => {
             if (isMounted) {
-              window.location.href = '/dashboard';
+              window.location.href = '/workspace';
             }
           }, 1400);
           return () => clearTimeout(timer);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
           setStatus('error');
-          setErrorMessage(
-            err?.message || 'OAuth authentication failed. Please try signing in again.'
-          );
+          const msg =
+            err instanceof Error
+              ? err.message
+              : 'OAuth authentication failed. Please try signing in again.';
+          setErrorMessage(msg);
         }
       }
     }
@@ -160,7 +162,7 @@ export const AuthCallbackPage: React.FC = () => {
               </p>
 
               <a
-                href="/dashboard"
+                href="/workspace"
                 className="flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg px-6 py-3.5 text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity focus-visible:ring-2 focus-visible:ring-ring cursor-pointer shadow-sm"
               >
                 <span>Enter Nebula Workspace</span>

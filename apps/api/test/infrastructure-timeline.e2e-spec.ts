@@ -64,9 +64,18 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
       // User A Setup
       const emailA = `timeline-tenant-a-${Date.now()}@atlas.local`;
       const passA = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailA, password: passA, fullName: 'Tenant A Admin' });
+      const regA = await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailA,
+        password: passA,
+        confirmPassword: passA,
+        fullName: 'Tenant A Admin',
+      });
+      if (regA.body?.user?.id) {
+        await prisma.user.update({
+          where: { id: regA.body.user.id },
+          data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+        });
+      }
       const loginA = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailA, password: passA });
@@ -76,9 +85,18 @@ describe('Infrastructure Timeline Platinum Certification Suite (E2E)', () => {
       // User B Setup
       const emailB = `timeline-tenant-b-${Date.now()}@atlas.local`;
       const passB = 'Password123!';
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: emailB, password: passB, fullName: 'Tenant B Admin' });
+      const regB = await request(app.getHttpServer()).post('/api/v1/auth/register').send({
+        email: emailB,
+        password: passB,
+        confirmPassword: passB,
+        fullName: 'Tenant B Admin',
+      });
+      if (regB.body?.user?.id) {
+        await prisma.user.update({
+          where: { id: regB.body.user.id },
+          data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+        });
+      }
       const loginB = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: emailB, password: passB });

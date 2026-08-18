@@ -1,7 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider } from '@prisma/client';
-import { UserSessionService } from './user-session.service';
+import { AuthService } from './auth.service';
 import {
   OAuthIdentityResolver,
   OAuthProfile,
@@ -15,8 +14,7 @@ export class GoogleAuthService {
 
   constructor(
     private readonly identityResolver: OAuthIdentityResolver,
-    private readonly sessionService: UserSessionService,
-    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
   async resolveAndAuthenticateGoogleUser(
@@ -47,19 +45,9 @@ export class GoogleAuthService {
     const { user, event } =
       await this.identityResolver.resolveUser(oauthProfile);
 
-    // 2. Issue Stateful Session & Access JWT via UserSessionService
-    const iat = Math.floor(Date.now() / 1000);
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      iat,
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload);
-    const { rawRefreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceMeta,
-    );
+    // 2. Canonical Session & Token Establishment via AuthService (AUTH-011)
+    const { accessToken, refreshToken } =
+      await this.authService.establishSession(user, deviceMeta);
 
     this.logger.log(
       `Google OAuth authenticated: User=${user.id} Event=${event}`,
@@ -67,7 +55,7 @@ export class GoogleAuthService {
 
     return {
       accessToken,
-      refreshToken: rawRefreshToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -78,3 +66,4 @@ export class GoogleAuthService {
     };
   }
 }
+

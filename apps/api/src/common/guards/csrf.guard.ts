@@ -37,15 +37,55 @@ export class CsrfGuard implements CanActivate {
     const path = req.path || req.url;
 
     // Exempt initial unauthenticated authentication requests
-    if (this.exemptPaths.some((exempt) => path.startsWith(exempt))) {
+    if (
+      this.exemptPaths.some(
+        (exempt) =>
+          path.startsWith(exempt) ||
+          path.startsWith(exempt.replace('/api/v1', '')),
+      )
+    ) {
       return true;
     }
 
-    const cookieToken =
+    // Authorization header (Bearer tokens) are immune to CSRF attacks
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return true;
+    }
+
+    let cookieToken =
       req.cookies?.[CSRF_COOKIE_NAME] ||
+      req.cookies?.['__Secure-nebula_csrf_token'] ||
+      req.cookies?.['__Host-nebula_csrf_token'] ||
       req.cookies?.nebula_csrf_token ||
       req.cookies?.csrf_token;
+
+    if (!cookieToken && req.headers?.cookie) {
+      const match =
+        req.headers.cookie.match(
+          /(?:^|;\s*)(?:__Secure-|__Host-)?nebula_csrf_token=([^;]+)/,
+        ) || req.headers.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+      if (match) {
+        cookieToken = decodeURIComponent(match[1]);
+      }
+    }
+
     const headerToken = req.headers[CSRF_HEADER_NAME] as string | undefined;
+
+    const isAuthPath =
+      path.startsWith('/api/v1/auth') || path.startsWith('/auth');
+
+    // For non-auth endpoints: if no cookies (access token, refresh token, CSRF) or CSRF headers are sent,
+    // let JwtAuthGuard handle unauthenticated requests (returning 401 instead of 403)
+    const hasAuthCookie =
+      req.cookies?.nebula_access_token ||
+      req.cookies?.['__Secure-nebula_access_token'] ||
+      req.cookies?.nebula_refresh_token ||
+      req.cookies?.['__Host-nebula_refresh_token'];
+
+    if (!isAuthPath && !cookieToken && !headerToken && !hasAuthCookie) {
+      return true;
+    }
 
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
       throw new ForbiddenException(

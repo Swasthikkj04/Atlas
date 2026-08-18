@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, useEffect, useMemo, type FormEvent } from 'react';
 import {
   Eye,
   EyeOff,
@@ -22,61 +22,61 @@ import { OAuthButtons } from '../components/OAuthButtons';
 const SERIF = "'Lora', 'Newsreader', Georgia, serif";
 const MONO = "'JetBrains Mono', 'Courier New', monospace";
 
+export type CreateWorkspaceMode = 'context-aware' | 'direct';
+
+export interface CreateWorkspacePageProps {
+  mode?: CreateWorkspaceMode;
+}
+
 type Step = 'register' | 'check-email';
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-}
+import {
+  validateRegistration,
+  hasErrors,
+  getPasswordStrength,
+  type RegistrationErrors,
+} from '../utils/validation';
+import { maskEmail } from '../utils/email.util';
 
-function validate(name: string, email: string, password: string): FormErrors {
-  const errs: FormErrors = {};
-  if (!name.trim()) {
-    errs.name = 'Please enter your full name.';
-  } else if (name.trim().length < 2) {
-    errs.name = 'Name must be at least 2 characters.';
-  }
-
-  if (!email.trim()) {
-    errs.email = 'Please enter your email address.';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-    errs.email = 'Please enter a valid email address.';
-  }
-
-  if (!password) {
-    errs.password = 'Please enter a password.';
-  } else if (password.length < 8) {
-    errs.password = 'Password must be at least 8 characters.';
-  }
-
-  return errs;
-}
-
-export const CreateWorkspacePage: React.FC = () => {
+export const CreateWorkspacePage: React.FC<CreateWorkspacePageProps> = ({ mode: propMode }) => {
   const { theme } = useTheme();
   const [step, setStep] = useState<Step>('register');
   const [sentEmail, setSentEmail] = useState('');
 
-  // Extract real guest context
-  const [context] = useState<GuestUnderstandingContext>(() => {
-    let domain = '';
-    let expiresAt: Date | null = null;
+  // 1. Determine Mode: Context-Aware (Mode A) vs. Direct (Mode B)
+  const isContextAware = useMemo(() => {
+    if (propMode === 'context-aware') return true;
+    if (propMode === 'direct') return false;
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      domain = params.get('domain') || '';
+      if (params.get('mode') === 'direct') return false;
+      if (params.get('mode') === 'guest' || params.get('mode') === 'context-aware') return true;
+      const sessionParam = params.get('session');
+      const domainParam = params.get('domain');
+      if (sessionParam || domainParam) return true;
+    }
+    return false;
+  }, [propMode]);
 
-      try {
-        const raw = sessionStorage.getItem('nebula_guest_claim');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (!domain && parsed.domain) domain = parsed.domain;
-          if (parsed.expiresAt) expiresAt = new Date(parsed.expiresAt);
-        }
-      } catch {
-        // ignore storage parse errors
+  // 2. Extract Guest Context only in Context-Aware Mode (Never in Direct Mode)
+  const [context] = useState<GuestUnderstandingContext | null>(() => {
+    if (!isContextAware || typeof window === 'undefined') {
+      return null;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const domain = params.get('domain') || '';
+    let expiresAt: Date | null = null;
+
+    try {
+      const raw = sessionStorage.getItem('nebula_guest_claim');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.expiresAt) expiresAt = new Date(parsed.expiresAt);
       }
+    } catch {
+      // ignore
     }
 
     return {
@@ -86,8 +86,9 @@ export const CreateWorkspacePage: React.FC = () => {
     };
   });
 
+  // 3. Persist Guest Session into storage ONLY in Context-Aware Mode
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!isContextAware || typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const sessionParam = params.get('session');
     const domainParam = params.get('domain');
@@ -99,41 +100,55 @@ export const CreateWorkspacePage: React.FC = () => {
           JSON.stringify({
             sessionId: sessionParam || '',
             domain: domainParam || '',
-            expiresAt: context.expiresAt?.toISOString(),
+            expiresAt: context?.expiresAt?.toISOString(),
           })
         );
       } catch {
         // ignore
       }
     }
-  }, [context.expiresAt]);
+  }, [isContextAware, context?.expiresAt]);
 
-  const searchParams = typeof window !== 'undefined' ? window.location.search : '';
+  const searchParams = isContextAware && typeof window !== 'undefined' ? window.location.search : '';
 
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Live re-validate after first attempt
-  useEffect(() => {
-    if (!attempted) return;
-    setErrors(validate(name, email, password));
-  }, [name, email, password, attempted]);
+  const errors: RegistrationErrors = attempted
+    ? validateRegistration({
+        fullName: name,
+        email,
+        password,
+        confirmPassword,
+      })
+    : {};
 
   const handleRegisterSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const errs = validate(name, email, password);
     setAttempted(true);
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
+    setEmailExists(false);
     setApiError(null);
+
+    const validationErrors = validateRegistration({
+      fullName: name,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    if (hasErrors(validationErrors)) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -141,11 +156,25 @@ export const CreateWorkspacePage: React.FC = () => {
         fullName: name.trim(),
         email: email.trim().toLowerCase(),
         password,
+        confirmPassword,
       });
       setSentEmail(email.trim().toLowerCase());
       setStep('check-email');
-    } catch (err: any) {
-      setApiError(err?.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Registration failed. Please try again.';
+
+      if (
+        msg.toLowerCase().includes('already registered') ||
+        msg.toLowerCase().includes('already associated') ||
+        msg.toLowerCase().includes('already exists')
+      ) {
+        setEmailExists(true);
+      } else {
+        setApiError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -154,16 +183,27 @@ export const CreateWorkspacePage: React.FC = () => {
   // Resend State
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleResend = async () => {
-    if (resending || !sentEmail) return;
+    if (resending || !sentEmail || resendCooldown > 0) return;
     setResending(true);
     try {
       await authService.resendVerification(sentEmail);
       setResent(true);
+      setResendCooldown(30);
       setTimeout(() => setResent(false), 4000);
     } catch {
       setResent(true); // Privacy policy: return consistent state
+      setResendCooldown(30);
       setTimeout(() => setResent(false), 4000);
     } finally {
       setResending(false);
@@ -173,23 +213,25 @@ export const CreateWorkspacePage: React.FC = () => {
   const handleInitiateOAuth = (provider: 'google' | 'github') => {
     if (typeof window === 'undefined') return;
 
-    // Preserve guest context in sessionStorage across external OAuth redirect
-    const params = new URLSearchParams(window.location.search);
-    const sessionParam = params.get('session');
-    const domainParam = params.get('domain');
+    if (isContextAware) {
+      // Preserve guest context in sessionStorage across external OAuth redirect
+      const params = new URLSearchParams(window.location.search);
+      const sessionParam = params.get('session');
+      const domainParam = params.get('domain');
 
-    if (sessionParam || domainParam || (context.domain && context.domain !== 'your infrastructure')) {
-      try {
-        sessionStorage.setItem(
-          'nebula_guest_claim',
-          JSON.stringify({
-            sessionId: sessionParam || '',
-            domain: domainParam || (context.domain !== 'your infrastructure' ? context.domain : ''),
-            expiresAt: context.expiresAt ? new Date(context.expiresAt).toISOString() : null,
-          })
-        );
-      } catch {
-        // ignore
+      if (sessionParam || domainParam || (context?.domain && context.domain !== 'your infrastructure')) {
+        try {
+          sessionStorage.setItem(
+            'nebula_guest_claim',
+            JSON.stringify({
+              sessionId: sessionParam || '',
+              domain: domainParam || (context?.domain !== 'your infrastructure' ? context?.domain : ''),
+              expiresAt: context?.expiresAt ? new Date(context.expiresAt).toISOString() : null,
+            })
+          );
+        } catch {
+          // ignore
+        }
       }
     }
 
@@ -208,24 +250,59 @@ export const CreateWorkspacePage: React.FC = () => {
         aria-label="Create workspace"
       >
         <div className="w-full max-w-[420px] mx-auto px-6 md:px-0 py-10 md:py-16 relative z-10">
-          {/* UnderstandingContextCard — always visible across steps */}
-          <UnderstandingContextCard context={context} step={step} />
+          {/* Context Card (Mode A only) */}
+          {isContextAware && context && (
+            <UnderstandingContextCard context={context} step={step} />
+          )}
 
           {/* Step 1: Register */}
           {step === 'register' && (
             <>
               <div className="mb-8">
-                <h1
-                  style={{ fontFamily: SERIF }}
-                  className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
-                >
-                  Your understanding<br />
-                  <em>is ready to preserve.</em>
-                </h1>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-[360px]">
-                  Create an account to claim this understanding before it expires.
-                </p>
+                {isContextAware ? (
+                  <>
+                    <h1
+                      style={{ fontFamily: SERIF }}
+                      className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                    >
+                      Your understanding<br />
+                      <em>is ready to preserve.</em>
+                    </h1>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-[360px]">
+                      Create an account to claim this understanding before it expires.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h1
+                      style={{ fontFamily: SERIF }}
+                      className="text-[2.5rem] md:text-[2.75rem] font-medium text-foreground leading-[1.1] tracking-tight mb-3"
+                    >
+                      Create your workspace.
+                    </h1>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-[360px]">
+                      Your place to understand what changed across your infrastructure.
+                    </p>
+                  </>
+                )}
               </div>
+
+              {emailExists && (
+                <div
+                  role="alert"
+                  className="mb-4 p-3.5 rounded-xl bg-card border border-border text-foreground text-xs leading-relaxed flex flex-col gap-1.5 shadow-sm"
+                >
+                  <p className="font-medium text-foreground">
+                    This email is already associated with a Nebula account.
+                  </p>
+                  <a
+                    href={`/login${searchParams}`}
+                    className="text-primary font-medium underline underline-offset-2 hover:opacity-80 transition-opacity inline-flex items-center gap-1"
+                  >
+                    Log in instead →
+                  </a>
+                </div>
+              )}
 
               {apiError && (
                 <div
@@ -247,7 +324,7 @@ export const CreateWorkspacePage: React.FC = () => {
                   value={name}
                   onChange={setName}
                   placeholder="Swasthik"
-                  error={errors.name}
+                  error={errors.fullName}
                   autoComplete="name"
                   disabled={submitting}
                 />
@@ -285,6 +362,68 @@ export const CreateWorkspacePage: React.FC = () => {
                     </button>
                   }
                 />
+                {password.length > 0 && (
+                  <div className="flex items-center justify-between gap-2 px-1 -mt-2 mb-1">
+                    <div className="flex gap-1 flex-1 max-w-[120px]">
+                      <div
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          getPasswordStrength(password) === 'weak'
+                            ? 'bg-amber-500/80'
+                            : 'bg-emerald-500/80'
+                        }`}
+                      />
+                      <div
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          getPasswordStrength(password) === 'fair' ||
+                          getPasswordStrength(password) === 'strong'
+                            ? 'bg-emerald-500/80'
+                            : 'bg-muted/40'
+                        }`}
+                      />
+                      <div
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          getPasswordStrength(password) === 'strong'
+                            ? 'bg-emerald-500'
+                            : 'bg-muted/40'
+                        }`}
+                      />
+                    </div>
+                    <span
+                      style={{ fontFamily: MONO }}
+                      className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                    >
+                      {getPasswordStrength(password) === 'weak'
+                        ? 'Needs Strength'
+                        : getPasswordStrength(password) === 'fair'
+                        ? 'Good'
+                        : 'Strong'}
+                    </span>
+                  </div>
+                )}
+                <Field
+                  label="Confirm password"
+                  type={showConfirmPw ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="••••••••"
+                  error={errors.confirmPassword}
+                  autoComplete="new-password"
+                  disabled={submitting}
+                  suffix={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPw((v) => !v)}
+                      aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                    >
+                      {showConfirmPw ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  }
+                />
                 <button
                   type="submit"
                   disabled={submitting}
@@ -297,7 +436,7 @@ export const CreateWorkspacePage: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      Create account
+                      Create workspace
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -338,23 +477,30 @@ export const CreateWorkspacePage: React.FC = () => {
               </h1>
 
               <p className="text-sm text-muted-foreground leading-relaxed mb-1">
-                We sent a verification link to
+                We&apos;ve sent a verification link to
               </p>
               <p
                 style={{ fontFamily: MONO }}
                 className="text-[13px] text-foreground mb-5 font-semibold"
               >
-                {sentEmail}
+                {maskEmail(sentEmail)}
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-                Open the email and verify your account. Your infrastructure understanding will be preserved automatically.
-              </p>
+
+              {isContextAware ? (
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  Open the email and verify your account. Your infrastructure understanding will be preserved automatically.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  Verify your email to finish creating your Nebula workspace. This link expires in 24 hours.
+                </p>
+              )}
 
               <div className="flex flex-col gap-2.5">
                 <button
                   type="button"
                   onClick={handleResend}
-                  disabled={resending}
+                  disabled={resending || resendCooldown > 0}
                   className="flex items-center justify-center gap-2 border border-border rounded-lg px-6 py-3 text-sm text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring cursor-pointer bg-card"
                 >
                   {resending ? (
@@ -367,16 +513,28 @@ export const CreateWorkspacePage: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <RefreshCw className="w-4 h-4" /> Resend email
+                      <RefreshCw className="w-4 h-4" />
+                      <span>
+                        {resendCooldown > 0
+                          ? `Resend available in ${resendCooldown}s`
+                          : 'Resend email'}
+                      </span>
                     </>
                   )}
                 </button>
-                <p
-                  style={{ fontFamily: MONO }}
-                  className="text-[11px] text-muted-foreground/60 text-center"
-                >
-                  Check your spam folder if you don&apos;t see it.
-                </p>
+
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2">
+                  <span style={{ fontFamily: MONO }}>
+                    Check spam folder if delayed
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStep('register')}
+                    className="text-foreground underline hover:opacity-75 cursor-pointer"
+                  >
+                    Entered wrong address?
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -386,4 +544,5 @@ export const CreateWorkspacePage: React.FC = () => {
   );
 };
 
+CreateWorkspacePage.displayName = 'CreateWorkspacePage';
 export default CreateWorkspacePage;

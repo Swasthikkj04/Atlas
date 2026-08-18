@@ -15,6 +15,7 @@ export interface RegisterCredentials {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 export interface RegisterResponse {
@@ -31,6 +32,7 @@ export interface AuthResponse {
 export interface VerifyEmailResponse {
   message: string;
   status: string;
+  alreadyVerified?: boolean;
   user?: User;
   accessToken?: string;
   refreshToken?: string;

@@ -1,15 +1,14 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserAccountStatus } from '@prisma/client';
-import { UserSessionService } from './user-session.service';
 import { GitHubAuthService } from './github-auth.service';
+import { AuthService } from './auth.service';
 import { OAuthIdentityResolver } from '../resolvers/oauth-identity.resolver';
-import { JwtService } from '@nestjs/jwt';
 
 describe('GitHubAuthService', () => {
   let service: GitHubAuthService;
   let identityResolver: jest.Mocked<OAuthIdentityResolver>;
-  let sessionService: jest.Mocked<UserSessionService>;
+  let authService: jest.Mocked<AuthService>;
 
   const mockGitHubProfile = {
     githubId: 'github_sub_777',
@@ -47,32 +46,27 @@ describe('GitHubAuthService', () => {
       }),
     };
 
-    const mockSessionSvc = {
-      createSession: jest.fn().mockResolvedValue({
-        session: {} as any,
-        rawRefreshToken: 'raw_github_refresh_token',
+    const mockAuthSvc = {
+      establishSession: jest.fn().mockResolvedValue({
+        accessToken: 'jwt_access_token',
+        refreshToken: 'raw_github_refresh_token',
       }),
-    };
-
-    const mockJwt = {
-      signAsync: jest.fn().mockResolvedValue('jwt_access_token'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GitHubAuthService,
         { provide: OAuthIdentityResolver, useValue: mockResolver },
-        { provide: UserSessionService, useValue: mockSessionSvc },
-        { provide: JwtService, useValue: mockJwt },
+        { provide: AuthService, useValue: mockAuthSvc },
       ],
     }).compile();
 
     service = module.get<GitHubAuthService>(GitHubAuthService);
     identityResolver = module.get(OAuthIdentityResolver);
-    sessionService = module.get(UserSessionService);
+    authService = module.get(AuthService);
   });
 
-  it('should authenticate user with verified GitHub email and issue session', async () => {
+  it('should authenticate user with verified GitHub email and issue session via canonical establishSession', async () => {
     const result = await service.resolveAndAuthenticateGitHubUser(
       mockGitHubProfile,
       mockDeviceMeta,
@@ -85,8 +79,8 @@ describe('GitHubAuthService', () => {
       fullName: 'GitHub User',
       avatarUrl: 'https://avatars.githubusercontent.com/u/777',
     });
-    expect(sessionService.createSession).toHaveBeenCalledWith(
-      'usr-github-1',
+    expect(authService.establishSession).toHaveBeenCalledWith(
+      mockUser,
       mockDeviceMeta,
     );
     expect(result.accessToken).toBe('jwt_access_token');
@@ -122,3 +116,4 @@ describe('GitHubAuthService', () => {
     ).rejects.toThrow(UnauthorizedException);
   });
 });
+

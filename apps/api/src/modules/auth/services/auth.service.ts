@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -22,9 +23,12 @@ import { VerificationTokenService } from './verification-token.service';
 import { PasswordResetTokenService } from './password-reset-token.service';
 import { UserSessionService } from './user-session.service';
 import { DeviceMetadata } from '../utils/user-agent.parser';
+import { PasswordPolicy } from '../validators/password-policy.validator';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly passwordService: PasswordService,
@@ -37,6 +41,18 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
+    if (registerDto.password !== registerDto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    const passwordValidation = PasswordPolicy.validate(registerDto.password);
+    if (!passwordValidation.valid) {
+      throw new BadRequestException(
+        passwordValidation.error ||
+          'Password does not meet security requirements.',
+      );
+    }
+
     const existingUser = await this.usersService.findByEmail(registerDto.email);
 
     if (existingUser) {
@@ -57,7 +73,7 @@ export class AuthService {
 
     // 3. Dispatch Verification Email (Non-blocking abstraction)
     void this.emailService
-      .sendVerificationEmail(user.email, rawToken)
+      .sendVerificationEmail(user.email, rawToken, user.fullName)
       .catch(() => null);
 
     return {
@@ -69,6 +85,36 @@ export class AuthService {
         email: user.email,
         createdAt: user.createdAt,
       },
+    };
+  }
+
+  /**
+   * AUTH-011: Canonical Session & Token Establishment Logic
+   * Creates a persisted database user session and signs an access JWT.
+   * Shared by password login, email verification, Google OAuth, and GitHub OAuth.
+   */
+  async establishSession(
+    user: { id: string; email: string },
+    deviceMeta?: DeviceMetadata,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const iat = Math.floor(Date.now() / 1000);
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      iat,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    // AUTH-003 Stateful Session Platform: Create DB Session & Issue Hashed Refresh Token
+    const { rawRefreshToken } = await this.sessionService.createSession(
+      user.id,
+      deviceMeta,
+    );
+
+    return {
+      accessToken,
+      refreshToken: rawRefreshToken,
     };
   }
 
@@ -98,24 +144,11 @@ export class AuthService {
       );
     }
 
-    const iat = Math.floor(Date.now() / 1000);
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      iat,
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload);
-
-    // AUTH-003 Stateful Session Platform: Create DB Session & Issue Hashed Refresh Token
-    const { rawRefreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceMeta,
-    );
+    const session = await this.establishSession(user, deviceMeta);
 
     return {
-      accessToken,
-      refreshToken: rawRefreshToken,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
       user: {
         id: user.id,
         fullName: user.fullName,
@@ -185,62 +218,135 @@ export class AuthService {
     rawToken: string,
     deviceMeta?: DeviceMetadata,
   ): Promise<VerifyEmailResponseDto> {
-    const token = await this.tokenService.findValidTokenByRaw(rawToken);
-
-    if (!token) {
-      throw new BadRequestException(
-        'Verification link is invalid or has expired.',
+    if (!rawToken || typeof rawToken !== 'string') {
+      this.logger.warn(
+        `[SecurityEvent:VERIFICATION_TOKEN_REJECTED] reason=malformed_token`,
       );
+      throw new BadRequestException('This verification link is no longer valid.');
     }
 
-    // Activate Account & Mark Email Verified
-    const user = await this.prisma.user.update({
-      where: { id: token.userId },
-      data: {
-        status: UserAccountStatus.ACTIVE,
-        emailVerifiedAt: new Date(),
-      },
+    const tokenHash = this.tokenService.hashToken(rawToken);
+    const now = new Date();
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const token = await tx.verificationToken.findUnique({
+        where: { tokenHash },
+        include: { user: true },
+      });
+
+      if (!token) {
+        this.logger.warn(
+          `[SecurityEvent:VERIFICATION_TOKEN_REJECTED] reason=unknown_token`,
+        );
+        throw new BadRequestException(
+          'This verification link is no longer valid.',
+        );
+      }
+
+      if (token.consumedAt !== null) {
+        if (token.user.status === UserAccountStatus.ACTIVE) {
+          this.logger.log(
+            `[SecurityEvent:EMAIL_ALREADY_VERIFIED] userId=${token.userId}`,
+          );
+          return {
+            alreadyVerified: true,
+            user: token.user,
+          };
+        }
+        this.logger.warn(
+          `[SecurityEvent:VERIFICATION_TOKEN_REJECTED] reason=consumed_token userId=${token.userId}`,
+        );
+        throw new BadRequestException(
+          'This verification link is no longer valid.',
+        );
+      }
+
+      if (now > token.expiresAt) {
+        this.logger.warn(
+          `[SecurityEvent:VERIFICATION_TOKEN_EXPIRED] tokenId=${token.id} userId=${token.userId}`,
+        );
+        throw new BadRequestException('This verification link has expired.');
+      }
+
+      // Mark token consumed
+      await tx.verificationToken.update({
+        where: { id: token.id },
+        data: { consumedAt: now },
+      });
+
+      // Activate Account & Mark Email Verified
+      const updatedUser = await tx.user.update({
+        where: { id: token.userId },
+        data: {
+          status: UserAccountStatus.ACTIVE,
+          emailVerifiedAt: now,
+        },
+      });
+
+      this.logger.log(
+        `[SecurityEvent:VERIFICATION_TOKEN_CONSUMED] tokenId=${token.id} userId=${token.userId}`,
+      );
+      this.logger.log(
+        `[SecurityEvent:EMAIL_VERIFICATION_SUCCESS] userId=${token.userId}`,
+      );
+
+      return {
+        alreadyVerified: false,
+        user: updatedUser,
+      };
     });
 
-    // Mark Token Consumed
-    await this.tokenService.markTokenConsumed(token.id);
+    if (result.alreadyVerified) {
+      return {
+        message: 'Your email is already verified.',
+        status: UserAccountStatus.ACTIVE,
+        alreadyVerified: true,
+        user: {
+          id: result.user.id,
+          fullName: result.user.fullName,
+          email: result.user.email,
+        },
+      };
+    }
 
-    // AUTH-004: Immediately Establish Authenticated Session
-    const iat = Math.floor(Date.now() / 1000);
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      iat,
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload);
-
-    const { rawRefreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceMeta,
-    );
+    // AUTH-004: Immediately Establish Authenticated Session for freshly activated account
+    const session = await this.establishSession(result.user, deviceMeta);
 
     return {
       message: 'Email verified successfully. Your account is now active.',
       status: UserAccountStatus.ACTIVE,
-      accessToken,
-      refreshToken: rawRefreshToken,
+      alreadyVerified: false,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
       user: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
+        id: result.user.id,
+        fullName: result.user.fullName,
+        email: result.user.email,
       },
     };
   }
 
   async resendVerification(email: string): Promise<{ message: string }> {
+    if (!email || typeof email !== 'string') {
+      return {
+        message:
+          'If a pending account exists for this email, a new verification link has been sent.',
+      };
+    }
+
     const user = await this.usersService.findByEmail(email);
 
     // Privacy Guard: Prevent email enumeration, return consistent message
     if (user && user.status === UserAccountStatus.PENDING_VERIFICATION) {
+      this.logger.log(
+        `[SecurityEvent:VERIFICATION_RESEND_REQUESTED] userId=${user.id}`,
+      );
       const rawToken = await this.tokenService.issueVerificationToken(user.id);
+      this.logger.log(
+        `[SecurityEvent:VERIFICATION_TOKEN_ISSUED] userId=${user.id}`,
+      );
       void this.emailService
-        .sendVerificationEmail(user.email, rawToken)
+        .sendVerificationEmail(user.email, rawToken, user.fullName)
         .catch(() => null);
     }
 
@@ -257,7 +363,7 @@ export class AuthService {
     if (user && user.status === UserAccountStatus.ACTIVE) {
       const rawToken = await this.resetTokenService.issueResetToken(user.id);
       void this.emailService
-        .sendPasswordResetEmail(user.email, rawToken)
+        .sendPasswordResetEmail(user.email, rawToken, user.fullName)
         .catch(() => null);
     }
 
@@ -277,6 +383,14 @@ export class AuthService {
     if (!token || token.user.status !== UserAccountStatus.ACTIVE) {
       throw new BadRequestException(
         'Password reset link is invalid or has expired.',
+      );
+    }
+
+    const passwordValidation = PasswordPolicy.validate(newPassword);
+    if (!passwordValidation.valid) {
+      throw new BadRequestException(
+        passwordValidation.error ||
+          'Password does not meet security requirements.',
       );
     }
 
@@ -301,7 +415,7 @@ export class AuthService {
 
     // 4. Send Security Confirmation Notice (Non-blocking)
     void this.emailService
-      .sendPasswordResetConfirmationEmail(token.user.email)
+      .sendPasswordResetConfirmationEmail(token.user.email, token.user.fullName)
       .catch(() => null);
 
     return {

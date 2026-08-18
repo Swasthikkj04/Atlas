@@ -1,6 +1,7 @@
 import { TestAppInstance } from './test-app.helper';
 import { createUserDto } from './factories.helper';
 import { API_PREFIX } from './constants';
+import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 
 export async function registerTestUser(
   testApp: TestAppInstance,
@@ -39,7 +40,16 @@ export async function getAccessToken(
   testApp: TestAppInstance,
   userDto: Record<string, any> = createUserDto(),
 ): Promise<{ accessToken: string; userDto: Record<string, any> }> {
-  await registerTestUser(testApp, userDto);
+  const regResult = await registerTestUser(testApp, userDto);
+
+  const prisma = testApp.app.get(PrismaService);
+  if (regResult.body?.user?.id) {
+    await prisma.user.update({
+      where: { id: regResult.body.user.id },
+      data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+    });
+  }
+
   const loginRes = await loginTestUser(testApp, {
     email: userDto.email,
     password: userDto.password,

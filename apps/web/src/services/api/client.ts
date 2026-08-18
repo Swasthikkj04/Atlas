@@ -30,7 +30,9 @@ export class InsufficientSignalError extends ApiError {
 
 function getCsrfCookieValue(): string | null {
   if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)(?:__Host-)?nebula_csrf_token=([^;]+)/);
+  const match = document.cookie.match(
+    /(?:^|;\s*)(?:__Secure-|__Host-)?nebula_csrf_token=([^;]+)/,
+  );
   if (match) return decodeURIComponent(match[1]);
   const fallback = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
   return fallback ? decodeURIComponent(fallback[1]) : null;

@@ -21,6 +21,13 @@ export class VerifyEmailResponseDto {
   status!: string;
 
   @ApiProperty({
+    example: false,
+    description: 'Whether the account was already active and verified',
+    required: false,
+  })
+  alreadyVerified?: boolean;
+
+  @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     description: 'JWT Access Token (also set in HTTP-Only cookie)',
     required: false,

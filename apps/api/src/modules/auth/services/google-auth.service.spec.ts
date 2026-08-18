@@ -1,14 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { UserAccountStatus } from '@prisma/client';
-import { UserSessionService } from './user-session.service';
 import { GoogleAuthService } from './google-auth.service';
+import { AuthService } from './auth.service';
 import { OAuthIdentityResolver } from '../resolvers/oauth-identity.resolver';
 
 describe('GoogleAuthService', () => {
   let service: GoogleAuthService;
   let identityResolver: jest.Mocked<OAuthIdentityResolver>;
-  let sessionService: jest.Mocked<UserSessionService>;
+  let authService: jest.Mocked<AuthService>;
 
   const mockGoogleProfile = {
     googleId: 'google_sub_999',
@@ -45,32 +44,27 @@ describe('GoogleAuthService', () => {
       }),
     };
 
-    const mockSessionSvc = {
-      createSession: jest.fn().mockResolvedValue({
-        session: {} as any,
-        rawRefreshToken: 'raw_google_refresh_token',
+    const mockAuthSvc = {
+      establishSession: jest.fn().mockResolvedValue({
+        accessToken: 'jwt_access_token',
+        refreshToken: 'raw_google_refresh_token',
       }),
-    };
-
-    const mockJwt = {
-      signAsync: jest.fn().mockResolvedValue('jwt_access_token'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GoogleAuthService,
         { provide: OAuthIdentityResolver, useValue: mockResolver },
-        { provide: UserSessionService, useValue: mockSessionSvc },
-        { provide: JwtService, useValue: mockJwt },
+        { provide: AuthService, useValue: mockAuthSvc },
       ],
     }).compile();
 
     service = module.get<GoogleAuthService>(GoogleAuthService);
     identityResolver = module.get(OAuthIdentityResolver);
-    sessionService = module.get(UserSessionService);
+    authService = module.get(AuthService);
   });
 
-  it('should authenticate user resolved by OAuthIdentityResolver and issue session', async () => {
+  it('should authenticate user resolved by OAuthIdentityResolver and issue session via canonical establishSession', async () => {
     const result = await service.resolveAndAuthenticateGoogleUser(
       mockGoogleProfile,
       mockDeviceMeta,
@@ -83,11 +77,12 @@ describe('GoogleAuthService', () => {
       fullName: 'Google User',
       avatarUrl: 'https://lh3.googleusercontent.com/photo.jpg',
     });
-    expect(sessionService.createSession).toHaveBeenCalledWith(
-      'usr-google-1',
+    expect(authService.establishSession).toHaveBeenCalledWith(
+      mockUser,
       mockDeviceMeta,
     );
     expect(result.accessToken).toBe('jwt_access_token');
     expect(result.refreshToken).toBe('raw_google_refresh_token');
   });
 });
+

@@ -39,6 +39,7 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
         .send({
           email: testEmail,
           password: testPassword,
+          confirmPassword: testPassword,
           fullName: testFullName,
         })
         .expect(201);
@@ -57,6 +58,7 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
       // Verify sensitive fields and auth tokens are NOT exposed
       expect(response.body.user).not.toHaveProperty('passwordHash');
       expect(response.body.user).not.toHaveProperty('password');
+      expect(response.body.user).not.toHaveProperty('confirmPassword');
       expect(response.body).not.toHaveProperty('accessToken');
       expect(response.body).not.toHaveProperty('refreshToken');
     });
@@ -67,6 +69,7 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
         .send({
           email: testEmail,
           password: testPassword,
+          confirmPassword: testPassword,
           fullName: testFullName,
         })
         .expect(409);
@@ -78,12 +81,41 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
       );
     });
 
+    it('should return 400 Bad Request when confirmPassword does not match password', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send({
+          email: `mismatch-pass-${Date.now()}@example.com`,
+          password: 'SecurePassword123!',
+          confirmPassword: 'DifferentPassword456!',
+          fullName: 'Mismatch User',
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('statusCode', 400);
+      expect(response.body.message).toMatch(/passwords do not match/i);
+    });
+
+    it('should return 400 Bad Request when confirmPassword is missing', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send({
+          email: `missing-confirm-${Date.now()}@example.com`,
+          password: 'SecurePassword123!',
+          fullName: 'Missing Confirm User',
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('statusCode', 400);
+    });
+
     it('should return 400 Bad Request when password is shorter than 8 characters', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
         .send({
           email: `short-pass-${Date.now()}@example.com`,
           password: 'short',
+          confirmPassword: 'short',
           fullName: 'Short Pass User',
         })
         .expect(400);
@@ -97,6 +129,7 @@ describe('Auth Registration Endpoint Hardening Suite (E2E)', () => {
         .send({
           email: 'not-an-email',
           password: testPassword,
+          confirmPassword: testPassword,
           fullName: 'Invalid Email User',
         })
         .expect(400);

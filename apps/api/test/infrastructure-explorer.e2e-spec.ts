@@ -67,6 +67,7 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
       await request(app.getHttpServer()).post('/api/v1/auth/register').send({
         email: emailA,
         password: passA,
+        confirmPassword: passA,
         fullName: 'Explorer Tenant A',
       });
       const loginA = await request(app.getHttpServer())
@@ -81,6 +82,7 @@ describe('Infrastructure Explorer Platinum Certification Suite (E2E)', () => {
       await request(app.getHttpServer()).post('/api/v1/auth/register').send({
         email: emailB,
         password: passB,
+        confirmPassword: passB,
         fullName: 'Explorer Tenant B',
       });
       const loginB = await request(app.getHttpServer())

@@ -23,44 +23,24 @@ const SERIF = "'Lora', 'Newsreader', Georgia, serif";
 const MONO = "'JetBrains Mono', 'Courier New', monospace";
 
 export interface CreateWorkspaceSurfaceProps {
-  domain: string;
+  domain?: string;
   sessionId?: string;
   jobId?: string;
   expiresAt?: Date | null;
   onClose?: () => void;
   reduced?: boolean;
+  mode?: 'context-aware' | 'direct';
 }
 
 type Step = 'register' | 'check-email' | 'login';
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-}
-
-function validate(name: string, email: string, password: string): FormErrors {
-  const errs: FormErrors = {};
-  if (!name.trim()) {
-    errs.name = 'Please enter your full name.';
-  } else if (name.trim().length < 2) {
-    errs.name = 'Name must be at least 2 characters.';
-  }
-
-  if (!email.trim()) {
-    errs.email = 'Please enter your email address.';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-    errs.email = 'Please enter a valid email address.';
-  }
-
-  if (!password) {
-    errs.password = 'Please enter a password.';
-  } else if (password.length < 8) {
-    errs.password = 'Password must be at least 8 characters.';
-  }
-
-  return errs;
-}
+import {
+  validateRegistration,
+  hasErrors,
+  getPasswordStrength,
+  type RegistrationErrors,
+} from '../utils/validation';
+import { maskEmail } from '../utils/email.util';
 
 export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   domain,
@@ -69,17 +49,23 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   expiresAt,
   onClose,
   reduced = false,
+  mode: propMode,
 }) => {
   const { login, checkAndClaimGuestSession } = useAuth();
   const [step, setStep] = useState<Step>('register');
   const [sentEmail, setSentEmail] = useState('');
 
-  // Live guest context
-  const context: GuestUnderstandingContext = {
-    domain: domain || 'your infrastructure',
-    understandingType: 'Infrastructure Understanding',
-    expiresAt: expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
-  };
+  const isContextAware = propMode === 'direct' ? false : Boolean(domain || sessionId || propMode === 'context-aware');
+
+  // Live guest context (Mode A only)
+  const [context] = useState<GuestUnderstandingContext | null>(() => {
+    if (!isContextAware) return null;
+    return {
+      domain: domain || 'your infrastructure',
+      understandingType: 'Infrastructure Understanding',
+      expiresAt: expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  });
 
   // Ensure guest session is persisted to sessionStorage
   useEffect(() => {
@@ -105,26 +91,40 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Live re-validate after first attempt
-  useEffect(() => {
-    if (!attempted) return;
-    setErrors(validate(name, email, password));
-  }, [name, email, password, attempted]);
+  const errors: RegistrationErrors = attempted
+    ? validateRegistration({
+        fullName: name,
+        email,
+        password,
+        confirmPassword,
+      })
+    : {};
 
   const handleRegisterSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const errs = validate(name, email, password);
     setAttempted(true);
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
+    setEmailExists(false);
     setApiError(null);
+
+    const validationErrors = validateRegistration({
+      fullName: name,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    if (hasErrors(validationErrors)) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -132,11 +132,25 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
         fullName: name.trim(),
         email: email.trim().toLowerCase(),
         password,
+        confirmPassword,
       });
       setSentEmail(email.trim().toLowerCase());
       setStep('check-email');
-    } catch (err: any) {
-      setApiError(err?.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Registration failed. Please try again.';
+
+      if (
+        msg.toLowerCase().includes('already registered') ||
+        msg.toLowerCase().includes('already associated') ||
+        msg.toLowerCase().includes('already exists')
+      ) {
+        setEmailExists(true);
+      } else {
+        setApiError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -166,11 +180,13 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
       } catch {
         // non-blocking claim fallback
       }
-      window.location.href = '/dashboard';
-    } catch (err: any) {
-      setLoginError(
-        err?.message || 'Authentication failed. Please check your credentials.'
-      );
+      window.location.href = '/workspace';
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Authentication failed. Please check your credentials.';
+      setLoginError(msg);
     } finally {
       setLoginSubmitting(false);
     }
@@ -179,16 +195,27 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   // Resend State
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleResend = async () => {
-    if (resending || !sentEmail) return;
+    if (resending || !sentEmail || resendCooldown > 0) return;
     setResending(true);
     try {
       await authService.resendVerification(sentEmail);
       setResent(true);
+      setResendCooldown(30);
       setTimeout(() => setResent(false), 4000);
     } catch {
       setResent(true);
+      setResendCooldown(30);
       setTimeout(() => setResent(false), 4000);
     } finally {
       setResending(false);
@@ -234,7 +261,11 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
           style={{ fontFamily: MONO }}
           className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold"
         >
-          {step === 'login' ? 'Sign In · Nebula' : 'Preserve Understanding'}
+          {step === 'login'
+            ? 'Sign In · Nebula'
+            : isContextAware
+            ? 'Preserve Understanding'
+            : 'Create Workspace · Nebula'}
         </span>
 
         {onClose && (
@@ -250,25 +281,62 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
         )}
       </div>
 
-      {/* UnderstandingContextCard — always visible across steps */}
-      <UnderstandingContextCard context={context} step={step === 'login' ? 'login' : step} />
+      {/* UnderstandingContextCard — visible in Mode A only */}
+      {isContextAware && context && (
+        <UnderstandingContextCard context={context} step={step === 'login' ? 'login' : step} />
+      )}
 
       {/* ── STEP 1: REGISTER ────────────────────────────────────────────── */}
       {step === 'register' && (
         <>
           <div className="mb-6">
-            <h2
-              id="create-workspace-title"
-              style={{ fontFamily: SERIF }}
-              className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
-            >
-              Your understanding<br />
-              <em>is ready to preserve.</em>
-            </h2>
-            <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
-              Create an account to claim this understanding before it expires.
-            </p>
+            {isContextAware ? (
+              <>
+                <h2
+                  id="create-workspace-title"
+                  style={{ fontFamily: SERIF }}
+                  className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+                >
+                  Your understanding<br />
+                  <em>is ready to preserve.</em>
+                </h2>
+                <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
+                  Create an account to claim this understanding before it expires.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2
+                  id="create-workspace-title"
+                  style={{ fontFamily: SERIF }}
+                  className="text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+                >
+                  Create your workspace.
+                </h2>
+                <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
+                  Your place to understand what changed across your infrastructure.
+                </p>
+              </>
+            )}
           </div>
+
+          {emailExists && (
+            <div
+              role="alert"
+              className="mb-4 p-3.5 rounded-xl bg-card border border-border text-foreground text-xs leading-relaxed flex flex-col gap-1.5 shadow-sm"
+            >
+              <p className="font-medium text-foreground">
+                This email is already associated with a Nebula account.
+              </p>
+              <button
+                type="button"
+                onClick={() => setStep('login')}
+                className="text-primary font-medium underline underline-offset-2 hover:opacity-80 transition-opacity inline-flex items-center gap-1 cursor-pointer text-left w-fit"
+              >
+                Log in instead →
+              </button>
+            </div>
+          )}
 
           {apiError && (
             <div
@@ -290,7 +358,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               value={name}
               onChange={setName}
               placeholder="Swasthik"
-              error={errors.name}
+              error={errors.fullName}
               autoComplete="name"
               disabled={submitting}
             />
@@ -328,6 +396,68 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
                 </button>
               }
             />
+            {password.length > 0 && (
+              <div className="flex items-center justify-between gap-2 px-1 -mt-1.5 mb-1">
+                <div className="flex gap-1 flex-1 max-w-[120px]">
+                  <div
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      getPasswordStrength(password) === 'weak'
+                        ? 'bg-amber-500/80'
+                        : 'bg-emerald-500/80'
+                    }`}
+                  />
+                  <div
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      getPasswordStrength(password) === 'fair' ||
+                      getPasswordStrength(password) === 'strong'
+                        ? 'bg-emerald-500/80'
+                        : 'bg-muted/40'
+                    }`}
+                  />
+                  <div
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      getPasswordStrength(password) === 'strong'
+                        ? 'bg-emerald-500'
+                        : 'bg-muted/40'
+                    }`}
+                  />
+                </div>
+                <span
+                  style={{ fontFamily: MONO }}
+                  className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                >
+                  {getPasswordStrength(password) === 'weak'
+                    ? 'Needs Strength'
+                    : getPasswordStrength(password) === 'fair'
+                    ? 'Good'
+                    : 'Strong'}
+                </span>
+              </div>
+            )}
+            <Field
+              label="Confirm password"
+              type={showConfirmPw ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              placeholder="••••••••"
+              error={errors.confirmPassword}
+              autoComplete="new-password"
+              disabled={submitting}
+              suffix={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw((v) => !v)}
+                  aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                >
+                  {showConfirmPw ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              }
+            />
             <button
               type="submit"
               disabled={submitting}
@@ -340,7 +470,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
                 </>
               ) : (
                 <>
-                  Create account
+                  Create workspace
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -362,6 +492,18 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               Log in →
             </button>
           </p>
+
+          {onClose && (
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[11px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+              >
+                ← Return to understanding report
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -388,17 +530,23 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
             style={{ fontFamily: MONO }}
             className="text-[13px] text-foreground mb-4 font-semibold"
           >
-            {sentEmail}
+            {maskEmail(sentEmail)}
           </p>
-          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed mb-6">
-            Open the email and verify your account. Your infrastructure understanding will be preserved automatically.
-          </p>
+          {isContextAware ? (
+            <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed mb-5">
+              Open the email and verify your account. Your infrastructure understanding will be preserved automatically.
+            </p>
+          ) : (
+            <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed mb-5">
+              Verify your email to finish creating your Nebula workspace. This link expires in 24 hours.
+            </p>
+          )}
 
           <div className="flex flex-col gap-2.5">
             <button
               type="button"
               onClick={handleResend}
-              disabled={resending}
+              disabled={resending || resendCooldown > 0}
               className="flex items-center justify-center gap-2 border border-border rounded-lg px-5 py-2.5 text-xs font-medium text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring cursor-pointer bg-background"
             >
               {resending ? (
@@ -411,17 +559,41 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
                 </>
               ) : (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5" /> Resend email
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>
+                    {resendCooldown > 0
+                      ? `Resend available in ${resendCooldown}s`
+                      : 'Resend email'}
+                  </span>
                 </>
               )}
             </button>
-            <p
-              style={{ fontFamily: MONO }}
-              className="text-[10.5px] text-muted-foreground/60 text-center"
-            >
-              Check your spam folder if you don&apos;t see it.
-            </p>
+
+            <div className="flex items-center justify-between text-[10.5px] text-muted-foreground pt-1.5">
+              <span style={{ fontFamily: MONO }}>
+                Check spam if delayed
+              </span>
+              <button
+                type="button"
+                onClick={() => setStep('register')}
+                className="text-foreground underline hover:opacity-75 cursor-pointer"
+              >
+                Entered wrong address?
+              </button>
+            </div>
           </div>
+
+          {onClose && (
+            <div className="pt-4 text-center">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[11.5px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+              >
+                ← Return to understanding report
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -526,6 +698,18 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               Create account →
             </button>
           </p>
+
+          {onClose && (
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[11px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+              >
+                ← Return to understanding report
+              </button>
+            </div>
+          )}
         </>
       )}
     </motion.div>

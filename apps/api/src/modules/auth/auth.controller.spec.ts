@@ -48,6 +48,7 @@ describe('AuthController', () => {
         fullName: 'Jane Doe',
         email: 'jane@example.com',
         password: 'Password123!',
+        confirmPassword: 'Password123!',
       };
 
       const expectedResponse = {

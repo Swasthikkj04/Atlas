@@ -132,8 +132,11 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
     };
 
     const mockTokenSvc = {
-      issueVerificationToken: jest.fn().mockResolvedValue('raw_verify_token_32bytes'),
+      issueVerificationToken: jest
+        .fn()
+        .mockResolvedValue('raw_verify_token_32bytes'),
       findValidTokenByRaw: jest.fn(),
+      hashToken: jest.fn().mockReturnValue('sha256_hash_100'),
       markTokenConsumed: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -159,7 +162,9 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
     const mockEmail = {
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
       sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
-      sendPasswordResetConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetConfirmationEmail: jest
+        .fn()
+        .mockResolvedValue(undefined),
     };
 
     const mockEngine = {
@@ -181,12 +186,17 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
         { provide: UnderstandingEngine, useValue: mockEngine },
         { provide: InfrastructureSnapshotService, useValue: {} },
         { provide: InfrastructureFindingService, useValue: {} },
-        { provide: InfrastructureBriefService, useValue: { generate: jest.fn() } },
+        {
+          provide: InfrastructureBriefService,
+          useValue: { generate: jest.fn() },
+        },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    guestService = module.get<GuestUnderstandingService>(GuestUnderstandingService);
+    guestService = module.get<GuestUnderstandingService>(
+      GuestUnderstandingService,
+    );
     prisma = module.get(PrismaService);
     usersService = module.get(UsersService);
     tokenService = module.get(VerificationTokenService);
@@ -203,10 +213,13 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
         fullName: 'Swasthik K J',
         email: 'swasthik@example.com',
         password: 'SecurePassword123!',
+        confirmPassword: 'SecurePassword123!',
       });
 
       expect(registerResult.user.id).toBe('usr-swasthik-100');
-      expect(tokenService.issueVerificationToken).toHaveBeenCalledWith('usr-swasthik-100');
+      expect(tokenService.issueVerificationToken).toHaveBeenCalledWith(
+        'usr-swasthik-100',
+      );
 
       // 2. VERIFICATION: Verify token, transition to ACTIVE, issue authenticated session
       const activatedUser = {
@@ -214,13 +227,13 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
         status: UserAccountStatus.ACTIVE,
         emailVerifiedAt: new Date(),
       };
-      tokenService.findValidTokenByRaw.mockResolvedValue({
+      (prisma.verificationToken.findUnique as jest.Mock).mockResolvedValue({
         id: 'tok-100',
         userId: 'usr-swasthik-100',
         tokenHash: 'sha256_hash_100',
         consumedAt: null,
         expiresAt: new Date(Date.now() + 86400000),
-        user: activatedUser,
+        user: { ...mockUser, status: UserAccountStatus.PENDING_VERIFICATION },
       } as any);
 
       (prisma.user.update as jest.Mock).mockResolvedValue(activatedUser);
@@ -236,15 +249,22 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
       expect(verifyResult.refreshToken).toBe('raw_refresh_token_mock');
       expect(verifyResult.user?.id).toBe('usr-swasthik-100');
       expect(verifyResult.user?.fullName).toBe('Swasthik K J');
-      expect(tokenService.markTokenConsumed).toHaveBeenCalledWith('tok-100');
+      expect(prisma.verificationToken.update).toHaveBeenCalledWith({
+        where: { id: 'tok-100' },
+        data: { consumedAt: expect.any(Date) },
+      });
       expect(sessionService.createSession).toHaveBeenCalledWith(
         'usr-swasthik-100',
         mockDeviceMeta,
       );
 
       // 3. GUEST CLAIM: Authenticated user claims guest session
-      (prisma.guestSession.findUnique as jest.Mock).mockResolvedValue(mockGuestSession);
-      (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(mockJob);
+      (prisma.guestSession.findUnique as jest.Mock).mockResolvedValue(
+        mockGuestSession,
+      );
+      (prisma.understandingJob.findUnique as jest.Mock).mockResolvedValue(
+        mockJob,
+      );
       (prisma.domain.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.domain.create as jest.Mock).mockResolvedValue({
         id: 'dom-user-100',
@@ -270,12 +290,14 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
       });
     });
 
-    it('rejects invalid or already-consumed verification token', async () => {
-      tokenService.findValidTokenByRaw.mockResolvedValue(null);
+    it('rejects invalid or unknown verification token', async () => {
+      (prisma.verificationToken.findUnique as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       await expect(
         authService.verifyEmail('invalid_or_consumed_token', mockDeviceMeta),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow('This verification link is no longer valid.');
     });
   });
 });

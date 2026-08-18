@@ -77,9 +77,12 @@ export const LoginPage: React.FC = () => {
       } catch {
         // non-blocking claim fallback
       }
-      window.location.href = '/dashboard';
-    } catch (err: any) {
-      const message = err?.message || 'Authentication failed. Please check your credentials.';
+      window.location.href = '/workspace';
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Authentication failed. Please check your credentials.';
       setError(message);
       if (message.toLowerCase().includes('verify your email') || message.toLowerCase().includes('verification required')) {
         setIsPendingVerification(true);

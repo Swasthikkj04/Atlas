@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsStrongPasswordPolicy } from '../validators/password-policy.validator';
 
 export class RegisterDto {
   @ApiProperty({
@@ -20,11 +21,21 @@ export class RegisterDto {
   email!: string;
 
   @ApiProperty({
-    description: 'Account password (minimum 8 characters)',
+    description: 'Account password satisfying canonical password strength policy',
+    example: 'SuperSecurePassword123!',
+    minLength: 8,
+    maxLength: 128,
+  })
+  @IsString()
+  @IsStrongPasswordPolicy()
+  password!: string;
+
+  @ApiProperty({
+    description: 'Password confirmation (must match password)',
     example: 'SuperSecurePassword123!',
     minLength: 8,
   })
   @IsString()
   @MinLength(8)
-  password!: string;
+  confirmPassword!: string;
 }

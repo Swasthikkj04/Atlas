@@ -8,7 +8,6 @@ export function useCountdown(expiresAt?: Date | null): string {
 
   useEffect(() => {
     if (!expiresAt) return;
-    setMs(Math.max(0, expiresAt.getTime() - Date.now()));
 
     const id = setInterval(() => {
       setMs(Math.max(0, expiresAt.getTime() - Date.now()));

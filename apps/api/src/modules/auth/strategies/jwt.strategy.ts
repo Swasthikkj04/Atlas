@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
 
 import { UsersService } from '../../users/users.service';
-import { ACCESS_COOKIE_NAME } from '../utils/auth-cookie.util';
+import { extractAccessToken } from '../utils/auth-cookie.util';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,15 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req: Request) => {
-          if (req && req.cookies) {
-            return (
-              req.cookies[ACCESS_COOKIE_NAME] ||
-              req.cookies.nebula_access_token ||
-              req.cookies.access_token ||
-              null
-            );
-          }
-          return null;
+          return extractAccessToken(req) ?? null;
         },
       ]),
       ignoreExpiration: false,

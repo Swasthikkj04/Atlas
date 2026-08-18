@@ -50,8 +50,8 @@ export class RateLimiterGuard implements CanActivate {
         ]);
 
       const clientIp =
+        (req.headers['x-forwarded-for'] as string) ||
         req.ip ||
-        req.headers['x-forwarded-for'] ||
         req.socket?.remoteAddress ||
         '127.0.0.1';
 

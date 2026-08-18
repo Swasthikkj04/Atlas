@@ -36,7 +36,7 @@ import {
 export default function GuestPage() {
   const [phase, setPhase] = useState<GuestPhase>("IDLE");
   const [domain, setDomain] = useState("");
-  const activeSessionRef = useRef<{ jobId: string; sessionId: string } | null>(null);
+  const [activeSession, setActiveSession] = useState<{ jobId: string; sessionId: string } | null>(null);
   const [sentenceIdx, setSentenceIdx] = useState(0);
   const [sections, setSections] = useState(0);
   const [data, setData] = useState<AssessmentData | null>(null);
@@ -74,7 +74,7 @@ export default function GuestPage() {
     clearTimers();
     setPhase("IDLE");
     setDomain("");
-    activeSessionRef.current = null;
+    setActiveSession(null);
     setSentenceIdx(0);
     setSections(0);
     setData(null);
@@ -163,7 +163,7 @@ export default function GuestPage() {
 
     try {
       const response = await startGuestUnderstanding(submittedDomain);
-      activeSessionRef.current = { jobId: response.jobId, sessionId: response.sessionId };
+      setActiveSession({ jobId: response.jobId, sessionId: response.sessionId });
 
       setPhase("UNDERSTANDING");
       setSentenceIdx(0);
@@ -380,8 +380,8 @@ export default function GuestPage() {
                   <WorkspaceConversion
                     phase={phase}
                     domain={domain}
-                    sessionId={data?.sessionId || activeSessionRef.current?.sessionId}
-                    jobId={data?.jobId || activeSessionRef.current?.jobId}
+                    sessionId={data?.sessionId || activeSession?.sessionId}
+                    jobId={data?.jobId || activeSession?.jobId}
                     onConvert={handleConvert}
                     onContinue={handleReset}
                     reduced={reduced}
@@ -394,20 +394,25 @@ export default function GuestPage() {
 
         <AnimatePresence>
           {phase === "CONVERTED" && (
-            <div
+            <motion.div
+              key="create-workspace-modal-overlay"
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
               role="dialog"
               aria-modal="true"
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-background/55 backdrop-blur-[2px] pt-16 pb-12"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-background/60 backdrop-blur-xs pt-16 pb-12"
             >
               <CreateWorkspaceSurface
                 domain={domain}
-                sessionId={data?.sessionId || activeSessionRef.current?.sessionId}
-                jobId={data?.jobId || activeSessionRef.current?.jobId}
+                sessionId={data?.sessionId || activeSession?.sessionId}
+                jobId={data?.jobId || activeSession?.jobId}
                 expiresAt={null}
                 onClose={() => setPhase("UNDERSTOOD")}
                 reduced={reduced}
               />
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 

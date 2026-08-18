@@ -13,12 +13,15 @@ import {
   TestAppInstance,
 } from '../common/test-app.helper';
 import { registerTestUser } from '../common/auth.helper';
+import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 
 describe('POST /api/v1/auth/login (Supertest Regression Suite)', () => {
   let testApp: TestAppInstance;
+  let prisma: PrismaService;
 
   beforeAll(async () => {
     testApp = await createTestApp();
+    prisma = testApp.app.get(PrismaService);
   });
 
   afterAll(async () => {
@@ -28,7 +31,11 @@ describe('POST /api/v1/auth/login (Supertest Regression Suite)', () => {
   describe('Success Scenarios (Authentication Success)', () => {
     it('should successfully authenticate user and return JWT access token and user metadata', async () => {
       const userDto = createUserDto();
-      await registerTestUser(testApp, userDto);
+      const regRes = await registerTestUser(testApp, userDto);
+      await prisma.user.update({
+        where: { id: regRes.body.user.id },
+        data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+      });
 
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/login`)
@@ -64,7 +71,11 @@ describe('POST /api/v1/auth/login (Supertest Regression Suite)', () => {
   describe('Invalid Credentials Scenarios (401 Unauthorized)', () => {
     it('should return 401 Unauthorized when password is incorrect', async () => {
       const userDto = createUserDto();
-      await registerTestUser(testApp, userDto);
+      const regRes = await registerTestUser(testApp, userDto);
+      await prisma.user.update({
+        where: { id: regRes.body.user.id },
+        data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+      });
 
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/login`)

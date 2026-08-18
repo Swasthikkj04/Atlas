@@ -1,4 +1,4 @@
-import type { CookieOptions, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import { clearCsrfCookie, setCsrfCookie } from './csrf.util';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -46,3 +46,42 @@ export function clearAuthCookies(res: Response): void {
   res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/v1/auth/refresh' });
   clearCsrfCookie(res);
 }
+
+export function extractAccessToken(req: Request): string | undefined {
+  if (req?.cookies) {
+    const token =
+      req.cookies[ACCESS_COOKIE_NAME] ||
+      req.cookies['__Secure-nebula_access_token'] ||
+      req.cookies.nebula_access_token ||
+      req.cookies.access_token;
+    if (token) return token;
+  }
+  if (req?.headers?.cookie) {
+    const match =
+      req.headers.cookie.match(
+        /(?:^|;\s*)(?:__Secure-)?nebula_access_token=([^;]+)/,
+      ) || req.headers.cookie.match(/(?:^|;\s*)access_token=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return undefined;
+}
+
+export function extractRefreshToken(req: Request): string | undefined {
+  if (req?.cookies) {
+    const token =
+      req.cookies[REFRESH_COOKIE_NAME] ||
+      req.cookies['__Host-nebula_refresh_token'] ||
+      req.cookies.nebula_refresh_token ||
+      req.cookies.refresh_token;
+    if (token) return token;
+  }
+  if (req?.headers?.cookie) {
+    const match =
+      req.headers.cookie.match(
+        /(?:^|;\s*)(?:__Host-)?nebula_refresh_token=([^;]+)/,
+      ) || req.headers.cookie.match(/(?:^|;\s*)refresh_token=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return undefined;
+}
+

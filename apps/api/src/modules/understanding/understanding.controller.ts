@@ -19,7 +19,10 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  JwtAuthGuard,
+  OptionalJwtAuthGuard,
+} from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../common/interfaces/authenticated-request.interface';
 
 import { UnderstandingService } from './understanding.service';
@@ -73,6 +76,7 @@ export class UnderstandingController {
   }
 
   @Get('jobs/:jobId')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Get understanding job status & result',
     description:

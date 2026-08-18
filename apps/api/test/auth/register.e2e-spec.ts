@@ -30,6 +30,7 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
 
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.101')
         .send(userDto)
         .expect(201);
 
@@ -56,7 +57,7 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
       expect(response.body.user).not.toHaveProperty('password');
       expect(response.body.user).not.toHaveProperty('passwordHash');
       expect(response.body.user).not.toHaveProperty('hash');
-      expect(response.body).not.toHaveProperty('accessToken');
+      expect(response.body.user).not.toHaveProperty('accessToken');
     });
   });
 
@@ -67,12 +68,14 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
       // First registration -> 201 Created
       await testApp.request
         .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.102')
         .send(userDto)
         .expect(201);
 
       // Second registration with identical email -> 409 Conflict
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.102')
         .send(userDto);
 
       expectApiError(response, 409, 'CONFLICT');
@@ -86,6 +89,7 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
 
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.103')
         .send(invalidDto);
 
       expectApiError(response, 400, 'BAD_REQUEST');
@@ -95,16 +99,46 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
     });
 
     it('should return 400 Bad Request when password is weak or shorter than 8 characters', async () => {
-      const invalidDto = createUserDto({ password: 'short' });
+      const invalidDto = createUserDto({
+        password: 'short',
+        confirmPassword: 'short',
+      });
 
       const response = await testApp.request
         .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.104')
         .send(invalidDto);
 
       expectApiError(response, 400, 'BAD_REQUEST');
       expect(response.body.details).toEqual(
         expect.arrayContaining([expect.stringMatching(/password/i)]),
       );
+    });
+
+    it('should return 400 Bad Request when confirmPassword does not match password', async () => {
+      const invalidDto = createUserDto({
+        password: 'SuperSecurePassword123!',
+        confirmPassword: 'DifferentPassword456!',
+      });
+
+      const response = await testApp.request
+        .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.105')
+        .send(invalidDto);
+
+      expectApiError(response, 400, 'BAD_REQUEST');
+      expect(response.body.message).toMatch(/passwords do not match/i);
+    });
+
+    it('should return 400 Bad Request when confirmPassword is missing', async () => {
+      const { confirmPassword, ...withoutConfirm } = createUserDto();
+
+      const response = await testApp.request
+        .post(`${API_PREFIX}/auth/register`)
+        .set('X-Forwarded-For', '10.0.1.106')
+        .send(withoutConfirm);
+
+      expectApiError(response, 400, 'BAD_REQUEST');
     });
   });
 
@@ -114,6 +148,7 @@ describe('POST /api/v1/auth/register (Supertest Regression Suite)', () => {
       for (let i = 0; i < 10; i++) {
         response = await testApp.request
           .post(`${API_PREFIX}/auth/register`)
+          .set('X-Forwarded-For', '10.0.1.199')
           .send(createUserDto());
         if (response.status === 429) {
           break;

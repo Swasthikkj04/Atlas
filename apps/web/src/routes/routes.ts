@@ -20,12 +20,25 @@ export const ROUTES = {
     FORGOT_PASSWORD_ALIAS: '/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
     RESET_PASSWORD_ALIAS: '/reset-password',
+    REACTIVATE: '/auth/reactivate',
+    REACTIVATE_ALIAS: '/reactivate',
   },
   WORKSPACE: {
     ROOT: '/workspace',
+    OVERVIEW: '/workspace',
+    FINDINGS: '/workspace/findings',
+    CHANGES: '/workspace/changes',
+    INFRASTRUCTURE: '/workspace/infrastructure',
+    MEMORY: '/workspace/memory',
     DASHBOARD_ALIAS: '/dashboard',
     CREATE: '/workspace/create',
     CREATE_ALIAS: '/create-workspace',
+  },
+  SETTINGS: {
+    ROOT: '/settings',
+    ACCOUNT: '/settings/account',
+    SECURITY: '/settings/security',
+    APPEARANCE: '/settings/appearance',
   },
 } as const;
 
@@ -36,7 +49,9 @@ export type AppRouteType =
   | 'VERIFY_EMAIL'
   | 'FORGOT_PASSWORD'
   | 'RESET_PASSWORD'
+  | 'REACTIVATE'
   | 'GUEST'
+  | 'SETTINGS'
   | 'WORKSPACE'
   | 'LANDING';
 
@@ -99,7 +114,17 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'RESET_PASSWORD';
   }
 
-  // 5. Authentication: Login
+  // 5. Authentication: Reactivate Account (AX-112)
+  if (
+    pathname === ROUTES.AUTH.REACTIVATE ||
+    pathname.startsWith(`${ROUTES.AUTH.REACTIVATE}/`) ||
+    pathname === ROUTES.AUTH.REACTIVATE_ALIAS ||
+    pathname.startsWith(`${ROUTES.AUTH.REACTIVATE_ALIAS}/`)
+  ) {
+    return 'REACTIVATE';
+  }
+
+  // 6. Authentication: Login
   if (
     pathname === ROUTES.AUTH.LOGIN ||
     pathname === ROUTES.AUTH.LOGIN_ALIAS
@@ -125,7 +150,15 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'GUEST';
   }
 
-  // 6. Authenticated Workspace (Evaluated AFTER specific /workspace/create)
+  // 7. Settings Routes (/settings, /settings/account, /settings/security, /settings/appearance)
+  if (
+    pathname === ROUTES.SETTINGS.ROOT ||
+    pathname.startsWith(`${ROUTES.SETTINGS.ROOT}/`)
+  ) {
+    return 'SETTINGS';
+  }
+
+  // 8. Authenticated Workspace (Evaluated AFTER specific /workspace/create)
   if (
     pathname === ROUTES.WORKSPACE.ROOT ||
     pathname.startsWith(`${ROUTES.WORKSPACE.ROOT}/`) ||
@@ -135,6 +168,6 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'WORKSPACE';
   }
 
-  // 7. Public Landing Page Fallback
+  // 9. Public Landing Page Fallback
   return 'LANDING';
 }

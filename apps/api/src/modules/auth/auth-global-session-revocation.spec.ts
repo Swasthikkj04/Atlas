@@ -77,8 +77,13 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
     const mockPassword = {
       hash: jest.fn().mockResolvedValue('hashed_new_password_argon2'),
       verify: jest.fn().mockImplementation(async (hash, plain) => {
-        if (hash === 'hashed_old_password' && plain === 'OldPassword#123') return true;
-        if (hash === 'hashed_new_password_argon2' && plain === 'NewPassword#456') return true;
+        if (hash === 'hashed_old_password' && plain === 'OldPassword#123')
+          return true;
+        if (
+          hash === 'hashed_new_password_argon2' &&
+          plain === 'NewPassword#456'
+        )
+          return true;
         return false;
       }),
     };
@@ -90,7 +95,9 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
     const mockEmail = {
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
       sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
-      sendPasswordResetConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetConfirmationEmail: jest
+        .fn()
+        .mockResolvedValue(undefined),
     };
 
     const mockResolver = {
@@ -122,7 +129,9 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
     googleAuthService = module.get<GoogleAuthService>(GoogleAuthService);
     githubAuthService = module.get<GitHubAuthService>(GitHubAuthService);
     sessionService = module.get<UserSessionService>(UserSessionService);
-    resetTokenService = module.get<PasswordResetTokenService>(PasswordResetTokenService);
+    resetTokenService = module.get<PasswordResetTokenService>(
+      PasswordResetTokenService,
+    );
     jwtStrategy = module.get<JwtStrategy>(JwtStrategy);
     passwordService = module.get<PasswordService>(PasswordService);
     prisma = module.get(PrismaService);
@@ -141,11 +150,20 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
         user: mockUser,
       };
 
-      jest.spyOn(resetTokenService, 'findValidTokenByRaw').mockResolvedValue(validResetToken as any);
-      jest.spyOn(resetTokenService, 'markTokenConsumed').mockResolvedValue(undefined);
-      jest.spyOn(resetTokenService, 'invalidateUserTokens').mockResolvedValue(undefined);
+      jest
+        .spyOn(resetTokenService, 'findValidTokenByRaw')
+        .mockResolvedValue(validResetToken as any);
+      jest
+        .spyOn(resetTokenService, 'markTokenConsumed')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(resetTokenService, 'invalidateUserTokens')
+        .mockResolvedValue(undefined);
 
-      const result = await authService.resetPassword('raw_reset_token', 'NewPassword#456');
+      const result = await authService.resetPassword(
+        'raw_reset_token',
+        'NewPassword#456',
+      );
 
       expect(result.message).toContain('All active sessions have been revoked');
       expect(prisma.userSession.updateMany).toHaveBeenCalledWith({
@@ -171,7 +189,9 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
         expiresAt: new Date(Date.now() + 86400000),
       };
 
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(revokedSessionA);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        revokedSessionA,
+      );
 
       const payloadA = {
         sub: mockUser.id,
@@ -181,13 +201,17 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
       };
 
       await expect(jwtStrategy.validate(payloadA)).rejects.toThrow(
-        new UnauthorizedException('Session has been revoked or expired. Please log in again.'),
+        new UnauthorizedException(
+          'Session has been revoked or expired. Please log in again.',
+        ),
       );
     });
 
     it('immediately rejects access tokens issued prior to tokenInvalidatedAt', async () => {
       const resetTime = new Date('2026-08-18T12:00:00Z');
-      const tokenIssuedSec = Math.floor(new Date('2026-08-18T11:59:00Z').getTime() / 1000);
+      const tokenIssuedSec = Math.floor(
+        new Date('2026-08-18T11:59:00Z').getTime() / 1000,
+      );
 
       usersService.findById.mockResolvedValue({
         ...mockUser,
@@ -245,7 +269,10 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
     it('rejects old password and establishes active session with new password', async () => {
       // 1. Attempt login with old password -> must fail
       await expect(
-        authService.login({ email: mockUser.email, password: 'WrongOldPassword' }, {} as any),
+        authService.login(
+          { email: mockUser.email, password: 'WrongOldPassword' },
+          {} as any,
+        ),
       ).rejects.toThrow(UnauthorizedException);
 
       // 2. Successful login with new password -> establishes fresh active session
@@ -307,10 +334,15 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
         rawRefreshToken: 'raw_oauth_refresh_token',
       });
 
-      const googleRes = await googleAuthService.resolveAndAuthenticateGoogleUser(
-        { googleId: 'g-123', email: mockUser.email, fullName: mockUser.fullName } as any,
-        {} as any,
-      );
+      const googleRes =
+        await googleAuthService.resolveAndAuthenticateGoogleUser(
+          {
+            googleId: 'g-123',
+            email: mockUser.email,
+            fullName: mockUser.fullName,
+          },
+          {} as any,
+        );
 
       expect(googleRes.accessToken).toBe('signed_jwt_access_token');
       expect(googleRes.refreshToken).toBeDefined();
@@ -319,16 +351,18 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
 
   describe('6. Single Device Logout Isolation', () => {
     it('revoking Device A session does not revoke Device B session', async () => {
-      (prisma.userSession.findUnique as jest.Mock).mockImplementation(({ where }) => {
-        if (where.refreshTokenHash) {
-          return Promise.resolve({
-            id: 'ses-device-a',
-            userId: mockUser.id,
-            refreshTokenHash: 'hash_a',
-          });
-        }
-        return Promise.resolve(null);
-      });
+      (prisma.userSession.findUnique as jest.Mock).mockImplementation(
+        ({ where }) => {
+          if (where.refreshTokenHash) {
+            return Promise.resolve({
+              id: 'ses-device-a',
+              userId: mockUser.id,
+              refreshTokenHash: 'hash_a',
+            });
+          }
+          return Promise.resolve(null);
+        },
+      );
 
       await sessionService.revokeSessionByRawToken('raw_token_device_a');
 

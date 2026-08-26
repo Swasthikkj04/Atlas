@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './services/auth.service';
@@ -17,6 +18,7 @@ describe('AuthController', () => {
           useValue: {
             register: jest.fn(),
             login: jest.fn(),
+            changePassword: jest.fn(),
           },
         },
         {
@@ -29,6 +31,16 @@ describe('AuthController', () => {
           provide: GitHubAuthService,
           useValue: {
             resolveAndAuthenticateGitHubUser: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'FRONTEND_URL') return 'http://localhost:5173';
+              if (key === 'NODE_ENV') return 'test';
+              return null;
+            }),
           },
         },
       ],
@@ -66,6 +78,28 @@ describe('AuthController', () => {
       const result = await controller.register(registerDto);
 
       expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(result).toEqual(expectedResponse);
+    });
+  });
+
+  describe('changePassword (AX-104)', () => {
+    it('should call authService.changePassword with authenticated userId and credentials', async () => {
+      const req = { user: { id: 'user-uuid-123' } } as any;
+      const dto = {
+        currentPassword: 'CurrentPassword123!',
+        newPassword: 'NewSecurePassword456!',
+      };
+
+      const expectedResponse = { message: 'Password changed successfully.' };
+      authService.changePassword.mockResolvedValue(expectedResponse);
+
+      const result = await controller.changePassword(req, dto);
+
+      expect(authService.changePassword).toHaveBeenCalledWith(
+        'user-uuid-123',
+        dto.currentPassword,
+        dto.newPassword,
+      );
       expect(result).toEqual(expectedResponse);
     });
   });

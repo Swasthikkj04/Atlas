@@ -1,1 +1,3 @@
-// Feedback components barrier export layer
+export * from './ErrorBoundary';
+export * from './withErrorBoundary';
+export * from './error-boundary.core';

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserAccountStatus } from '@prisma/client';
+import { OAuthProvider, UserAccountStatus } from '@prisma/client';
 import { UsersService } from '../../users/users.service';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { EmailService } from '../../../infrastructure/email/email.service';
@@ -9,6 +9,7 @@ import { PasswordService } from './password.service';
 import { VerificationTokenService } from './verification-token.service';
 import { PasswordResetTokenService } from './password-reset-token.service';
 import { UserSessionService } from './user-session.service';
+import { OAuthAccountService } from './oauth-account.service';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -18,6 +19,7 @@ describe('AuthService', () => {
   let tokenService: jest.Mocked<VerificationTokenService>;
   let resetTokenService: jest.Mocked<PasswordResetTokenService>;
   let sessionService: jest.Mocked<UserSessionService>;
+  let oauthAccountService: jest.Mocked<OAuthAccountService>;
   let emailService: jest.Mocked<EmailService>;
   let prisma: jest.Mocked<PrismaService>;
 
@@ -83,6 +85,8 @@ describe('AuthService', () => {
       revokeSessionByRawToken: jest.fn().mockResolvedValue(undefined),
       revokeSessionById: jest.fn().mockResolvedValue(undefined),
       revokeAllUserSessions: jest.fn().mockResolvedValue(undefined),
+      revokeAllOtherSessions: jest.fn().mockResolvedValue(undefined),
+      hashRefreshToken: jest.fn().mockReturnValue('mock_hashed_refresh_token'),
       getUserSessions: jest.fn().mockResolvedValue([]),
     };
 
@@ -108,6 +112,30 @@ describe('AuthService', () => {
       }),
     };
 
+    const mockOAuthAccountSvc = {
+      getProvidersForUser: jest.fn().mockResolvedValue({
+        providers: [
+          {
+            provider: 'google',
+            name: 'Google',
+            connected: true,
+            accountLabel: 'u••••r@example.com',
+            canDisconnect: true,
+          },
+          {
+            provider: 'github',
+            name: 'GitHub',
+            connected: false,
+            accountLabel: null,
+            canDisconnect: false,
+          },
+        ],
+      }),
+      disconnectProvider: jest.fn().mockResolvedValue({
+        message: 'Google account disconnected successfully.',
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -117,6 +145,7 @@ describe('AuthService', () => {
         { provide: VerificationTokenService, useValue: mockTokenSvc },
         { provide: PasswordResetTokenService, useValue: mockResetTokenSvc },
         { provide: UserSessionService, useValue: mockSessionSvc },
+        { provide: OAuthAccountService, useValue: mockOAuthAccountSvc },
         { provide: EmailService, useValue: mockEmail },
         { provide: PrismaService, useValue: mockPrisma },
       ],
@@ -128,6 +157,7 @@ describe('AuthService', () => {
     tokenService = module.get(VerificationTokenService);
     resetTokenService = module.get(PasswordResetTokenService);
     sessionService = module.get(UserSessionService);
+    oauthAccountService = module.get(OAuthAccountService);
     emailService = module.get(EmailService);
     prisma = module.get(PrismaService);
   });
@@ -273,7 +303,9 @@ describe('AuthService', () => {
   });
 
   it('should reject email verification with unknown or invalid token', async () => {
-    (service as any).prisma.verificationToken.findUnique.mockResolvedValue(null);
+    (service as any).prisma.verificationToken.findUnique.mockResolvedValue(
+      null,
+    );
 
     await expect(
       service.verifyEmail('invalid_token', mockDeviceMeta),
@@ -281,9 +313,9 @@ describe('AuthService', () => {
   });
 
   it('should reject email verification with empty or malformed token', async () => {
-    await expect(
-      service.verifyEmail('', mockDeviceMeta),
-    ).rejects.toThrow('This verification link is no longer valid.');
+    await expect(service.verifyEmail('', mockDeviceMeta)).rejects.toThrow(
+      'This verification link is no longer valid.',
+    );
   });
 
   it('should resend verification email for pending user and issue new token', async () => {
@@ -317,7 +349,7 @@ describe('AuthService', () => {
     expect(result.refreshToken).toBe('rotated_refresh_token_111');
   });
 
-  it('should revoke all sessions on logout-all', async () => {
+  it('should revoke all sessions on logout-all when no current token provided', async () => {
     const result = await service.logoutAll('usr-123');
 
     expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith(
@@ -326,10 +358,55 @@ describe('AuthService', () => {
     expect(result.message).toContain('Logged out of all sessions');
   });
 
+  it('should revoke other sessions on logout-all while preserving current session when current token provided (AX-105)', async () => {
+    const result = await service.logoutAll('usr-123', 'raw_current_token');
+
+    expect(sessionService.hashRefreshToken).toHaveBeenCalledWith(
+      'raw_current_token',
+    );
+    expect(sessionService.revokeAllOtherSessions).toHaveBeenCalledWith(
+      'usr-123',
+      'mock_hashed_refresh_token',
+    );
+    expect(result.message).toBe(
+      'All other active sessions have been signed out.',
+    );
+  });
+
+  describe('getConnectedProviders (AX-106)', () => {
+    it('should delegate provider status retrieval to oauthAccountService', async () => {
+      const result = await service.getConnectedProviders('usr-123');
+
+      expect(oauthAccountService.getProvidersForUser).toHaveBeenCalledWith(
+        'usr-123',
+      );
+      expect(result.providers).toHaveLength(2);
+    });
+  });
+
+  describe('disconnectProvider (AX-106)', () => {
+    it('should delegate provider disconnection to oauthAccountService', async () => {
+      const result = await service.disconnectProvider(
+        'usr-123',
+        OAuthProvider.GOOGLE,
+      );
+
+      expect(oauthAccountService.disconnectProvider).toHaveBeenCalledWith(
+        'usr-123',
+        OAuthProvider.GOOGLE,
+      );
+      expect(result.message).toContain(
+        'Google account disconnected successfully',
+      );
+    });
+  });
+
   describe('forgotPassword', () => {
     it('should issue reset token and dispatch email for active user', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
-      resetTokenService.issueResetToken.mockResolvedValue('raw_reset_token_abc');
+      resetTokenService.issueResetToken.mockResolvedValue(
+        'raw_reset_token_abc',
+      );
 
       const result = await service.forgotPassword('test@example.com');
 
@@ -410,10 +487,9 @@ describe('AuthService', () => {
       expect(resetTokenService.invalidateUserTokens).toHaveBeenCalledWith(
         'usr-123',
       );
-      expect(emailService.sendPasswordResetConfirmationEmail).toHaveBeenCalledWith(
-        'test@example.com',
-        'Test User',
-      );
+      expect(
+        emailService.sendPasswordResetConfirmationEmail,
+      ).toHaveBeenCalledWith('test@example.com', 'Test User');
       expect(result.message).toContain('Password has been reset successfully');
     });
 

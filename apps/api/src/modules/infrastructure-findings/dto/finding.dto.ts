@@ -7,6 +7,14 @@ export class FindingDto {
 
   severity: string;
 
+  confidence?: string;
+
+  riskClassification?: string;
+
+  severityRationale?: string;
+
+  whatThisDoesNotProve?: string;
+
   category: string;
 
   recommendations?: unknown;

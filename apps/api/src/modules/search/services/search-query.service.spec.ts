@@ -14,7 +14,12 @@ describe('SearchQueryService', () => {
   });
 
   it('should delegate search execution to SearchRepository', async () => {
-    await service.executeSearch('user-1', 'example');
-    expect(repository.executeSearch).toHaveBeenCalledWith('user-1', 'example');
+    const options = { domainId: 'dom-123', limit: 20, type: 'FINDING' };
+    await service.executeSearch('user-1', 'example', options);
+    expect(repository.executeSearch).toHaveBeenCalledWith(
+      'user-1',
+      'example',
+      options,
+    );
   });
 });

@@ -5,4 +5,6 @@ export class DomainResponseDto {
 
   createdAt: Date;
   updatedAt: Date;
+  lastUnderstoodAt?: Date | null;
+  understandingStatus?: string | null;
 }

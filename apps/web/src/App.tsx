@@ -9,12 +9,17 @@ import {
   AuthCallbackPage,
   ForgotPasswordPage,
   ResetPasswordPage,
+  ReactivateAccountPage,
 } from './features/auth';
 import { WorkspacePage } from './features/workspace';
-import { resolveAppRoute } from './routes/routes';
+import { SettingsPage } from './features/settings';
+import { resolveAppRoute, ProtectedRoute } from './routes';
+import { SkipToContent } from './components/accessibility';
 
-const AppRoutes: React.FC = () => {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
+export const AppRoutes: React.FC = () => {
+  const [pathname, setPathname] = useState(() =>
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
 
   useEffect(() => {
     const handlePopState = () => {
@@ -26,7 +31,12 @@ const AppRoutes: React.FC = () => {
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       // Handle internal relative paths
-      if (href && href.startsWith('/') && !href.startsWith('//') && !anchor.hasAttribute('download')) {
+      if (
+        href &&
+        href.startsWith('/') &&
+        !href.startsWith('//') &&
+        !anchor.hasAttribute('download')
+      ) {
         if (href.startsWith('/api/')) return;
 
         e.preventDefault();
@@ -58,6 +68,8 @@ const AppRoutes: React.FC = () => {
       return <ForgotPasswordPage />;
     case 'RESET_PASSWORD':
       return <ResetPasswordPage />;
+    case 'REACTIVATE':
+      return <ReactivateAccountPage />;
     case 'LOGIN':
       return <LoginPage />;
     case 'VERIFY_EMAIL':
@@ -65,7 +77,17 @@ const AppRoutes: React.FC = () => {
     case 'GUEST':
       return <GuestPage />;
     case 'WORKSPACE':
-      return <WorkspacePage />;
+      return (
+        <ProtectedRoute>
+          <WorkspacePage />
+        </ProtectedRoute>
+      );
+    case 'SETTINGS':
+      return (
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      );
     case 'LANDING':
     default:
       return <LandingPage />;
@@ -74,9 +96,12 @@ const AppRoutes: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <>
+      <SkipToContent />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </>
   );
 };
 

@@ -20,6 +20,13 @@ export class MissingSpfRule implements FindingRule {
       return [];
     }
 
+    // P0 Truth Invariant (WX-1020): DNS lookup failed != SPF record absent.
+    // If the TXT lookup failed (TIMEOUT, SERVFAIL, FAILED), do NOT convert absence of evidence into evidence of absence.
+    const txtStatus = dns.status?.txt;
+    if (txtStatus === 'FAILED' || txtStatus === 'TIMEOUT' || txtStatus === 'SERVFAIL') {
+      return [];
+    }
+
     const txtRecords = dns.txt.map((record) =>
       Array.isArray(record) ? record.join('') : String(record),
     );
@@ -37,9 +44,15 @@ export class MissingSpfRule implements FindingRule {
         ruleId: this.id,
         title: 'SPF Record Not Found',
         description:
-          'The domain does not publish an SPF record. This may allow attackers to spoof email sent from this domain.',
+          'The domain does not publish a Sender Policy Framework (SPF) record in authoritative DNS.',
         category: FindingCategory.DNS_RECORD,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'SECURITY_HARDENING_GAP',
+        severityRationale:
+          'SPF records allow receiving mail servers to verify whether incoming mail from a domain was sent by an authorized host.',
+        whatThisDoesNotProve:
+          'This observation does not establish that unauthorized emails are currently being forged using this domain. It identifies the absence of an authoritative sender validation policy.',
         recommendations: [
           {
             title: 'Publish an SPF record',

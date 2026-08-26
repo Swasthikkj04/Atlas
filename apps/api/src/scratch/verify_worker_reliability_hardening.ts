@@ -38,6 +38,7 @@ async function runValidation() {
   const activeJob1 = workerReliability.trackJobStart(
     jobId1,
     'dom_123',
+    'worker_test_1',
     'corr_lifecycle_001',
   );
   console.log(`   - Status Transition: QUEUED -> CLAIMED -> RUNNING`);
@@ -73,7 +74,12 @@ async function runValidation() {
 
   console.log('✅ 4. HEARTBEAT & STUCK JOB RECOVERY');
   const stuckJobId = 'job_stuck_002';
-  workerReliability.trackJobStart(stuckJobId, 'dom_456');
+  workerReliability.trackJobStart(
+    stuckJobId,
+    'dom_456',
+    'worker_test_1',
+    'corr_stuck_002',
+  );
   // Age heartbeat to 35s
   const activeStuck = (workerReliability as any).activeJobs.get(stuckJobId);
   activeStuck.lastHeartbeat = Date.now() - 35000;

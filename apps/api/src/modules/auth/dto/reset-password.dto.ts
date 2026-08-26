@@ -12,7 +12,8 @@ export class ResetPasswordDto {
   token!: string;
 
   @ApiProperty({
-    description: 'New account password satisfying canonical password strength policy',
+    description:
+      'New account password satisfying canonical password strength policy',
     example: 'NewSecurePassword123!',
     minLength: 8,
     maxLength: 128,

@@ -165,6 +165,25 @@ export class UserSessionService {
     );
   }
 
+  async revokeAllOtherSessions(
+    userId: string,
+    currentRefreshTokenHash: string,
+  ): Promise<void> {
+    const now = new Date();
+    const result = await this.prisma.userSession.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+        refreshTokenHash: { not: currentRefreshTokenHash },
+      },
+      data: { revokedAt: now },
+    });
+
+    this.logger.log(
+      `[SecurityEvent:REVOKE_OTHER_SESSIONS] userId=${userId} sessionsRevoked=${result.count}`,
+    );
+  }
+
   async getUserSessions(userId: string): Promise<UserSession[]> {
     return this.prisma.userSession.findMany({
       where: {

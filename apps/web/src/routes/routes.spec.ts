@@ -63,6 +63,12 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
       assert.equal(resolveAppRoute('/auth/reset-password/'), 'RESET_PASSWORD');
     });
 
+    it('resolves /auth/reactivate and /reactivate to REACTIVATE', () => {
+      assert.equal(resolveAppRoute('/auth/reactivate'), 'REACTIVATE');
+      assert.equal(resolveAppRoute('/reactivate'), 'REACTIVATE');
+      assert.equal(resolveAppRoute('/auth/reactivate/'), 'REACTIVATE');
+    });
+
     it('resolves /auth/callback to AUTH_CALLBACK', () => {
       assert.equal(resolveAppRoute('/auth/callback'), 'AUTH_CALLBACK');
     });
@@ -85,6 +91,19 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
     });
   });
 
+  describe('Settings Routes', () => {
+    it('resolves /settings and /settings/ to SETTINGS', () => {
+      assert.equal(resolveAppRoute('/settings'), 'SETTINGS');
+      assert.equal(resolveAppRoute('/settings/'), 'SETTINGS');
+    });
+
+    it('resolves /settings subroutes to SETTINGS', () => {
+      assert.equal(resolveAppRoute('/settings/account'), 'SETTINGS');
+      assert.equal(resolveAppRoute('/settings/security'), 'SETTINGS');
+      assert.equal(resolveAppRoute('/settings/appearance'), 'SETTINGS');
+    });
+  });
+
   describe('Route Constants Integrity', () => {
     it('defines canonical constant URIs matching specifications', () => {
       assert.equal(ROUTES.HOME, '/');
@@ -97,6 +116,10 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
       assert.equal(ROUTES.AUTH.VERIFY_EMAIL, '/auth/verify-email');
       assert.equal(ROUTES.AUTH.FORGOT_PASSWORD, '/auth/forgot-password');
       assert.equal(ROUTES.AUTH.RESET_PASSWORD, '/auth/reset-password');
+      assert.equal(ROUTES.SETTINGS.ROOT, '/settings');
+      assert.equal(ROUTES.SETTINGS.ACCOUNT, '/settings/account');
+      assert.equal(ROUTES.SETTINGS.SECURITY, '/settings/security');
+      assert.equal(ROUTES.SETTINGS.APPEARANCE, '/settings/appearance');
     });
   });
 });

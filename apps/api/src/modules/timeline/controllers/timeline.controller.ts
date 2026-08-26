@@ -79,4 +79,33 @@ export class TimelineController {
       id,
     );
   }
+
+  @Get(':id/evidence')
+  @ApiOperation({
+    summary: 'Get observation evidence and lineage for timeline change',
+    description:
+      'Returns authoritative observed facts and underlying protocol evidence lineage for a change event, preserving progressive disclosure and domain tenant isolation.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Timeline change ID.',
+    example: 'evt-3d91d72d-5f86-4e4c-b9ef-65e4e6b1b5b1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Observation evidence retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Timeline change not found.',
+  })
+  async getTimelineEventEvidence(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<any> {
+    return this.timelineExperienceService.getTimelineEventEvidence(
+      req.user.id,
+      id,
+    );
+  }
 }

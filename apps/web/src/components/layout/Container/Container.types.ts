@@ -1,9 +1,17 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type ElementType, type HTMLAttributes } from 'react';
 
-export type ContainerSize = 'sm' | 'content' | 'landing' | 'workspace';
+export type ContainerSize =
+  | 'form'
+  | 'dialog'
+  | 'reading'
+  | 'landing'
+  | 'content'
+  | 'workspace'
+  | 'fluid';
 
-export interface ContainerProps {
+export interface ContainerProps extends HTMLAttributes<HTMLElement> {
   size?: ContainerSize;
+  as?: ElementType;
   children: ReactNode;
   className?: string;
 }

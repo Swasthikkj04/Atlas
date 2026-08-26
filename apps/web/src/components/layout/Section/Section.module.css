@@ -1,16 +1,18 @@
 .section {
   width: 100%;
   box-sizing: border-box;
+  position: relative;
 }
 
-.hero {
-  padding-block: var(--space-3xl) var(--space-4xl);
-}
+/* ── Spatial Vertical Padding ────────────────────────────────────────────── */
+.spacing-none { padding-top: 0; padding-bottom: 0; }
+.spacing-sm   { padding-top: var(--space-lg, 24px); padding-bottom: var(--space-lg, 24px); }
+.spacing-md   { padding-top: var(--space-2xl, 48px); padding-bottom: var(--space-2xl, 48px); }
+.spacing-lg   { padding-top: var(--space-3xl, 72px); padding-bottom: var(--space-3xl, 72px); }
+.spacing-xl   { padding-top: var(--space-4xl, 96px); padding-bottom: var(--space-4xl, 96px); }
 
-.default {
-  padding-block: var(--space-2xl);
-}
-
-.large {
-  padding-block: var(--space-3xl);
-}
+/* ── Border Dividers ─────────────────────────────────────────────────────── */
+.border-top    { border-top: 1px solid var(--border); }
+.border-bottom { border-bottom: 1px solid var(--border); }
+.border-both   { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.border-none   { border-top: none; border-bottom: none; }

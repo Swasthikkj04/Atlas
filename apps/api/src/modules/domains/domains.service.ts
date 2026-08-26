@@ -1,10 +1,13 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 
 import { DomainsRepository } from './repositories/domains.repository';
+import { DomainReachabilityService } from './services/domain-reachability.service';
 
 interface CreateDomainData {
   userId: string;
@@ -13,19 +16,47 @@ interface CreateDomainData {
 
 @Injectable()
 export class DomainsService {
-  constructor(private readonly domainsRepository: DomainsRepository) {}
+  constructor(
+    private readonly domainsRepository: DomainsRepository,
+    private readonly reachabilityService: DomainReachabilityService,
+  ) {}
 
   async create(data: CreateDomainData) {
+    const userDomains = await this.domainsRepository.findByUser(data.userId);
+
+    if (userDomains.length >= 4) {
+      throw new BadRequestException(
+        'Maximum limit of 4 domains reached for this workspace.',
+      );
+    }
+
+    // Authoritative Reachability & SSRF Validation Gate (WX-813)
+    const reachability =
+      await this.reachabilityService.verifyDomainReachability(data.domainName);
+
+    if (!reachability.reachable) {
+      throw new UnprocessableEntityException({
+        code: 'DOMAIN_UNREACHABLE',
+        message:
+          'Unable to reach this domain. Check the address and try again.',
+      });
+    }
+
+    const normalizedDomain = reachability.normalizedDomain;
+
     const existingDomain = await this.domainsRepository.findByUserAndDomain(
       data.userId,
-      data.domainName,
+      normalizedDomain,
     );
 
     if (existingDomain) {
-      throw new ConflictException('Domain already exists.');
+      throw new ConflictException('Domain already exists in this workspace.');
     }
 
-    return this.domainsRepository.create(data);
+    return this.domainsRepository.create({
+      userId: data.userId,
+      domainName: normalizedDomain,
+    });
   }
 
   async findByUser(userId: string) {
@@ -42,7 +73,7 @@ export class DomainsService {
     return domain;
   }
 
-  async delete(id: string, userId: string): Promise<void> {
+  async delete(userId: string, id: string): Promise<void> {
     const domain = await this.domainsRepository.findById(id);
 
     if (!domain || domain.userId !== userId) {

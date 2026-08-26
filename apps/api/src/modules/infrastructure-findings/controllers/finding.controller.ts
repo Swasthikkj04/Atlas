@@ -19,6 +19,7 @@ import { Request } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 import { FindingDetailDto } from '../dto/finding-detail.dto';
+import { FindingEvidenceResponseDto } from '../dto/finding-evidence-response.dto';
 import { FindingsListDto } from '../dto/findings-list.dto';
 import { FindingsQueryDto } from '../dto/findings-query.dto';
 import { InfrastructureFindingService } from '../services/infrastructure-finding.service';
@@ -86,6 +87,33 @@ export class FindingController {
     );
   }
 
+  @Get(':findingId/evidence')
+  @ApiOperation({
+    summary: 'Get observation evidence and lineage for finding',
+    description:
+      'Returns authoritative observed facts and underlying protocol evidence lineage for a finding, preserving progressive disclosure and domain tenant isolation.',
+  })
+  @ApiParam({
+    name: 'findingId',
+    description: 'Infrastructure finding ID.',
+    example: 'find-http-missing-hsts-123',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Observation evidence retrieved successfully.',
+    type: FindingEvidenceResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Finding not found.',
+  })
+  async getFindingEvidence(
+    @Req() req: AuthenticatedRequest,
+    @Param('findingId') findingId: string,
+  ): Promise<FindingEvidenceResponseDto> {
+    return this.findingService.getFindingEvidence(req.user.id, findingId);
+  }
+
   @Get('/snapshots/:snapshotId/findings')
   @ApiOperation({
     summary: 'Get findings associated with a snapshot',
@@ -105,11 +133,21 @@ export class FindingController {
     status: 401,
     description: 'Unauthorized access.',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Snapshot not found.',
+  })
   async getFindingsBySnapshot(
+    @Req() req: AuthenticatedRequest,
     @Param('snapshotId') snapshotId: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
   ) {
-    return this.findingService.getFindingsBySnapshot(snapshotId, page, limit);
+    return this.findingService.getFindingsBySnapshot(
+      req.user.id,
+      snapshotId,
+      page,
+      limit,
+    );
   }
 }

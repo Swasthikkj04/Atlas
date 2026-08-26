@@ -20,6 +20,12 @@ export class MissingMxRule implements FindingRule {
       return [];
     }
 
+    // P0 Truth Invariant (WX-1020): DNS lookup failure != MX record absent.
+    const mxStatus = dns.status?.mx;
+    if (mxStatus === 'FAILED' || mxStatus === 'TIMEOUT' || mxStatus === 'SERVFAIL') {
+      return [];
+    }
+
     if (dns.mx.length > 0) {
       return [];
     }
@@ -29,9 +35,15 @@ export class MissingMxRule implements FindingRule {
         ruleId: this.id,
         title: 'MX Record Not Found',
         description:
-          'The domain does not publish any MX records. Email delivery to this domain may not function correctly.',
+          'The domain does not publish any Mail Exchange (MX) records in authoritative DNS.',
         category: FindingCategory.DNS_RECORD,
-        severity: Severity.MEDIUM,
+        severity: Severity.LOW,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'OPERATIONAL_OBSERVATION',
+        severityRationale:
+          'Absence of MX records prevents inbound email reception if mail handling is intended for this domain.',
+        whatThisDoesNotProve:
+          'This observation is an operational routing observation and does not represent a security vulnerability. If this domain is not intended to receive inbound mail, this state is expected.',
         recommendations: [
           {
             title: 'Configure MX records',

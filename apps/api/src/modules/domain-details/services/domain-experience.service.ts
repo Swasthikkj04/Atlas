@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { DomainDetailsDto } from '../dto/domain-details.dto';
 import { DomainOverviewResponseDto } from '../dto/domain-overview-response.dto';
@@ -9,6 +9,53 @@ import { DomainDetailsService } from './domain-details.service';
 @Injectable()
 export class DomainExperienceService {
   constructor(private readonly domainDetailsService: DomainDetailsService) {}
+
+  async getDomainBrief(userId: string, domainId: string) {
+    const domain = await this.domainDetailsService.getDomain(userId, domainId);
+    let brief: any = await this.domainDetailsService.getLatestBrief(domainId);
+
+    if (!brief) {
+      const latestSnapshot =
+        await this.domainDetailsService.getLatestSnapshot(domainId);
+      if (latestSnapshot) {
+        try {
+          brief = await this.domainDetailsService.generateBrief(
+            userId,
+            latestSnapshot.id,
+          );
+        } catch {
+          // Fall through
+        }
+      }
+    }
+
+    if (!brief) {
+      throw new NotFoundException(
+        `No infrastructure brief found for domain '${domainId}'.`,
+      );
+    }
+
+    return {
+      id: brief.id,
+      snapshotId: brief.snapshotId,
+      domainId: domain.id,
+      executiveSummary: brief.summary,
+      healthScore: null,
+      highlights: Array.isArray(brief.highlights)
+        ? (brief.highlights as any[]).map((h: any, idx: number) => ({
+            id: h.id || `hl-${idx}`,
+            title: typeof h === 'string' ? h : h.title || 'Observation',
+            summary: typeof h === 'string' ? h : h.summary || '',
+            severity: typeof h === 'object' ? h.severity : undefined,
+          }))
+        : [],
+      stableObservationsCount: 0,
+      generatedAt:
+        typeof brief.createdAt?.toISOString === 'function'
+          ? brief.createdAt.toISOString()
+          : String(brief.createdAt),
+    };
+  }
 
   async getDomainOverview(
     userId: string,
@@ -48,7 +95,11 @@ export class DomainExperienceService {
       totalFindings: findingsSummary.total,
       criticalFindings: findingsSummary.critical,
       changesLast30Days: 0,
-      lastUnderstandingAt: latestSnapshot?.createdAt ?? null,
+      lastUnderstandingAt:
+        (domain as any).lastUnderstoodAt ??
+        latestVerification?.completedAt ??
+        latestSnapshot?.createdAt ??
+        null,
     };
 
     return {

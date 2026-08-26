@@ -102,4 +102,18 @@ describe('UserSessionService', () => {
       data: { tokenInvalidatedAt: expect.any(Date) },
     });
   });
+
+  it('should revoke all other user sessions preserving current session without setting tokenInvalidatedAt (AX-105)', async () => {
+    await service.revokeAllOtherSessions('usr-123', 'current_hash_123');
+
+    expect(prisma.userSession.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'usr-123',
+        revokedAt: null,
+        refreshTokenHash: { not: 'current_hash_123' },
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
 });

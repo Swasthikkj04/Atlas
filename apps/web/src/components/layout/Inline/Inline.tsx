@@ -1,17 +1,12 @@
 import React from 'react';
-import type { InlineProps } from './Inline.types';
-import styles from './Inline.module.css';
+import { Cluster } from '../Cluster/Cluster';
+import type { ClusterProps } from '../Cluster/Cluster.types';
 
-export const Inline: React.FC<InlineProps> = ({
-  align = 'center',
-  justify = 'start',
-  wrap = true,
-  children,
-  className = '',
-}) => (
-  <div className={`${styles.inline} ${styles[`align-${align}`]} ${styles[`justify-${justify}`]} ${wrap ? styles.wrap : ''} ${className}`}>
-    {children}
-  </div>
-);
+export type InlineProps = ClusterProps;
+
+/**
+ * Backward-compatible alias for Cluster layout primitive.
+ */
+export const Inline: React.FC<InlineProps> = (props) => <Cluster {...props} />;
 
 Inline.displayName = 'Inline';

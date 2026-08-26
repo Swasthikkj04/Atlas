@@ -31,6 +31,32 @@ export class DomainDetailsController {
     private readonly domainExperienceService: DomainExperienceService,
   ) {}
 
+  @Get(':domainId/brief')
+  @ApiOperation({
+    summary: 'Get latest infrastructure brief for domain',
+    description:
+      'Returns the latest synthesized executive infrastructure brief for the authenticated domain.',
+  })
+  @ApiParam({
+    name: 'domainId',
+    description: 'Domain ID',
+    example: '3d91d72d-5f86-4e4c-b9ef-65e4e6b1b5b1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Domain infrastructure brief retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Domain or brief not found.',
+  })
+  async getDomainBrief(
+    @Req() req: AuthenticatedRequest,
+    @Param('domainId') domainId: string,
+  ) {
+    return this.domainExperienceService.getDomainBrief(req.user.id, domainId);
+  }
+
   @Get(':domainId/overview')
   @ApiOperation({
     summary: 'Get domain overview dashboard data',

@@ -54,18 +54,25 @@ export const LoginPage: React.FC = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPendingVerification, setIsPendingVerification] = useState(false);
+  const [isDeactivated, setIsDeactivated] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) {
-      setError('Please enter your email and password.');
+    setError(null);
+    setIsPendingVerification(false);
+    setIsDeactivated(false);
+
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password.');
       return;
     }
 
-    setError(null);
-    setIsPendingVerification(false);
     setSubmitting(true);
 
     try {
@@ -82,8 +89,14 @@ export const LoginPage: React.FC = () => {
           ? err.message
           : 'Authentication failed. Please check your credentials.';
       setError(message);
-      if (message.toLowerCase().includes('verify your email') || message.toLowerCase().includes('verification required')) {
+      if (
+        message.toLowerCase().includes('verify your email') ||
+        message.toLowerCase().includes('verification required')
+      ) {
         setIsPendingVerification(true);
+      }
+      if (message.toLowerCase().includes('deactivated')) {
+        setIsDeactivated(true);
       }
     } finally {
       setSubmitting(false);
@@ -176,6 +189,16 @@ export const LoginPage: React.FC = () => {
                       Resend verification email →
                     </button>
                   )}
+                </div>
+              )}
+              {isDeactivated && (
+                <div className="mt-2 pt-2 border-t border-destructive/20">
+                  <a
+                    href="/auth/reactivate"
+                    className="underline font-medium hover:opacity-80 transition-opacity inline-flex items-center gap-1 text-primary cursor-pointer"
+                  >
+                    <span>Reactivate your account &rarr;</span>
+                  </a>
                 </div>
               )}
             </div>

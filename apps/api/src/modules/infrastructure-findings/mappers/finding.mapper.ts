@@ -9,6 +9,7 @@ export class FindingMapper {
       title: finding.title,
       description: finding.description,
       severity: finding.severity,
+      confidence: 'AUTHORITATIVE',
       category: finding.category,
       createdAt: finding.createdAt,
     };

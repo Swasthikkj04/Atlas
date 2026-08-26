@@ -5,6 +5,20 @@ import React, {
   useMemo,
 } from 'react';
 import { authService } from '../../../services/auth';
+import { apiClient } from '../../../lib/api-client';
+import { accountService } from '../../../services/account/account.service';
+import {
+  THEME_STORAGE_KEY,
+  THEME_CHANGE_EVENT,
+  applyThemeToDOM,
+  getSystemTheme,
+} from '../../../hooks/useTheme';
+import {
+  MOTION_STORAGE_KEY,
+  MOTION_CHANGE_EVENT,
+  applyMotionToDOM,
+  getSystemReducedMotion,
+} from '../../../hooks/useMotion';
 import { claimGuestSession as apiClaimGuestSession } from '../../../services/api/guest';
 import { AuthContext } from './auth-context';
 import type {
@@ -23,6 +37,38 @@ export interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+function syncPreferencesLocally(prefs: { theme?: string; motion?: string }) {
+  if (typeof window === 'undefined') return;
+  if (prefs.theme && (prefs.theme === 'light' || prefs.theme === 'dark' || prefs.theme === 'system')) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, prefs.theme);
+    } catch {
+      // Ignore local storage write errors
+    }
+    const effectiveTheme = prefs.theme === 'system' ? getSystemTheme() : (prefs.theme as 'light' | 'dark');
+    applyThemeToDOM(effectiveTheme);
+    window.dispatchEvent(
+      new CustomEvent(THEME_CHANGE_EVENT, {
+        detail: { mode: prefs.theme, theme: effectiveTheme },
+      })
+    );
+  }
+  if (prefs.motion && (prefs.motion === 'standard' || prefs.motion === 'reduced' || prefs.motion === 'system')) {
+    try {
+      localStorage.setItem(MOTION_STORAGE_KEY, prefs.motion);
+    } catch {
+      // Ignore local storage write errors
+    }
+    const isReduced = prefs.motion === 'system' ? getSystemReducedMotion() : prefs.motion === 'reduced';
+    applyMotionToDOM(isReduced);
+    window.dispatchEvent(
+      new CustomEvent(MOTION_CHANGE_EVENT, {
+        detail: { motion: prefs.motion, isReduced },
+      })
+    );
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,16 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(profile);
       return profile;
     } catch {
-      // Attempt silent refresh if session refresh cookie is valid
-      try {
-        await authService.refreshToken();
-        const profile = await authService.getProfile();
-        setUser(profile);
-        return profile;
-      } catch {
-        setUser(null);
-        return null;
-      }
+      setUser(null);
+      return null;
     }
   }, []);
 
@@ -54,7 +92,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     async function initAuth() {
       setIsLoading(true);
       try {
-        await loadUser();
+        const profile = await loadUser();
+        if (profile) {
+          try {
+            const prefs = await accountService.getPreferences();
+            if (prefs && isMounted) {
+              syncPreferencesLocally(prefs);
+            }
+          } catch {
+            // Non-blocking preference synchronization
+          }
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -64,8 +112,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     void initAuth();
 
+    apiClient.setOnSessionExpired(() => {
+      if (isMounted) {
+        setUser(null);
+      }
+    });
+
     return () => {
       isMounted = false;
+      apiClient.setOnSessionExpired(undefined);
     };
   }, [loadUser]);
 
@@ -73,6 +128,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     async (credentials: LoginCredentials): Promise<User> => {
       const response = await authService.login(credentials);
       setUser(response.user);
+      try {
+        const prefs = await accountService.getPreferences();
+        if (prefs) {
+          syncPreferencesLocally(prefs);
+        }
+      } catch {
+        // Non-blocking preference synchronization
+      }
       return response.user;
     },
     []
@@ -92,6 +155,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
     }
   }, []);
+
+  const updateProfile = useCallback(
+    async (data: { fullName: string }): Promise<User> => {
+      const updatedUser = await authService.updateProfile(data);
+      setUser(updatedUser);
+      return updatedUser;
+    },
+    []
+  );
 
   const refetchUser = useCallback(async (): Promise<User | null> => {
     return loadUser();
@@ -169,6 +241,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       login,
       register,
       logout,
+      updateProfile,
       refetchUser,
       verifyEmail,
       claimGuestSession,
@@ -181,6 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       login,
       register,
       logout,
+      updateProfile,
       refetchUser,
       verifyEmail,
       claimGuestSession,

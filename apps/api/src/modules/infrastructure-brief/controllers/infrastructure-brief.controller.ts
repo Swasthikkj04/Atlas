@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -15,10 +16,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { InfrastructureBriefService } from '../services/infrastructure-brief.service';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
 
 @ApiTags('Infrastructure Briefs')
 @ApiBearerAuth()
@@ -50,8 +59,11 @@ export class InfrastructureBriefController {
     status: 404,
     description: 'Infrastructure snapshot or brief not found.',
   })
-  async getBySnapshot(@Param('snapshotId') snapshotId: string) {
-    return this.briefService.getBySnapshot(snapshotId);
+  async getBySnapshot(
+    @Req() req: AuthenticatedRequest,
+    @Param('snapshotId') snapshotId: string,
+  ) {
+    return this.briefService.getBySnapshotForUser(req.user.id, snapshotId);
   }
 
   @Post(':snapshotId/brief')
@@ -79,10 +91,14 @@ export class InfrastructureBriefController {
     description: 'Infrastructure snapshot not found.',
   })
   async generate(
+    @Req() req: AuthenticatedRequest,
     @Param('snapshotId') snapshotId: string,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const brief = await this.briefService.generate(snapshotId);
+    const brief = await this.briefService.generateForUser(
+      req.user.id,
+      snapshotId,
+    );
     response.setHeader('Location', `/api/v1/snapshots/${snapshotId}/brief`);
     return brief;
   }

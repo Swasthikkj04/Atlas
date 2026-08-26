@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 
 import { FindingFactory } from './factories/finding.factory';
-import { AtlasHealthRule } from './rules/infrastructure/atlas-health.rule';
 import { FindingRuleEngineService } from './services/finding-rule-engine.service';
 import { FindingRuleRegistryService } from './services/finding-rule-registry.service';
 import { CertificateExpiryRule } from './rules/infrastructure/ssl/certificate-expiry.rule';
@@ -19,7 +18,6 @@ import { MissingContentSecurityPolicyRule } from './rules/infrastructure/http/mi
 import { MissingXFrameOptionsRule } from './rules/infrastructure/http/missing-x-frame-options.rule';
 import { MissingXContentTypeOptionsRule } from './rules/infrastructure/http/missing-x-content-type-options.rule';
 import { MissingReferrerPolicyRule } from './rules/infrastructure/http/missing-referrer-policy.rule';
-import { ServerHeaderExposedRule } from './rules/infrastructure/http/server-header-exposed.rule';
 import { SlowResponseRule } from './rules/infrastructure/http/slow-response.rule';
 import { HttpServiceUnreachableRule } from './rules/infrastructure/http/http-service-unreachable.rule';
 
@@ -28,7 +26,6 @@ import { HttpServiceUnreachableRule } from './rules/infrastructure/http/http-ser
     FindingRuleRegistryService,
     FindingRuleEngineService,
     FindingFactory,
-    AtlasHealthRule,
     CertificateExpiryRule,
     SslUnsupportedRule,
     WeakTlsVersionRule,
@@ -44,7 +41,6 @@ import { HttpServiceUnreachableRule } from './rules/infrastructure/http/http-ser
     MissingXFrameOptionsRule,
     MissingXContentTypeOptionsRule,
     MissingReferrerPolicyRule,
-    ServerHeaderExposedRule,
     SlowResponseRule,
     HttpServiceUnreachableRule,
   ],

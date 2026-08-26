@@ -47,6 +47,12 @@ export class CertificateExpiryRule implements FindingRule {
           )} day(s) ago.`,
           category: FindingCategory.CERTIFICATE,
           severity: Severity.CRITICAL,
+          confidence: 'AUTHORITATIVE',
+          riskClassification: 'CONFIRMED_SECURITY_CONDITION',
+          severityRationale:
+            'An expired TLS certificate triggers browser warning interstitials and blocks user access.',
+          whatThisDoesNotProve:
+            'This observation confirms the cryptographic certificate has exceeded its validity period; it does not indicate private key compromise.',
           recommendations: [
             {
               title: 'Renew the certificate',
@@ -66,6 +72,12 @@ export class CertificateExpiryRule implements FindingRule {
           description: `The TLS certificate will expire in ${remainingDays} day(s).`,
           category: FindingCategory.CERTIFICATE,
           severity: Severity.HIGH,
+          confidence: 'AUTHORITATIVE',
+          riskClassification: 'CONFIRMED_SECURITY_CONDITION',
+          severityRationale:
+            'Impending certificate expiration risks service interruption unless renewed within the active window.',
+          whatThisDoesNotProve:
+            'This observation identifies the scheduled expiration date; it does not indicate active service failure prior to expiration.',
           recommendations: [
             {
               title: 'Renew the certificate',
@@ -83,6 +95,12 @@ export class CertificateExpiryRule implements FindingRule {
         description: `The TLS certificate will expire in ${remainingDays} day(s).`,
         category: FindingCategory.CERTIFICATE,
         severity: Severity.MEDIUM,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'CONFIRMED_SECURITY_CONDITION',
+        severityRationale:
+          'Certificate renewal should be scheduled to avoid certificate expiration outages.',
+        whatThisDoesNotProve:
+          'This observation tracks certificate lifecycle state and does not indicate an active defect.',
         recommendations: [
           {
             title: 'Schedule certificate renewal',

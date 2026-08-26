@@ -1,4 +1,10 @@
-import { apiClient, ApiError, NetworkError, InsufficientSignalError } from './client';
+import {
+  apiClient,
+  ApiError,
+  NetworkError,
+  InsufficientSignalError,
+  RateLimitError,
+} from './client';
 
 export interface StartGuestUnderstandingRequest {
   domain: string;
@@ -10,12 +16,6 @@ export interface StartGuestUnderstandingResponse {
   status: string;
 }
 
-export class RateLimitError extends ApiError {
-  constructor(message = 'GUEST_RATE_LIMIT_EXCEEDED') {
-    super(message, 429, 'GUEST_RATE_LIMIT_EXCEEDED');
-    this.name = 'RateLimitError';
-  }
-}
 
 export class InvalidDomainError extends ApiError {
   constructor(message = 'INVALID_DOMAIN_INPUT') {

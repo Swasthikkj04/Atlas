@@ -20,6 +20,12 @@ export class MissingIpv6Rule implements FindingRule {
       return [];
     }
 
+    // P0 Truth Invariant (WX-1020): DNS lookup failure != IPv6 not configured.
+    const aaaaStatus = dns.status?.aaaa;
+    if (aaaaStatus === 'FAILED' || aaaaStatus === 'TIMEOUT' || aaaaStatus === 'SERVFAIL') {
+      return [];
+    }
+
     if (dns.aaaa.length > 0) {
       return [];
     }
@@ -29,9 +35,15 @@ export class MissingIpv6Rule implements FindingRule {
         ruleId: this.id,
         title: 'IPv6 Not Configured',
         description:
-          'The domain does not publish an AAAA record. IPv6 clients may be unable to reach the service over IPv6 networks.',
+          'The domain does not publish an AAAA record in authoritative DNS.',
         category: FindingCategory.DNS_RECORD,
-        severity: Severity.LOW,
+        severity: Severity.INFO,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'INFORMATIONAL_OBSERVATION',
+        severityRationale:
+          'IPv6 deployment provides dual-stack accessibility and future network readiness.',
+        whatThisDoesNotProve:
+          'This observation is informational and does not represent a vulnerability or security risk. IPv4 connectivity remains fully functional.',
         recommendations: [
           {
             title: 'Enable IPv6',

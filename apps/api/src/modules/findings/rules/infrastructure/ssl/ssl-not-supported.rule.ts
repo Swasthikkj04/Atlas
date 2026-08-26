@@ -37,6 +37,12 @@ export class SslUnsupportedRule implements FindingRule {
           'The target is reachable on port 443, but failed to complete a valid TLS handshake.',
         category: FindingCategory.CERTIFICATE,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'CONFIRMED_SECURITY_CONDITION',
+        severityRationale:
+          'Failure to negotiate TLS on port 443 prevents secure, encrypted client communication.',
+        whatThisDoesNotProve:
+          'This observation indicates a TLS configuration or handshake defect; it does not indicate complete host unreachability.',
         recommendations: [
           {
             title: 'Enable HTTPS',

@@ -15,6 +15,8 @@ export * from './pages/VerifyEmailPage';
 export * from './pages/AuthCallbackPage';
 export * from './pages/ForgotPasswordPage';
 export * from './pages/ResetPasswordPage';
+export * from './pages/ReactivateAccountPage';
+export * from './contracts/reactivation.contract';
 export * from './components/RegistrationForm';
 export * from './components/CheckEmailView';
 export * from './components/CreateWorkspaceSurface';

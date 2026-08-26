@@ -1,19 +1,31 @@
 :root {
-  /* Base-8 Spacing Grid */
-  --space-2xs: 0.25rem; /* 4px */
-  --space-xs:  0.5rem;  /* 8px */
-  --space-sm:  0.75rem; /* 12px */
-  --space-md:  1rem;    /* 16px */
-  --space-lg:  1.5rem;  /* 24px */
-  --space-xl:  2rem;    /* 32px */
-  --space-2xl: 3rem;    /* 48px */
-  --space-3xl: 4.5rem;  /* 72px */
-  --space-4xl: 6rem;    /* 96px */
+  /* ── Spatial Scale (Base-8 / Base-4 Rhythm) ─────────────────────────────── */
+  --space-3xs: 0.125rem; /* 2px  - Hairline offsets, sub-pixel positioning */
+  --space-2xs: 0.25rem;  /* 4px  - Micro padding, status indicators */
+  --space-xs:  0.5rem;   /* 8px  - Icon gaps, compact inline elements */
+  --space-sm:  0.75rem;  /* 12px - Form field padding, tight component gaps */
+  --space-md:  1rem;     /* 16px - Standard card padding, baseline spacing */
+  --space-lg:  1.5rem;   /* 24px - Large card padding, section gaps */
+  --space-xl:  2rem;     /* 32px - Component block separation */
+  --space-2xl: 3rem;     /* 48px - Major section rhythm */
+  --space-3xl: 4.5rem;   /* 72px - Page landmark spacing */
+  --space-4xl: 6rem;     /* 96px - Hero macro padding */
 
-  /* Border Radius Primitives */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 9999px;
+  /* ── Border Radius Scale (Frozen) ──────────────────────────────────────── */
+  --radius-xs:   2px;    /* Subtle tags / code chips */
+  --radius-sm:   4px;    /* Badges, tooltips, small indicators */
+  --radius-md:   8px;    /* Buttons, inputs, dropdown items */
+  --radius-lg:   12px;   /* Cards, panels, alert banners */
+  --radius-xl:   16px;   /* Feature cards, grouped sections */
+  --radius-2xl:  24px;   /* Modals, overlay dialogs, hero containers */
+  --radius-pill: 9999px; /* Status pills, domain chips, segmented toggles */
+
+  /* ── Layout Width Boundaries ───────────────────────────────────────────── */
+  --max-w-form:      420px;
+  --max-w-dialog:    640px;
+  --max-w-reading:   760px;
+  --max-w-content:   1024px;
+  --max-w-landing:   1120px;
+  --max-w-workspace: 1440px;
 }
+

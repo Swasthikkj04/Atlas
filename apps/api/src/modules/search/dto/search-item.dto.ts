@@ -10,8 +10,26 @@ export class SearchItemDto {
   @ApiProperty({
     description: 'Type of entity matched.',
     example: 'DOMAIN',
+    enum: [
+      'DOMAIN',
+      'FINDING',
+      'CHANGE',
+      'TIMELINE',
+      'INFRASTRUCTURE',
+      'BRIEF',
+      'INVESTIGATION',
+      'ACTIVITY',
+    ],
   })
-  type!: 'DOMAIN' | 'FINDING' | 'TIMELINE' | 'BRIEF' | 'ACTIVITY';
+  type!:
+    | 'DOMAIN'
+    | 'FINDING'
+    | 'CHANGE'
+    | 'TIMELINE'
+    | 'INFRASTRUCTURE'
+    | 'BRIEF'
+    | 'INVESTIGATION'
+    | 'ACTIVITY';
 
   @ApiProperty({
     description: 'Title of the search result.',
@@ -26,6 +44,20 @@ export class SearchItemDto {
   description!: string;
 
   @ApiProperty({
+    description: 'Optional subtitle for visual hierarchy.',
+    example: 'HIGH · example.com',
+    required: false,
+  })
+  subtitle?: string;
+
+  @ApiProperty({
+    description: 'Associated domain identifier.',
+    example: 'dom-1234-5678',
+    required: false,
+  })
+  domainId?: string;
+
+  @ApiProperty({
     description: 'Associated domain name.',
     example: 'example.com',
   })
@@ -36,4 +68,17 @@ export class SearchItemDto {
     example: 95,
   })
   relevanceScore!: number;
+
+  @ApiProperty({
+    description: 'Optional metadata dictionary for technical qualifiers.',
+    required: false,
+  })
+  metadata?: Record<string, unknown>;
+
+  @ApiProperty({
+    description: 'Canonical destination path for navigation.',
+    example: '/workspace?domainId=dom-1234',
+    required: false,
+  })
+  destination?: string;
 }

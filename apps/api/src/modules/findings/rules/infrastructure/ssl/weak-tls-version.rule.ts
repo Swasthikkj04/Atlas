@@ -28,9 +28,15 @@ export class WeakTlsVersionRule implements FindingRule {
       {
         ruleId: this.id,
         title: 'Weak TLS Version Detected',
-        description: `The endpoint negotiated ${ssl.protocol}, which is deprecated and considered insecure.`,
-        category: FindingCategory.CERTIFICATE,
+        description: `The endpoint negotiated ${ssl.protocol}, which is deprecated and considered cryptographically weak.`,
+        category: FindingCategory.TLS,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'CONFIRMED_SECURITY_CONDITION',
+        severityRationale:
+          'TLS 1.0 and 1.1 rely on outdated cipher suites susceptible to cryptographic downgrade attacks (e.g. POODLE, BEAST).',
+        whatThisDoesNotProve:
+          'This observation confirms the server accepted a deprecated protocol negotiation; it does not prove active eavesdropping or traffic decryption.',
         recommendations: [
           {
             title: 'Upgrade TLS',

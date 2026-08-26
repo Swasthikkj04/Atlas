@@ -2,6 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { OAuthProvider, User, UserAccountStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { OAuthAccountService } from '../services/oauth-account.service';
+import { OAuthAuthenticationException } from '../exceptions/oauth.exception';
 
 export interface OAuthProfile {
   provider: OAuthProvider;
@@ -41,6 +42,18 @@ export class OAuthIdentityResolver {
     );
 
     if (existingOAuth) {
+      if (existingOAuth.user.status === UserAccountStatus.DEACTIVATED) {
+        throw new OAuthAuthenticationException(
+          'account_deactivated',
+          'Your Nebula account is currently deactivated. Please request a reactivation link to restore access.',
+        );
+      }
+      if (existingOAuth.user.status === UserAccountStatus.DELETED) {
+        throw new UnauthorizedException(
+          'This account has been permanently deleted.',
+        );
+      }
+
       this.logger.log(
         `OAuth Resolution Case A (Existing Linked Account): User=${existingOAuth.userId} Provider=${profile.provider}`,
       );
@@ -62,6 +75,18 @@ export class OAuthIdentityResolver {
     });
 
     if (existingUser) {
+      if (existingUser.status === UserAccountStatus.DEACTIVATED) {
+        throw new OAuthAuthenticationException(
+          'account_deactivated',
+          'Your Nebula account is currently deactivated. Please request a reactivation link to restore access.',
+        );
+      }
+      if (existingUser.status === UserAccountStatus.DELETED) {
+        throw new UnauthorizedException(
+          'This account has been permanently deleted.',
+        );
+      }
+
       const isPending =
         existingUser.status === UserAccountStatus.PENDING_VERIFICATION;
       const caseName = isPending

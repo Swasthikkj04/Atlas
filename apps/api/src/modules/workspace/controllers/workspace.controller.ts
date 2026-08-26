@@ -1,7 +1,8 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -30,6 +31,31 @@ export class WorkspaceController {
   constructor(
     private readonly workspaceExperienceService: WorkspaceExperienceService,
   ) {}
+
+  @Get('overview')
+  @ApiOperation({
+    summary: 'Get synthesized Workspace Overview for an authenticated domain',
+    description:
+      'Returns authoritative synthesized domain intelligence including Executive Brief, Primary Story, Secondary Stories, Latest Snapshot, Recent Changes, and Quiet State.',
+  })
+  @ApiQuery({
+    name: 'domainId',
+    description: 'Domain ID',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Workspace overview retrieved successfully.',
+  })
+  async getWorkspaceOverview(
+    @Req() req: AuthenticatedRequest,
+    @Query('domainId') domainId: string,
+  ) {
+    return this.workspaceExperienceService.getWorkspaceOverview(
+      req.user.id,
+      domainId,
+    );
+  }
 
   @Get('dashboard')
   @ApiOperation({

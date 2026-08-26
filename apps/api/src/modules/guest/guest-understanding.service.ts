@@ -72,13 +72,19 @@ export class GuestUnderstandingService {
     // 3. Create real UnderstandingJob in database with RUNNING status so worker does not double-process
     const jobId = `gst_job_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
+    const now = new Date();
     const job = await this.prisma.understandingJob.create({
       data: {
         id: jobId,
         domainId: domainRecord.id,
         trigger: 'MANUAL',
         status: 'RUNNING',
-        startedAt: new Date(),
+        workerId: 'guest_direct_worker',
+        startedAt: now,
+        heartbeatAt: now,
+        leaseUntil: new Date(now.getTime() + 60000),
+        attemptCount: 1,
+        maxAttempts: 3,
       },
     });
 
@@ -105,6 +111,8 @@ export class GuestUnderstandingService {
           data: {
             status: 'COMPLETED',
             completedAt: new Date(),
+            leaseUntil: null,
+            nextRetryAt: null,
           },
         });
       })
@@ -115,6 +123,8 @@ export class GuestUnderstandingService {
             status: 'FAILED',
             errorMessage: (err as Error)?.message || 'Engine execution failed',
             completedAt: new Date(),
+            leaseUntil: null,
+            nextRetryAt: null,
           },
         });
       });

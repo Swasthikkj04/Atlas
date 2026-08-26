@@ -32,6 +32,12 @@ export class SslEndpointUnreachableRule implements FindingRule {
           'Atlas could not establish a TCP connection to the HTTPS endpoint on port 443.',
         category: FindingCategory.CERTIFICATE,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'OPERATIONAL_OBSERVATION',
+        severityRationale:
+          'Port 443 inaccessibility prevents TLS communication and indicates network filtering or an offline service.',
+        whatThisDoesNotProve:
+          'This observation reflects TCP port reachability and does not indicate an exploitable vulnerability in cryptographic configuration.',
         recommendations: [
           {
             title: 'Verify HTTPS availability',

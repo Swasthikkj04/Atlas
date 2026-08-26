@@ -16,27 +16,38 @@ export class MissingReferrerPolicyRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
-    if (!http?.reachable) {
+    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
       return [];
     }
 
-    if (http.headers['referrer-policy']) {
+    const finalResponse = http.finalResponse;
+    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
+
+    if (evaluatedHeaders && evaluatedHeaders['referrer-policy']) {
       return [];
     }
+
+    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {
         ruleId: this.id,
         title: 'Missing Referrer-Policy Header',
-        description:
-          'The application does not send a Referrer-Policy header. Browsers may expose more referrer information than intended when navigating to other sites.',
+        description: `The authoritative response (${evaluatedUrl}) does not specify an explicit Referrer-Policy header. User agents will default to browser privacy policies.`,
         category: FindingCategory.SECURITY_HEADER,
         severity: Severity.LOW,
+        confidence,
+        riskClassification: 'SECURITY_HARDENING_GAP',
+        severityRationale:
+          'Referrer-Policy limits sensitive URL path data from leaking to third parties during external navigation.',
+        whatThisDoesNotProve:
+          'This observation does not establish that sensitive user parameters are currently leaking. It identifies the absence of an explicit referrer control policy.',
         recommendations: [
           {
             title: 'Configure Referrer-Policy',
             description:
-              'Configure the Referrer-Policy response header to control how much referrer information browsers send with outgoing requests.',
+              "Configure a Referrer-Policy header (such as 'strict-origin-when-cross-origin' or 'no-referrer') to control referrer leakage.",
           },
         ],
       },

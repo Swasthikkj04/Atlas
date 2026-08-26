@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Optional, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
@@ -13,7 +14,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
+    @Optional() private readonly configService?: ConfigService,
   ) {
+    const isProduction =
+      configService?.get<string>('NODE_ENV') === 'production' ||
+      process.env.NODE_ENV === 'production';
+    const secretOrKey =
+      configService?.get<string>('JWT_ACCESS_SECRET') ||
+      process.env.JWT_ACCESS_SECRET ||
+      (isProduction ? '' : 'atlas-development-access-secret');
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -22,8 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey:
-        process.env.JWT_ACCESS_SECRET ?? 'atlas-development-access-secret',
+      secretOrKey,
     });
   }
 

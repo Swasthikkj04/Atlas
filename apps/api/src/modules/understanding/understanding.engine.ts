@@ -10,7 +10,9 @@ import { InfrastructureFindingService } from '../infrastructure-findings/service
 import { InfrastructureSnapshotService } from '../infrastructure-snapshots/services/infrastructure-snapshot.service';
 import { InfrastructureVerificationService } from './services/infrastructure-verification.service';
 import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
+import { ChangeDetectionEngine } from './services/change-detection.engine';
 import { UnderstandingRepository } from './repositories/understanding.repository';
+import { ProviderAttributionService } from '../../infrastructure/attribution/services/provider-attribution.service';
 
 @Injectable()
 export class UnderstandingEngine {
@@ -23,68 +25,83 @@ export class UnderstandingEngine {
     private readonly infrastructureFindingService: InfrastructureFindingService,
     private readonly infrastructureBriefService: InfrastructureBriefService,
     private readonly snapshotEqualityEngine: SnapshotEqualityEngine,
+    private readonly changeDetectionEngine: ChangeDetectionEngine,
     private readonly verificationService: InfrastructureVerificationService,
     private readonly understandingRepository: UnderstandingRepository,
+    private readonly providerAttributionService: ProviderAttributionService,
   ) {}
 
   async execute(
     jobId: string,
     domainId: string,
     domainName: string,
+    onProgress?: () => Promise<void>,
   ): Promise<void> {
     const startedAt = new Date();
-    const snapshot = await this.collectDiscovery(domainName);
 
+    // 1. Idempotency Check: Did this job already create a snapshot prior to a crash?
+    const existingJobSnapshot = await this.snapshotService.findByJobId(jobId);
+    if (existingJobSnapshot) {
+      this.logger.log(
+        `Job ${jobId} already persisted snapshot ${existingJobSnapshot.id} before crash. Resuming downstream intelligence generation idempotently.`,
+      );
+
+      const findingsResult =
+        await this.infrastructureFindingService.getFindingsBySnapshotInternal(
+          existingJobSnapshot.id,
+          1,
+          10,
+        );
+      if (findingsResult.data.length === 0 && existingJobSnapshot.payload) {
+        const context: FindingContext = {
+          domainId,
+          snapshotId: existingJobSnapshot.id,
+          snapshot: existingJobSnapshot.payload as unknown as DiscoverySnapshot,
+        };
+        const evaluatedFindings =
+          await this.findingRuleEngine.evaluate(context);
+        if (evaluatedFindings.length > 0) {
+          await this.infrastructureFindingService.saveFindings(
+            existingJobSnapshot.id,
+            evaluatedFindings,
+          );
+        }
+      }
+
+      const existingBrief = await this.infrastructureBriefService
+        .getBySnapshot(existingJobSnapshot.id)
+        .catch(() => null);
+      if (!existingBrief) {
+        await this.infrastructureBriefService.generate(existingJobSnapshot.id);
+      }
+
+      return;
+    }
+
+    // 2. Perform Discovery (with progress heartbeats)
+    const snapshot = await this.collectDiscovery(domainName, onProgress);
+
+    // 2.5 Multi-Signal Authoritative Provider Attribution (WX-1022)
+    snapshot.attribution =
+      this.providerAttributionService.attributeInfrastructure(snapshot);
+
+    // 3. Snapshot Equality Evaluation (Change Detection baseline)
     const latestSnapshot =
       await this.snapshotService.getLatestByDomain(domainId);
 
+    let isSame = false;
+    let previousDiscovery: DiscoverySnapshot | null = null;
     if (latestSnapshot && latestSnapshot.payload) {
-      const previousDiscovery =
+      previousDiscovery =
         latestSnapshot.payload as unknown as DiscoverySnapshot;
 
-      const isSame = this.snapshotEqualityEngine.isEqual(
+      isSame = this.snapshotEqualityEngine.isEqual(
         previousDiscovery,
         snapshot,
       );
-
-      if (isSame) {
-        const completedAt = new Date();
-        const durationMs = completedAt.getTime() - startedAt.getTime();
-
-        // 1. Link the current job to the existing unchanged snapshot so queries return the data
-        await this.understandingRepository.linkJobToSnapshot(
-          jobId,
-          latestSnapshot.id,
-        );
-
-        // 2. Ensure brief exists for latestSnapshot if it was missing
-        const existingBrief = await this.infrastructureBriefService
-          .getBySnapshot(latestSnapshot.id)
-          .catch(() => null);
-
-        if (!existingBrief) {
-          await this.infrastructureBriefService.generate(latestSnapshot.id);
-        }
-
-        await this.verificationService.create({
-          domainId,
-          jobId,
-          snapshotId: latestSnapshot.id,
-          changeDetected: false,
-          snapshotCreated: false,
-          startedAt,
-          completedAt,
-          durationMs,
-        });
-
-        this.logger.log(
-          `No infrastructure changes detected for domain ${domainName}. Linked job ${jobId} to existing snapshot ${latestSnapshot.id}.`,
-        );
-
-        return;
-      }
     }
 
+    // 4. Persist Authoritative Verified Snapshot for this Understanding
     const savedSnapshot = await this.snapshotService.saveSnapshot(
       domainId,
       jobId,
@@ -94,17 +111,39 @@ export class UnderstandingEngine {
     const completedAt = new Date();
     const durationMs = completedAt.getTime() - startedAt.getTime();
 
+    // Link the current job to the newly created snapshot
+    await this.understandingRepository.linkJobToSnapshot(
+      jobId,
+      savedSnapshot.id,
+    );
+
     await this.verificationService.create({
       domainId,
       jobId,
       snapshotId: savedSnapshot.id,
-      changeDetected: latestSnapshot !== null,
+      changeDetected: !isSame && latestSnapshot !== null,
       snapshotCreated: true,
       startedAt,
       completedAt,
       durationMs,
     });
 
+    // 4.5 Detect & Persist Changes against previous snapshot
+    if (latestSnapshot && previousDiscovery) {
+      await this.changeDetectionEngine.detectAndPersistChanges(
+        domainId,
+        latestSnapshot.id,
+        savedSnapshot.id,
+        previousDiscovery,
+        snapshot,
+      );
+    }
+
+    if (onProgress) {
+      await onProgress();
+    }
+
+    // 5. Evaluate and Persist Findings
     const context: FindingContext = {
       domainId,
       snapshotId: savedSnapshot.id,
@@ -124,6 +163,11 @@ export class UnderstandingEngine {
       findings,
     );
 
+    if (onProgress) {
+      await onProgress();
+    }
+
+    // 6. Generate Intelligence Brief
     await this.infrastructureBriefService.generate(savedSnapshot.id);
 
     this.logger.debug(
@@ -133,6 +177,7 @@ export class UnderstandingEngine {
 
   private async collectDiscovery(
     domainName: string,
+    onProgress?: () => Promise<void>,
   ): Promise<DiscoverySnapshot> {
     const snapshot: DiscoverySnapshot = {
       domainName,
@@ -141,6 +186,9 @@ export class UnderstandingEngine {
 
     for (const module of this.discoveryRegistry.getModules()) {
       snapshot[module.name] = await module.discover(domainName);
+      if (onProgress) {
+        await onProgress();
+      }
     }
 
     return snapshot;

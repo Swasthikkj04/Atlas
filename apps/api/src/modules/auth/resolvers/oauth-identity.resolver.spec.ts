@@ -120,4 +120,31 @@ describe('OAuthIdentityResolver', () => {
     });
     expect(result.event).toBe('GOOGLE_ACCOUNT_CREATED');
   });
+
+  it('Case A (Deactivated): throws OAuthAuthenticationException with account_deactivated code', async () => {
+    oauthAccountService.findAccount.mockResolvedValue({
+      id: 'oauth-1',
+      userId: 'usr-100',
+      user: {
+        ...mockUser,
+        status: UserAccountStatus.DEACTIVATED,
+      },
+    } as any);
+
+    await expect(resolver.resolveUser(mockProfile)).rejects.toMatchObject({
+      errorCode: 'account_deactivated',
+    });
+  });
+
+  it('Case B (Deactivated): throws OAuthAuthenticationException with account_deactivated code', async () => {
+    oauthAccountService.findAccount.mockResolvedValue(null);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      ...mockUser,
+      status: UserAccountStatus.DEACTIVATED,
+    });
+
+    await expect(resolver.resolveUser(mockProfile)).rejects.toMatchObject({
+      errorCode: 'account_deactivated',
+    });
+  });
 });

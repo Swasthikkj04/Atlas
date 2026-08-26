@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OAuthProvider } from '@prisma/client';
 import { AuthService } from './auth.service';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../resolvers/oauth-identity.resolver';
 import { NormalizedGoogleProfile } from '../mappers/google-profile.mapper';
 import { DeviceMetadata } from '../utils/user-agent.parser';
+import { OAuthAuthenticationException } from '../exceptions/oauth.exception';
 
 @Injectable()
 export class GoogleAuthService {
@@ -30,7 +31,10 @@ export class GoogleAuthService {
       this.logger.error(
         'Google Login Failed: Missing required Google profile claims',
       );
-      throw new UnauthorizedException('Invalid Google profile response.');
+      throw new OAuthAuthenticationException(
+        'oauth_invalid_request',
+        'Invalid Google profile response.',
+      );
     }
 
     const oauthProfile: OAuthProfile = {
@@ -66,4 +70,3 @@ export class GoogleAuthService {
     };
   }
 }
-

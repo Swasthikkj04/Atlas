@@ -1,6 +1,4 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { runWithCorrelationId } from '../../../infrastructure/logger/background-job-context';
-import { RequestContextStore } from '../../../infrastructure/logger/request-context.store';
 import { MetricsService } from '../../../infrastructure/metrics/metrics.service';
 import { UnderstandingRepository } from '../repositories/understanding.repository';
 
@@ -23,16 +21,16 @@ export interface ActiveWorkerJob {
   jobId: string;
   domainId: string;
   correlationId: string;
+  workerId: string;
   startedAt: number;
   lastHeartbeat: number;
-  retryCount: number;
 }
 
 @Injectable()
 export class WorkerReliabilityService implements OnModuleDestroy {
   private readonly logger = new Logger(WorkerReliabilityService.name);
   private readonly activeJobs = new Map<string, ActiveWorkerJob>();
-  private readonly maxRetries = 3;
+  private readonly defaultMaxRetries = 3;
   private isShuttingDown = false;
 
   constructor(
@@ -46,10 +44,12 @@ export class WorkerReliabilityService implements OnModuleDestroy {
     if (
       msg.includes('ENOTFOUND') ||
       msg.includes('ECONNREFUSED') ||
+      msg.includes('ECONNRESET') ||
       msg.includes('ETIMEDOUT') ||
       msg.includes('fetch failed') ||
       msg.includes('HTTP timeout') ||
-      msg.includes('TLS handshake')
+      msg.includes('TLS handshake') ||
+      msg.includes('socket hang up')
     ) {
       return {
         category: FailureCategory.NETWORK,
@@ -62,7 +62,8 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       msg.includes('Prisma') ||
       msg.includes('database') ||
       msg.includes('Connection terminated') ||
-      msg.includes('deadlock')
+      msg.includes('deadlock') ||
+      msg.includes("Can't reach database server")
     ) {
       return {
         category: FailureCategory.DATABASE,
@@ -74,7 +75,8 @@ export class WorkerReliabilityService implements OnModuleDestroy {
     if (
       msg.includes('Invalid domain') ||
       msg.includes('Validation failed') ||
-      msg.includes('forbidNonWhitelisted')
+      msg.includes('forbidNonWhitelisted') ||
+      msg.includes('Target domain is unresolvable or malformed')
     ) {
       return {
         category: FailureCategory.VALIDATION,
@@ -95,7 +97,7 @@ export class WorkerReliabilityService implements OnModuleDestroy {
       };
     }
 
-    if (msg.includes('Discovery failed')) {
+    if (msg.includes('Discovery failed') || msg.includes('Discovery timeout')) {
       return {
         category: FailureCategory.DISCOVERY,
         isRetriable: true,
@@ -111,34 +113,49 @@ export class WorkerReliabilityService implements OnModuleDestroy {
   }
 
   getRetryDelayMs(attempt: number, baseMs = 1000, maxMs = 30000): number {
-    const delay = baseMs * Math.pow(2, attempt - 1);
+    const exponent = Math.max(0, attempt - 1);
+    const delay = baseMs * Math.pow(2, exponent);
     return Math.min(delay, maxMs);
   }
 
   trackJobStart(
     jobId: string,
     domainId: string,
-    correlationId?: string,
+    workerId: string,
+    correlationId: string,
   ): ActiveWorkerJob {
     const active: ActiveWorkerJob = {
       jobId,
       domainId,
-      correlationId:
-        correlationId ||
-        RequestContextStore.getCorrelationId() ||
-        `corr_worker_${jobId}`,
+      workerId,
+      correlationId,
       startedAt: Date.now(),
       lastHeartbeat: Date.now(),
-      retryCount: this.activeJobs.get(jobId)?.retryCount || 0,
     };
     this.activeJobs.set(jobId, active);
     return active;
   }
 
-  updateHeartbeat(jobId: string): void {
+  async updateHeartbeat(
+    jobId: string,
+    workerId: string,
+    leaseExtensionMs = 60000,
+  ): Promise<void> {
     const active = this.activeJobs.get(jobId);
     if (active) {
       active.lastHeartbeat = Date.now();
+    }
+
+    try {
+      await this.understandingRepository.updateHeartbeat(
+        jobId,
+        workerId,
+        leaseExtensionMs,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to persist heartbeat for job ${jobId}: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -150,82 +167,96 @@ export class WorkerReliabilityService implements OnModuleDestroy {
     jobId: string,
     rawError: any,
     durationMs: number,
+    workerId?: string,
   ): Promise<{ retried: boolean; category: FailureCategory }> {
-    const active = this.activeJobs.get(jobId);
-    const retryCount = (active?.retryCount || 0) + 1;
+    this.activeJobs.delete(jobId);
+
+    const job = await this.understandingRepository.findById(jobId);
+    const attemptCount = job?.attemptCount ?? 1;
+    const maxAttempts = job?.maxAttempts ?? this.defaultMaxRetries;
     const classified = this.classifyError(rawError);
 
     this.logger.warn(
-      `Job ${jobId} failed with category=${classified.category}, retriable=${classified.isRetriable}, attempt=${retryCount}/${this.maxRetries}`,
+      `Job ${jobId} failed with category=${classified.category}, retriable=${classified.isRetriable}, attempt=${attemptCount}/${maxAttempts}`,
     );
 
-    if (classified.isRetriable && retryCount <= this.maxRetries) {
-      const delayMs = this.getRetryDelayMs(retryCount);
-      if (active) {
-        active.retryCount = retryCount;
-      }
+    if (classified.isRetriable && attemptCount < maxAttempts) {
+      const delayMs = this.getRetryDelayMs(attemptCount);
+      const nextRetryAt = new Date(Date.now() + delayMs);
 
       this.logger.log(
-        `Scheduling retry #${retryCount} for job ${jobId} after ${delayMs}ms exponential backoff delay.`,
+        `Scheduling retry #${attemptCount + 1} for job ${jobId} at ${nextRetryAt.toISOString()} (${delayMs}ms backoff).`,
       );
 
-      // Transition job back to PENDING for retry
-      await this.understandingRepository.failJob(
+      await this.understandingRepository.scheduleRetry(
         jobId,
-        `[RETRYING #${retryCount} - ${classified.category}] ${classified.message}`,
-        durationMs,
+        nextRetryAt,
+        `[RETRYING #${attemptCount + 1} - ${classified.category}] ${classified.message}`,
       );
-
-      // Re-queue to PENDING so next worker poll claims it
-      await this.understandingRepository.claimJob(jobId); // reset to RUNNING/PENDING lifecycle
-      await this.understandingRepository.failJob(
-        jobId,
-        `[RETRYING #${retryCount}] Scheduled`,
-        0,
-      );
-
-      // Update job back to PENDING status atomically
-      await (
-        this.understandingRepository as any
-      ).prisma.understandingJob.update({
-        where: { id: jobId },
-        data: { status: 'PENDING' },
-      });
 
       return { retried: true, category: classified.category };
     }
 
-    // Permanent failure
-    this.activeJobs.delete(jobId);
+    // Permanent failure or retry exhaustion
+    const failureReason =
+      attemptCount >= maxAttempts
+        ? `[MAX_ATTEMPTS_EXCEEDED] Exhausted ${maxAttempts} retry attempts. Last error (${classified.category}): ${classified.message}`
+        : `[PERMANENT_FAILURE - ${classified.category}] ${classified.message}`;
+
+    this.logger.error(`Job ${jobId} permanently failed: ${failureReason}`);
+
     await this.understandingRepository.failJob(
       jobId,
-      `[PERMANENT_FAILURE - ${classified.category}] ${classified.message}`,
+      failureReason,
       durationMs,
     );
 
     return { retried: false, category: classified.category };
   }
 
-  async recoverStuckJobs(timeoutMs = 30000): Promise<number> {
-    const now = Date.now();
+  /**
+   * Reconciles all stale RUNNING jobs in PostgreSQL whose lease has expired.
+   * This is database-driven and recovers crashed jobs from any dead worker process.
+   */
+  async recoverStuckJobs(leaseDurationMs = 60000): Promise<number> {
+    const now = new Date();
+    const staleJobs =
+      await this.understandingRepository.findStaleRunningJobs(now);
+
+    if (staleJobs.length === 0) {
+      return 0;
+    }
+
     let recoveredCount = 0;
 
-    for (const [jobId, active] of this.activeJobs.entries()) {
-      if (now - active.lastHeartbeat > timeoutMs) {
-        this.logger.warn(
-          `Stuck job detected: ${jobId} (heartbeat age: ${now - active.lastHeartbeat}ms). Recovering...`,
+    for (const job of staleJobs) {
+      const attemptCount = job.attemptCount;
+      const maxAttempts = job.maxAttempts || this.defaultMaxRetries;
+
+      this.logger.warn(
+        `Stale job detected: ${job.id} (worker=${job.workerId}, leaseExpired=${job.leaseUntil?.toISOString()}, attempt=${attemptCount}/${maxAttempts}). Reconciling...`,
+      );
+
+      if (attemptCount >= maxAttempts) {
+        // Mark failed due to lease expiry after max attempts
+        await this.understandingRepository.failJob(
+          job.id,
+          `[MAX_ATTEMPTS_EXCEEDED] Job lease expired after ${attemptCount} attempts without worker heartbeat.`,
+          job.durationMs ?? 0,
         );
-        this.activeJobs.delete(jobId);
+      } else {
+        // Re-queue with exponential backoff
+        const delayMs = this.getRetryDelayMs(attemptCount);
+        const nextRetryAt = new Date(Date.now() + delayMs);
 
-        await (
-          this.understandingRepository as any
-        ).prisma.understandingJob.update({
-          where: { id: jobId },
-          data: { status: 'PENDING', errorMessage: '[RECOVERED_STUCK_JOB]' },
-        });
-
-        recoveredCount++;
+        await this.understandingRepository.scheduleRetry(
+          job.id,
+          nextRetryAt,
+          `[STALE_JOB_RECOVERED] Worker lease expired (last worker: ${job.workerId}); scheduled retry #${attemptCount + 1}.`,
+        );
       }
+
+      recoveredCount++;
     }
 
     return recoveredCount;

@@ -27,4 +27,7 @@ export class UserSessionResponseDto {
 
   @ApiProperty({ example: '2026-07-31T19:50:00.000Z' })
   createdAt: Date;
+
+  @ApiProperty({ example: true, required: false })
+  isCurrent?: boolean;
 }

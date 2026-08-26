@@ -25,6 +25,26 @@ export class HttpMissingCspRule implements AtlasRulePlugin {
       return null;
     }
 
+    // Invariant: NO_FAILED_LOOKUP_AS_HEADER_ABSENCE
+    if (obs.observation.state === 'FAILED') {
+      return null;
+    }
+
+    if (obs.observation.state === 'UNKNOWN') {
+      return new FindingBuilder()
+        .setRule(this.metadata.id, this.metadata.version)
+        .setModule(FindingModule.HTTP)
+        .setCategory(FindingCategory.SECURITY_HEADER)
+        .setSeverity(Severity.LOW)
+        .setTitle('CSP Header Status Unknown')
+        .setDescription(
+          `CSP header status could not be verified due to probe state (${obs.observation.state}).`,
+        )
+        .setState('UNKNOWN')
+        .addObservation('contentSecurityPolicy', obs)
+        .build();
+    }
+
     if (obs.observation.state === 'MISSING') {
       return new FindingBuilder()
         .setRule(this.metadata.id, this.metadata.version)
@@ -35,24 +55,6 @@ export class HttpMissingCspRule implements AtlasRulePlugin {
         .setDescription(
           'The application does not send a Content-Security-Policy header. This increases the risk of content injection and cross-site scripting attacks.',
         )
-        .addObservation('contentSecurityPolicy', obs)
-        .build();
-    }
-
-    if (
-      obs.observation.state === 'UNKNOWN' ||
-      obs.observation.state === 'FAILED'
-    ) {
-      return new FindingBuilder()
-        .setRule(this.metadata.id, this.metadata.version)
-        .setModule(FindingModule.HTTP)
-        .setCategory(FindingCategory.SECURITY_HEADER)
-        .setSeverity(Severity.HIGH)
-        .setTitle('CSP Header Status Unknown')
-        .setDescription(
-          `CSP header status could not be verified due to probe state (${obs.observation.state}).`,
-        )
-        .setState('UNKNOWN')
         .addObservation('contentSecurityPolicy', obs)
         .build();
     }

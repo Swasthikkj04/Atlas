@@ -16,27 +16,38 @@ export class MissingXContentTypeOptionsRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
-    if (!http?.reachable) {
+    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
       return [];
     }
 
-    if (http.headers['x-content-type-options']) {
+    const finalResponse = http.finalResponse;
+    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
+
+    if (evaluatedHeaders && evaluatedHeaders['x-content-type-options']) {
       return [];
     }
+
+    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {
         ruleId: this.id,
         title: 'Missing X-Content-Type-Options Header',
-        description:
-          'The application does not send the X-Content-Type-Options header. Browsers may MIME-sniff responses, increasing the risk of content-type confusion attacks.',
+        description: `The authoritative response (${evaluatedUrl}) does not specify 'X-Content-Type-Options: nosniff'. Browsers may attempt to MIME-sniff response bodies.`,
         category: FindingCategory.SECURITY_HEADER,
-        severity: Severity.MEDIUM,
+        severity: Severity.LOW,
+        confidence,
+        riskClassification: 'SECURITY_HARDENING_GAP',
+        severityRationale:
+          'X-Content-Type-Options prevents legacy MIME-sniffing behavior that could cause non-executable assets to be executed as scripts.',
+        whatThisDoesNotProve:
+          'This observation does not establish that untrusted user uploads are being executed. It identifies the absence of the MIME-sniffing prevention header.',
         recommendations: [
           {
             title: 'Enable X-Content-Type-Options',
             description:
-              'Configure the X-Content-Type-Options response header with the value "nosniff" to prevent MIME type sniffing.',
+              "Configure the 'X-Content-Type-Options: nosniff' header on all HTTP responses.",
           },
         ],
       },

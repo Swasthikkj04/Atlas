@@ -59,4 +59,68 @@ export class InfrastructureOverviewDto {
     example: 145,
   })
   responseTimeMs!: number;
+
+  @ApiProperty({
+    description: 'Authoritative hosting provider attribution',
+    example: 'Replit',
+    nullable: true,
+  })
+  hostingProvider?: string | null;
+
+  @ApiProperty({
+    description: 'Attribution decision state',
+    example: 'CONFIRMED',
+    enum: ['CONFIRMED', 'STRONGLY_INFERRED', 'INFERRED', 'POSSIBLE', 'UNKNOWN', 'CONFLICTED'],
+    nullable: true,
+  })
+  hostingDecision?: string | null;
+
+  @ApiProperty({
+    description: 'Attribution confidence level',
+    example: 'HIGH',
+    enum: ['HIGH', 'MEDIUM', 'LOW', 'INCONCLUSIVE'],
+    nullable: true,
+  })
+  hostingConfidence?: string | null;
+
+  @ApiProperty({
+    description: 'Attribution reasoning and signal summary',
+    example: 'Authoritatively confirmed deployment on Replit via correlated DNS CNAME and Replit HTTP headers.',
+    nullable: true,
+  })
+  hostingExplanation?: string | null;
+
+  @ApiProperty({
+    description: 'Edge / CDN provider attribution',
+    example: 'Cloudflare',
+    nullable: true,
+  })
+  edgeProvider?: string | null;
+
+  @ApiProperty({
+    description: 'Edge / CDN confidence level',
+    example: 'HIGH',
+    nullable: true,
+  })
+  edgeConfidence?: string | null;
+
+  @ApiProperty({
+    description: 'Authoritative DNS provider attribution',
+    example: 'Cloudflare',
+    nullable: true,
+  })
+  dnsProvider?: string | null;
+
+  @ApiProperty({
+    description: 'DNS provider confidence level',
+    example: 'HIGH',
+    nullable: true,
+  })
+  dnsConfidence?: string | null;
+
+  @ApiProperty({
+    description: 'Full multi-signal provider attribution map',
+    nullable: true,
+  })
+  attribution?: any;
 }

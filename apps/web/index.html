@@ -7,6 +7,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050608" />
 
+    <!-- Anti-flash theme & motion pre-render bootstrap (AX-110) -->
+    <script>
+      (function() {
+        try {
+          var storedTheme = localStorage.getItem('nebula-theme');
+          var isDark = storedTheme === 'dark' || (storedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+
+          var storedMotion = localStorage.getItem('nebula-motion');
+          var isReduced = storedMotion === 'reduced' || (storedMotion !== 'standard' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+          if (isReduced) {
+            document.documentElement.setAttribute('data-reduced-motion', 'true');
+            document.documentElement.classList.add('reduced-motion');
+          } else {
+            document.documentElement.setAttribute('data-reduced-motion', 'false');
+            document.documentElement.classList.remove('reduced-motion');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- SEO Primary Meta Tags -->
     <title>Argonion | Engineering Intelligence for Modern Infrastructure</title>
     <meta name="title" content="Argonion | Engineering Intelligence for Modern Infrastructure" />

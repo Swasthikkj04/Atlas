@@ -1,9 +1,6 @@
-import { type ReactNode } from 'react';
-
-export interface InlineProps {
-  align?: 'start' | 'center' | 'end';
-  justify?: 'start' | 'center' | 'end' | 'between';
-  wrap?: boolean;
-  children: ReactNode;
-  className?: string;
-}
+export type {
+  ClusterProps as InlineProps,
+  ClusterGap as InlineGap,
+  ClusterAlign as InlineAlign,
+  ClusterJustify as InlineJustify,
+} from '../Cluster/Cluster.types';

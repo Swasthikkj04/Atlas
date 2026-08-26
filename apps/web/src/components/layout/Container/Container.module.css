@@ -1,11 +1,51 @@
 .container {
   width: 100%;
-  margin-inline: auto;
-  padding-inline: var(--space-md);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
   box-sizing: border-box;
 }
 
-.sm { max-width: 640px; }
-.content { max-width: 1024px; }
-.landing { max-width: 1120px; }
-.workspace { max-width: 1440px; }
+@media (min-width: 640px) {
+  .container {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+  }
+}
+
+/* ── Semantic Width Boundaries ───────────────────────────────────────────── */
+.form {
+  max-width: var(--max-w-form, 420px);
+}
+
+.dialog {
+  max-width: var(--max-w-dialog, 640px);
+}
+
+.reading {
+  max-width: var(--max-w-reading, 760px);
+}
+
+.content {
+  max-width: var(--max-w-content, 1024px);
+}
+
+.landing {
+  max-width: var(--max-w-landing, 1120px);
+}
+
+.workspace {
+  max-width: var(--max-w-workspace, 1440px);
+}
+
+.fluid {
+  max-width: 100%;
+}

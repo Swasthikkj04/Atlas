@@ -32,6 +32,12 @@ export class HttpServiceUnreachableRule implements FindingRule {
           'Atlas could not establish an HTTP/HTTPS connection to the target application.',
         category: FindingCategory.RESPONSE,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'OPERATIONAL_OBSERVATION',
+        severityRationale:
+          'Service unreachability indicates active endpoint downtime, DNS failure, or perimeter firewall blockage.',
+        whatThisDoesNotProve:
+          'This observation is an operational availability failure and does not indicate an exploitable vulnerability.',
         recommendations: [
           {
             title: 'Verify application availability',

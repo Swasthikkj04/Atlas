@@ -41,12 +41,14 @@ describe('API Contract Hardening Suite (E2E)', () => {
     // Register & login test user to get token for location header & async status tests
     const email = `contract-qa-${Date.now()}@example.com`;
     const password = 'Password123!';
-    const regRes = await request(app.getHttpServer()).post('/api/v1/auth/register').send({
-      email,
-      password,
-      confirmPassword: password,
-      fullName: 'Contract QA Tester',
-    });
+    const regRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        email,
+        password,
+        confirmPassword: password,
+        fullName: 'Contract QA Tester',
+      });
 
     const prisma = app.get(PrismaService);
     if (regRes.body?.user?.id) {

@@ -43,4 +43,8 @@ export class DomainDetailsService {
   async countVerifications(domainId: string) {
     return this.verificationService.countByDomain(domainId);
   }
+
+  async generateBrief(userId: string, snapshotId: string) {
+    return this.infrastructureBriefService.generateForUser(userId, snapshotId);
+  }
 }

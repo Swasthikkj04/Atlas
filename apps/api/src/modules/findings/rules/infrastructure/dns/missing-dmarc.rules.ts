@@ -20,6 +20,12 @@ export class MissingDmarcRule implements FindingRule {
       return [];
     }
 
+    // P0 Truth Invariant (WX-1020): DMARC lookup failed != DMARC record absent.
+    const dmarcStatus = dns.status?.dmarc;
+    if (dmarcStatus === 'FAILED' || dmarcStatus === 'TIMEOUT' || dmarcStatus === 'SERVFAIL') {
+      return [];
+    }
+
     const hasDmarc = dns.dmarc.some((record) =>
       Array.isArray(record)
         ? record.join('').trim().toLowerCase().startsWith('v=dmarc1')
@@ -35,9 +41,15 @@ export class MissingDmarcRule implements FindingRule {
         ruleId: this.id,
         title: 'DMARC Record Not Found',
         description:
-          'The domain does not publish a DMARC policy. This reduces protection against email spoofing and phishing.',
+          'The domain does not publish a DMARC policy in authoritative DNS.',
         category: FindingCategory.DNS_RECORD,
         severity: Severity.HIGH,
+        confidence: 'AUTHORITATIVE',
+        riskClassification: 'SECURITY_HARDENING_GAP',
+        severityRationale:
+          'DMARC specifies how receiving mail servers should treat messages failing SPF or DKIM alignment, preventing unauthorized sender impersonation.',
+        whatThisDoesNotProve:
+          'This observation does not establish that phishing attacks are actively impersonating this domain. It identifies the absence of an enforcement policy for SPF/DKIM alignment.',
         recommendations: [
           {
             title: 'Publish a DMARC policy',

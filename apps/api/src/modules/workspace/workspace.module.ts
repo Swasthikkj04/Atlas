@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 import { DomainsModule } from '../domains/domains.module';
+import { InfrastructureBriefModule } from '../infrastructure-brief/infrastructure-brief.module';
 import { InfrastructureFindingsModule } from '../infrastructure-findings/infrastructure-findings.module';
 import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infrastructure-snapshots.module';
+import { TimelineModule } from '../timeline/timeline.module';
 import { UnderstandingModule } from '../understanding/understanding.module';
 
 import { StatisticsController } from './controllers/statistics.controller';
@@ -20,6 +22,8 @@ import { WorkspaceQueryService } from './services/workspace-query.service';
     DomainsModule,
     InfrastructureSnapshotsModule,
     InfrastructureFindingsModule,
+    InfrastructureBriefModule,
+    TimelineModule,
     UnderstandingModule,
   ],
   controllers: [WorkspaceController, StatisticsController],

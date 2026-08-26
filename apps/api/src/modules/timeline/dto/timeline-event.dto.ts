@@ -94,4 +94,91 @@ export class TimelineEventDto {
       'Number of immutable raw evidence payloads backing this change.',
   })
   evidenceCount!: number;
+
+  @ApiProperty({
+    example: 'snp-3d91d72d-5f86-4e4c-b9ef-65e4e6b1b5b1',
+    description: 'Current snapshot ID associated with this change event.',
+    required: false,
+  })
+  snapshotId?: string;
+
+  @ApiProperty({
+    example: 'snp-3d91d72d-5f86-4e4c-b9ef-65e4e6b1b5b1',
+    description: 'Current snapshot ID associated with this change event.',
+    required: false,
+  })
+  currentSnapshotId?: string | null;
+
+  @ApiProperty({
+    example: 'snp-2e5b652d-c186-41de-8c68-144f58308e24',
+    description: 'Previous snapshot ID used for difference comparison.',
+    required: false,
+  })
+  previousSnapshotId?: string | null;
+
+  @ApiProperty({
+    example: '2026-07-24T20:00:00.000Z',
+    description: 'Detection ISO timestamp string.',
+    required: false,
+  })
+  detectedAt?: string;
+
+  @ApiProperty({
+    example: 'DENY',
+    description: 'Previous value before the change.',
+    required: false,
+  })
+  previousValue?: string | null;
+
+  @ApiProperty({
+    example: 'SAMEORIGIN',
+    description: 'Current value after the change.',
+    required: false,
+  })
+  currentValue?: string | null;
+
+  @ApiProperty({
+    example:
+      'X-Frame-Options controls whether browsers can render this domain in frames, protecting against clickjacking attacks.',
+    description: 'Authoritative significance explanation of this change event.',
+    required: false,
+  })
+  explanation?: string;
+
+  @ApiProperty({
+    example: 'Content-Security-Policy',
+    description: 'Target infrastructure component or policy subject.',
+    required: false,
+  })
+  subject?: string;
+
+  @ApiProperty({
+    example:
+      'Nebula verified that the current authoritative response contains a Content-Security-Policy that differs from the previous verified response.',
+    description: 'Authoritative factual boundary establishing what this change proves.',
+    required: false,
+  })
+  whatThisEstablishes?: string;
+
+  @ApiProperty({
+    example:
+      'This change does not guarantee that all content-injection or XSS scenarios are prevented.',
+    description: 'Explicit anti-overclaiming boundary stating what this change does not establish.',
+    required: false,
+  })
+  whatThisDoesNotEstablish?: string;
+
+  @ApiProperty({
+    description: 'Authoritative derived comparison summary for complex policies.',
+    required: false,
+  })
+  derivedSummary?: {
+    previousLabel?: string;
+    currentLabel?: string;
+    postureChange?: string;
+    directives?: { previous: number; current: number };
+    allowedSources?: string;
+    browserRestrictions?: string;
+    overallPosture?: string;
+  } | null;
 }

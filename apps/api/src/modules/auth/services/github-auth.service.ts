@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OAuthProvider } from '@prisma/client';
 import { AuthService } from './auth.service';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../resolvers/oauth-identity.resolver';
 import { NormalizedGitHubProfile } from '../mappers/github-profile.mapper';
 import { DeviceMetadata } from '../utils/user-agent.parser';
+import { OAuthAuthenticationException } from '../exceptions/oauth.exception';
 
 @Injectable()
 export class GitHubAuthService {
@@ -26,12 +27,13 @@ export class GitHubAuthService {
     user: any;
     event: string;
   }> {
-    // AUTH-005.7 Security Rule: Verified email required for automatic account linking
+    // AUTH-005.7 / AUTH-019 Security Rule: Verified email required for automatic account linking
     if (!profile.email || !profile.emailVerified) {
       this.logger.error(
         `GitHub Login Failed: User ID ${profile.githubId} does not have a verified email address`,
       );
-      throw new UnauthorizedException(
+      throw new OAuthAuthenticationException(
+        'github_email_unverified',
         'GitHub account does not have a verified email address. Please configure and verify your email in GitHub settings before signing in.',
       );
     }
@@ -72,4 +74,3 @@ export class GitHubAuthService {
     };
   }
 }
-

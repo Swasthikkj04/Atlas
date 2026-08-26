@@ -1,16 +1,24 @@
 .stack {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
-.gap-xs { gap: var(--space-xs); }
-.gap-sm { gap: var(--space-sm); }
-.gap-md { gap: var(--space-md); }
-.gap-lg { gap: var(--space-lg); }
-.gap-xl { gap: var(--space-xl); }
-.gap-2xl { gap: var(--space-2xl); }
+/* ── Spatial Scale Gap Tokens ────────────────────────────────────────────── */
+.gap-none { gap: 0; }
+.gap-3xs  { gap: var(--space-3xs, 2px); }
+.gap-2xs  { gap: var(--space-2xs, 4px); }
+.gap-xs   { gap: var(--space-xs, 8px); }
+.gap-sm   { gap: var(--space-sm, 12px); }
+.gap-md   { gap: var(--space-md, 16px); }
+.gap-lg   { gap: var(--space-lg, 24px); }
+.gap-xl   { gap: var(--space-xl, 32px); }
+.gap-2xl  { gap: var(--space-2xl, 48px); }
+.gap-3xl  { gap: var(--space-3xl, 72px); }
+.gap-4xl  { gap: var(--space-4xl, 96px); }
 
-.align-start { align-items: flex-start; }
-.align-center { align-items: center; }
-.align-end { align-items: flex-end; }
+/* ── Alignment ───────────────────────────────────────────────────────────── */
+.align-start   { align-items: flex-start; }
+.align-center  { align-items: center; }
+.align-end     { align-items: flex-end; }
 .align-stretch { align-items: stretch; }

@@ -508,23 +508,51 @@ Tenant isolation is enforced through multiple architectural layers.
 
 Application Layer
 
-- Authentication
+- Authentication (JWT + Session Verification)
+- Fail-closed error responses (404 Not Found prevents resource enumeration)
 
 Business Layer
 
-- Authorization
-- Ownership verification
+- Authorization and ownership pre-validation
+- Zero side effects on unauthorized requests (no mutation/work queued before authorization)
 
 Repository Layer
 
-- Ownership-aware queries
+- Ownership-aware queries (e.g. `findByIdForUser(id, userId)`, `findByDomainForUser(domainId, userId)`)
+- Clear separation between User-Facing tenant methods and Internal System Worker routines
 
 Database Layer
 
-- Constraints
-- Referential integrity
+- Foreign key constraints with cascade rules
+- Tenant-scoped composite unique indexes (`[userId, domainName]`, `[userId, sessionToken]`)
 
-Multiple layers provide defense in depth.
+---
+
+## Canonical Resource Ownership Hierarchy
+
+Every protected infrastructure entity resolves ownership through the domain graph:
+
+```
+User (userId)
+  └── Domain (id, userId)
+        └── UnderstandingJob (id, domainId)
+              └── InfrastructureSnapshot (id, domainId, jobId)
+                    ├── InfrastructureFinding (id, snapshotId)
+                    ├── ChangeHistory (id, domainId, previousSnapshotId, currentSnapshotId)
+                    ├── RawEvidence (id, domainId, snapshotId)
+                    └── InfrastructureBrief (id, snapshotId)
+```
+
+Direct lookups by resource ID MUST include database-level tenant scoping:
+`WHERE snapshot.id = :snapshotId AND domain.userId = :userId`
+
+---
+
+## Operational and Diagnostic Boundaries
+
+Endpoints providing cluster-wide or infrastructure-wide telemetry (such as `GET /api/v1/queue` and `/api/v1/health`) are decoupled from tenant resources:
+- Public unauthenticated access is strictly forbidden for operational telemetry.
+- Platform health probes (`/health/live`, `/health/ready`) verify application liveness/readiness without exposing tenant or queue internals.
 
 ---
 
@@ -1282,16 +1310,39 @@ As Atlas evolves, new security capabilities may be introduced, but they should a
 
 ---
 
+# 18. Production Configuration & Environment Hardening (REFINEMENT-003)
+
+## Centralized Environment Validation
+
+Atlas implements centralized, fail-fast configuration validation at bootstrap before any network socket or database pool is initialized.
+
+### Core Validation Invariants
+
+| Configuration Key | Development Default | Production Invariant |
+| :--- | :--- | :--- |
+| `NODE_ENV` | `development` | Must be `production` |
+| `PORT` | `3000` | Valid port number `1-65535` |
+| `DATABASE_URL` | `postgresql://atlas:atlas@localhost:5432/atlas` | Explicit PostgreSQL URI. Cannot contain `localhost`, `127.0.0.1`, or default credentials. |
+| `JWT_ACCESS_SECRET` | `atlas-development-access-secret` | Required $\ge 32$ character high-entropy secret. Development/example fallbacks rejected. |
+| `JWT_REFRESH_SECRET` | `atlas-development-refresh-secret` | Required $\ge 32$ character high-entropy secret. Must be cryptographically distinct from access secret. |
+| `FRONTEND_URL` | `http://localhost:5173` | Explicit production domain. Cannot point to `localhost` / `127.0.0.1`. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Explicit list of trusted frontend origins. Wildcard (`*`) strictly disallowed with credentials. |
+| `EMAIL_PROVIDER` | `development` (Mailpit) | Production transport required (`smtp`, `ses`, `sendgrid`, `resend`, `postmark`). `development`/`mailpit` rejected. |
+| `GOOGLE_OAUTH_ENABLED` | `false` | When enabled, valid non-placeholder `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET` required. Callback URL cannot be localhost. |
+| `GITHUB_OAUTH_ENABLED` | `false` | When enabled, valid non-placeholder `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET` required. Callback URL cannot be localhost. |
+
+---
+
 # Document Status
 
 | Property | Value |
 |----------|-------|
 | **Document** | 11 – Security & Trust Architecture |
-| **Version** | 2.0 |
+| **Version** | 2.1 |
 | **Status** | **Approved (Frozen)** |
 | **Classification** | Security Architecture Specification |
 | **Owner** | Atlas Security & Architecture Team |
-| **Last Updated** | July 2026 |
+| **Last Updated** | August 2026 |
 | **Next Review Trigger** | Major Security or Architectural Change |
 | **Review Process** | Engineering Decision Record (EDR) Required |
 

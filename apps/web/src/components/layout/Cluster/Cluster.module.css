@@ -1,0 +1,35 @@
+.cluster {
+  display: flex;
+  box-sizing: border-box;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.nowrap {
+  flex-wrap: nowrap;
+}
+
+/* ── Spatial Scale Gap Tokens ────────────────────────────────────────────── */
+.gap-3xs { gap: var(--space-3xs, 2px); }
+.gap-2xs { gap: var(--space-2xs, 4px); }
+.gap-xs  { gap: var(--space-xs, 8px); }
+.gap-sm  { gap: var(--space-sm, 12px); }
+.gap-md  { gap: var(--space-md, 16px); }
+.gap-lg  { gap: var(--space-lg, 24px); }
+.gap-xl  { gap: var(--space-xl, 32px); }
+
+/* ── Alignment ───────────────────────────────────────────────────────────── */
+.align-start    { align-items: flex-start; }
+.align-center   { align-items: center; }
+.align-end      { align-items: flex-end; }
+.align-baseline { align-items: baseline; }
+.align-stretch  { align-items: stretch; }
+
+/* ── Justification ───────────────────────────────────────────────────────── */
+.justify-start   { justify-content: flex-start; }
+.justify-center  { justify-content: center; }
+.justify-end     { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around  { justify-content: space-around; }

@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+
+import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { InfrastructureBriefService } from '../../infrastructure-brief/services/infrastructure-brief.service';
+import { InfrastructureFindingService } from '../../infrastructure-findings/services/infrastructure-finding.service';
+import { TimelineExperienceService } from '../../timeline/services/timeline-experience.service';
 
 import { QuickActionDto } from '../dto/quick-action.dto';
 import { WelcomeBackDto } from '../dto/welcome-back.dto';
-
 import { WorkspaceBriefDto } from '../dto/workspace-brief.dto';
 import {
   WorkspaceDashboardDto,
@@ -19,7 +23,226 @@ export interface UserContext {
 
 @Injectable()
 export class WorkspaceExperienceService {
-  constructor(private readonly workspaceQueryService: WorkspaceQueryService) {}
+  private readonly logger = new Logger(WorkspaceExperienceService.name);
+
+  constructor(
+    private readonly workspaceQueryService: WorkspaceQueryService,
+    private readonly prisma: PrismaService,
+    private readonly infrastructureBriefService: InfrastructureBriefService,
+    private readonly findingService: InfrastructureFindingService,
+    private readonly timelineExperienceService: TimelineExperienceService,
+  ) {}
+
+  async getWorkspaceOverview(userId: string, domainId: string): Promise<any> {
+    const domain = await this.prisma.domain.findFirst({
+      where: { id: domainId, userId },
+    });
+
+    if (!domain) {
+      throw new NotFoundException(`Domain '${domainId}' not found for user.`);
+    }
+
+    const latestSnapshot = await this.prisma.infrastructureSnapshot.findFirst({
+      where: { domainId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    let briefRecord = latestSnapshot
+      ? await this.prisma.infrastructureBrief.findUnique({
+          where: { snapshotId: latestSnapshot.id },
+        })
+      : null;
+
+    if (!briefRecord && latestSnapshot) {
+      try {
+        briefRecord = await this.infrastructureBriefService.generateForUser(
+          userId,
+          latestSnapshot.id,
+        );
+      } catch (e) {
+        this.logger.debug(`Brief generation deferred or unavailable: ${e}`);
+      }
+    }
+
+    const findingsResponse =
+      await this.findingService.getFindingsExperienceList(userId, {
+        domainId,
+        snapshotId: latestSnapshot?.id,
+        page: 1,
+        limit: 50,
+      });
+    const findings = findingsResponse.data;
+
+    const severityRank: Record<string, number> = {
+      CRITICAL: 5,
+      HIGH: 4,
+      MEDIUM: 3,
+      LOW: 2,
+      INFORMATIONAL: 1,
+    };
+
+    // 1. Canonical Sorting (deterministic severity + recency + ID)
+    const sortedFindings = [...findings].sort((a, b) => {
+      const rankA = severityRank[a.severity] || 0;
+      const rankB = severityRank[b.severity] || 0;
+      if (rankB !== rankA) return rankB - rankA;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (dateB !== dateA) return dateB - dateA;
+      return a.id.localeCompare(b.id);
+    });
+
+    // 2. Identity Deduplication across all findings (type + canonicalId/ruleId)
+    const uniqueFindings = this.deduplicateByIdentity('FINDING', sortedFindings);
+
+    // 3. Primary Story Selection
+    const primaryStory = uniqueFindings[0] || null;
+
+    // 4. Primary Exclusion for Secondary Stories (primary entity NEVER appears in secondary stories)
+    const secondaryStories = this.deduplicateByIdentity(
+      'FINDING',
+      uniqueFindings.slice(1),
+      primaryStory?.id,
+      (primaryStory as any)?.ruleId,
+    );
+
+    // 5. Recent Changes Deduplication
+    const timelineResponse =
+      await this.timelineExperienceService.getTimelineData(userId, {
+        domainId,
+        page: 1,
+        limit: 10,
+      });
+    const recentChanges = this.deduplicateByIdentity(
+      'CHANGE',
+      timelineResponse.data,
+    ).slice(0, 5);
+
+    const executiveBrief = briefRecord
+      ? {
+          id: briefRecord.id,
+          snapshotId: briefRecord.snapshotId,
+          domainId: domain.id,
+          executiveSummary: briefRecord.summary,
+          healthScore: null,
+          highlights: Array.isArray(briefRecord.highlights)
+            ? (() => {
+                const rawHighlights = (briefRecord.highlights as any[]).map((h: any, idx: number) => {
+                  const highlightTitle = typeof h === 'string' ? h : h.title || 'Observation';
+                  const highlightSeverity = typeof h === 'object' ? h.severity : undefined;
+                  const matchingFinding = !h.id
+                    ? uniqueFindings.find(
+                        (f) =>
+                          f.title.toLowerCase() === highlightTitle.toLowerCase() ||
+                          (highlightSeverity && f.severity === highlightSeverity && (
+                            f.title.toLowerCase().includes(highlightTitle.toLowerCase()) ||
+                            highlightTitle.toLowerCase().includes(f.title.toLowerCase())
+                          )),
+                      )
+                    : null;
+                  return {
+                    id: h.id || matchingFinding?.id || `hl-${idx}`,
+                    title: highlightTitle,
+                    summary: typeof h === 'string' ? h : h.summary || '',
+                    severity: highlightSeverity,
+                  };
+                });
+                return this.deduplicateByIdentity('HIGHLIGHT', rawHighlights);
+              })()
+            : [],
+          stableObservationsCount: 0,
+          generatedAt: briefRecord.createdAt.toISOString(),
+        }
+      : null;
+
+    const isQuiet = uniqueFindings.length === 0;
+
+    return {
+      domain: {
+        id: domain.id,
+        domainName: domain.domainName,
+        status: domain.monitoringEnabled ? 'ACTIVE' : 'INACTIVE',
+        createdAt: domain.createdAt.toISOString(),
+        updatedAt: domain.updatedAt.toISOString(),
+      },
+      executiveBrief,
+      primaryStory,
+      secondaryStories,
+      latestSnapshot: latestSnapshot
+        ? {
+            id: latestSnapshot.id,
+            domainId: latestSnapshot.domainId,
+            responseTimeMs: latestSnapshot.responseTimeMs,
+            httpStatus: latestSnapshot.httpStatus,
+            createdAt: latestSnapshot.createdAt.toISOString(),
+            payload: latestSnapshot.payload,
+          }
+        : null,
+      recentChanges,
+      quietStatus: {
+        isQuiet,
+        lastVerifiedAt:
+          latestSnapshot?.createdAt?.toISOString() || new Date().toISOString(),
+        stableComponentsCount: 0,
+      },
+    };
+  }
+
+  /**
+   * Canonical Identity Deduplication & Primary Exclusion.
+   *
+   * Deduplicates by strictly combining `type + canonicalId`.
+   * For findings, also checks canonical `ruleId` and `category:title` canonical signature
+   * to guarantee that duplicate scan results or repeated observations appear at most ONCE.
+   * If `primaryIdToExclude` or `primaryRuleIdToExclude` is provided, primary items are excluded.
+   */
+  public deduplicateByIdentity<T extends { id: string; ruleId?: string; category?: string; title?: string }>(
+    type: string,
+    items: readonly T[],
+    primaryIdToExclude?: string | null,
+    primaryRuleIdToExclude?: string | null,
+  ): T[] {
+    const seen = new Set<string>();
+    const result: T[] = [];
+    const primaryKey = primaryIdToExclude ? `${type}:${primaryIdToExclude}` : null;
+    const primaryRuleKey = primaryRuleIdToExclude ? `${type}:rule:${primaryRuleIdToExclude}` : null;
+
+    for (const item of items) {
+      if (!item || !item.id) continue;
+      const entityKey = `${type}:${item.id}`;
+      const ruleKey = item.ruleId ? `${type}:rule:${item.ruleId}` : null;
+      const canonicalKey =
+        item.category && item.title
+          ? `${type}:${item.category}:${item.title.trim().toLowerCase()}`
+          : null;
+
+      // 1. Primary Exclusion
+      if (primaryKey && entityKey === primaryKey) {
+        continue;
+      }
+      if (primaryRuleKey && ruleKey && ruleKey === primaryRuleKey) {
+        continue;
+      }
+
+      // 2. Identity Deduplication (by entity ID, canonical rule ID, or canonical category+title)
+      if (seen.has(entityKey)) {
+        continue;
+      }
+      if (ruleKey && seen.has(ruleKey)) {
+        continue;
+      }
+      if (canonicalKey && seen.has(canonicalKey)) {
+        continue;
+      }
+
+      seen.add(entityKey);
+      if (ruleKey) seen.add(ruleKey);
+      if (canonicalKey) seen.add(canonicalKey);
+      result.push(item);
+    }
+
+    return result;
+  }
 
   async getDashboardData(user: UserContext): Promise<WorkspaceDashboardDto> {
     const userId = user.id;

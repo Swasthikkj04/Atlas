@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -10,6 +11,7 @@ import { AuthService } from './services/auth.service';
 import { PasswordService } from './services/password.service';
 import { VerificationTokenService } from './services/verification-token.service';
 import { PasswordResetTokenService } from './services/password-reset-token.service';
+import { AccountReactivationTokenService } from './services/account-reactivation-token.service';
 import { UserSessionService } from './services/user-session.service';
 import { OAuthAccountService } from './services/oauth-account.service';
 import { GoogleAuthService } from './services/google-auth.service';
@@ -26,13 +28,21 @@ import { GitHubStrategy } from './strategies/github.strategy';
     PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
-      useFactory: () => ({
-        secret:
-          process.env.JWT_ACCESS_SECRET ?? 'atlas-development-access-secret',
-        signOptions: {
-          expiresIn: '15m',
-        },
-      }),
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
+        return {
+          secret:
+            configService.get<string>('JWT_ACCESS_SECRET') ||
+            (isProduction ? undefined : 'atlas-development-access-secret'),
+          signOptions: {
+            expiresIn: (configService.get<string>('JWT_ACCESS_EXPIRES_IN') ||
+              '15m') as any,
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
@@ -44,6 +54,7 @@ import { GitHubStrategy } from './strategies/github.strategy';
     GitHubStrategy,
     VerificationTokenService,
     PasswordResetTokenService,
+    AccountReactivationTokenService,
     UserSessionService,
     OAuthAccountService,
     OAuthIdentityResolver,
@@ -55,6 +66,7 @@ import { GitHubStrategy } from './strategies/github.strategy';
     PasswordService,
     VerificationTokenService,
     PasswordResetTokenService,
+    AccountReactivationTokenService,
     UserSessionService,
     OAuthAccountService,
     OAuthIdentityResolver,

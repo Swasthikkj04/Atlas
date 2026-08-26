@@ -22,6 +22,7 @@ import { InfrastructureSnapshotsModule } from './modules/infrastructure-snapshot
 import { UnderstandingModule } from './modules/understanding/understanding.module';
 import { GuestModule } from './modules/guest/guest.module';
 import { UsersModule } from './modules/users/users.module';
+import { AccountModule } from './modules/account/account.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { TimelineModule } from './modules/timeline/timeline.module';
 import { ActivityModule } from './modules/activity/activity.module';
@@ -56,6 +57,7 @@ import { validateEnvironment } from './config/env.validation';
     PlatformModule,
 
     UsersModule,
+    AccountModule,
     AuthModule,
     DomainsModule,
     HealthModule,

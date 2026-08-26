@@ -1,18 +1,22 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Optional,
   Param,
   Post,
   Req,
   Res,
   UnauthorizedException,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { OAuthProvider } from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -21,6 +25,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { OAuthCallbackExceptionFilter } from './filters/oauth-callback-exception.filter';
 
 import { ApiErrorResponseDto } from '../../common/dto/api-error-response.dto';
 import { RateLimit } from '../../infrastructure/rate-limiting/rate-limit.decorator';
@@ -35,9 +41,14 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyEmailResponseDto } from './dto/verify-email-response.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { UserSessionResponseDto } from './dto/session-response.dto';
+import { ConnectedProvidersResponseDto } from './dto/connected-providers-response.dto';
+import { RequestReactivationDto } from './dto/request-reactivation.dto';
+import { ConfirmReactivationDto } from './dto/confirm-reactivation.dto';
+import { ReactivationResponseDto } from './dto/reactivation-response.dto';
 
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './services/auth.service';
@@ -59,6 +70,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly googleAuthService: GoogleAuthService,
     private readonly githubAuthService: GitHubAuthService,
+    @Optional() private readonly configService?: ConfigService,
   ) {}
 
   @RateLimit({ limit: 5, windowSeconds: 3600, name: 'auth_register' })
@@ -161,6 +173,7 @@ export class AuthController {
 
   @RateLimit({ limit: 10, windowSeconds: 900, name: 'auth_google_callback' })
   @Get('google/callback')
+  @UseFilters(OAuthCallbackExceptionFilter)
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
     summary: 'Google OAuth authentication callback',
@@ -188,7 +201,10 @@ export class AuthController {
 
     setAuthCookies(res, accessToken, refreshToken);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl =
+      this.configService?.get<string>('FRONTEND_URL') ||
+      process.env.FRONTEND_URL ||
+      'http://localhost:5173';
     return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
@@ -209,6 +225,7 @@ export class AuthController {
 
   @RateLimit({ limit: 10, windowSeconds: 900, name: 'auth_github_callback' })
   @Get('github/callback')
+  @UseFilters(OAuthCallbackExceptionFilter)
   @UseGuards(AuthGuard('github'))
   @ApiOperation({
     summary: 'GitHub OAuth authentication callback',
@@ -236,7 +253,10 @@ export class AuthController {
 
     setAuthCookies(res, accessToken, refreshToken);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl =
+      this.configService?.get<string>('FRONTEND_URL') ||
+      process.env.FRONTEND_URL ||
+      'http://localhost:5173';
     return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
@@ -301,25 +321,66 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RateLimit({ limit: 10, windowSeconds: 3600, name: 'auth_change_password' })
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change authenticated user password',
+    description:
+      'Verifies the existing password with Argon2 and updates it to the new password complying with security policy.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Bad Request - Validation failure or new password equals current password.',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Unauthorized - Incorrect current password or invalid authentication.',
+    type: ApiErrorResponseDto,
+  })
+  async changePassword(
+    @Req() req: Request,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = req.user as { id: string };
+    return this.authService.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Logout of all active user sessions',
+    summary: 'Logout of all other active user sessions',
     description:
-      'Revokes all active sessions for current user and clears HTTP-Only cookies.',
+      'Revokes all other active sessions for current user while preserving the current session.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Logged out of all sessions successfully.',
+    description: 'All other active sessions have been signed out.',
   })
   async logoutAll(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     const user = req.user as { id: string };
-    const result = await this.authService.logoutAll(user.id);
-    clearAuthCookies(res);
+    const rawToken = extractRefreshToken(req);
+    const result = await this.authService.logoutAll(user.id, rawToken);
+    if (!rawToken) {
+      clearAuthCookies(res);
+    }
 
     return result;
   }
@@ -339,7 +400,8 @@ export class AuthController {
   })
   async getSessions(@Req() req: Request): Promise<UserSessionResponseDto[]> {
     const user = req.user as { id: string };
-    return this.authService.getSessions(user.id);
+    const rawToken = extractRefreshToken(req);
+    return this.authService.getSessions(user.id, rawToken);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -370,6 +432,68 @@ export class AuthController {
   ): Promise<{ message: string }> {
     const user = req.user as { id: string };
     return this.authService.revokeSession(user.id, sessionId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('providers')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List connected authentication providers',
+    description:
+      'Retrieves connection status, safe account labels, and disconnectability for all supported OAuth providers for the authenticated user.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Connected providers retrieved successfully.',
+    type: ConnectedProvidersResponseDto,
+  })
+  async getProviders(
+    @Req() req: Request,
+  ): Promise<ConnectedProvidersResponseDto> {
+    const user = req.user as { id: string };
+    return this.authService.getConnectedProviders(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('providers/:provider')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Disconnect external authentication provider',
+    description:
+      'Safely unlinks an OAuth provider from the user account after verifying that alternative authentication methods remain active.',
+  })
+  @ApiParam({
+    name: 'provider',
+    enum: ['google', 'github'],
+    description: 'OAuth provider name (google or github)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Provider disconnected successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Cannot disconnect final authentication method.',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Not Found - Provider is not connected to user account.',
+    type: ApiErrorResponseDto,
+  })
+  async disconnectProvider(
+    @Req() req: Request,
+    @Param('provider') providerStr: string,
+  ): Promise<{ message: string }> {
+    const user = req.user as { id: string };
+    const normalized = providerStr.toUpperCase();
+    if (
+      normalized !== OAuthProvider.GOOGLE &&
+      normalized !== OAuthProvider.GITHUB
+    ) {
+      throw new BadRequestException('Unsupported OAuth provider.');
+    }
+    return this.authService.disconnectProvider(user.id, normalized);
   }
 
   @RateLimit({ limit: 10, windowSeconds: 3600, name: 'auth_verify_email' })
@@ -522,6 +646,84 @@ export class AuthController {
       dto.password,
     );
     clearAuthCookies(res);
+    return result;
+  }
+
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 3600,
+    name: 'auth_reactivate_request',
+  })
+  @Post('reactivate/request')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request account reactivation link',
+    description:
+      'Dispatches a single-use 15-minute reactivation token to the registered email address if the account is in DEACTIVATED status. Generic response returned to prevent enumeration.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reactivation request processed.',
+    schema: {
+      example: {
+        message:
+          'If an eligible deactivated account is associated with this email, a secure reactivation link has been sent.',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid email format.',
+    type: ApiErrorResponseDto,
+  })
+  async requestReactivation(
+    @Body() dto: RequestReactivationDto,
+  ): Promise<{ message: string }> {
+    return this.authService.requestReactivation(dto.email);
+  }
+
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 900,
+    name: 'auth_reactivate_confirm',
+  })
+  @Post('reactivate/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm account reactivation and establish authenticated session',
+    description:
+      'Validates a raw single-use reactivation token, transitions account status from DEACTIVATED to ACTIVE in an atomic transaction, invalidates previous sessions, establishes a new stateful session, and sets HTTP-Only security cookies.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account reactivated successfully.',
+    type: ReactivationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Token is invalid, expired, or consumed.',
+    type: ApiErrorResponseDto,
+  })
+  async confirmReactivation(
+    @Body() dto: ConfirmReactivationDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ReactivationResponseDto> {
+    const userAgent = req.headers['user-agent'];
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip ||
+      req.socket.remoteAddress;
+    const deviceMeta = parseUserAgent(userAgent, clientIp);
+
+    const result = await this.authService.confirmReactivation(
+      dto.token,
+      deviceMeta,
+    );
+    if (result.accessToken && result.refreshToken) {
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+    }
+
     return result;
   }
 

@@ -1,271 +1,1024 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Globe,
-  ArrowRight,
-  ShieldCheck,
-  Activity,
-  Layers,
-  LogOut,
-  Moon,
-  Sun,
-  Loader2,
-  Sparkles,
-} from 'lucide-react';
 import { useAuth } from '../auth/hooks/useAuth';
-import { getGreetingName } from '../auth/utils/name.util';
 import { useTheme } from '../guest/hooks/useTheme';
-import { NetworkBg } from '../auth/components/NetworkBg';
+import { LoadingState } from '../../components/states';
+import { navigateTo } from '../../routes';
+import { WorkspaceShell } from './components/shell';
+import { WorkspaceNav } from './components/navigation';
+import { WorkspaceHeader } from './components/header';
+import { WorkspaceCanvas } from './components/canvas';
+import { FirstRunDomainSetup } from './components/first-run';
+import { ReturningWorkspaceEntry } from './components/returning';
+import { DomainEntryDialog, DeleteDomainDialog, DomainDeletedToast } from './components/domain-dialog';
+import { WorkspaceFooter } from './components/footer';
+import { CurrentIntelligence } from './components/intelligence';
+import { PrimaryStory, SecondaryStories } from './components/story';
+import {
+  FindingInvestigation,
+  ChangeInvestigation,
+  ObservationEvidenceSurface,
+} from './components/investigation';
+import { InfrastructureOverview } from './components/overview';
+import { ChangesTimeline, HistoricalComparisonSurface } from './components/changes';
+import { InfrastructureTimeline } from './components/timeline';
+import { SnapshotHistory } from './components/snapshots';
+import { HistoricalContext } from './components/historical-context';
+import { DomainIdentity } from './components/identity';
+import { WorkspaceIntelligenceLanding } from './components/multi-domain';
+import { useDomains, useDeleteDomain } from '../../hooks/queries/useDomains';
+import { useWorkspaceUnderstandingConvergence } from '../../hooks/queries/useUnderstanding';
+import { resolveWorkspaceContext } from './contracts/context-resolution.contract';
+import { getStoredGuestClaimContext } from './contracts/guest-continuity.contract';
+import {
+  resolveInvestigationTarget,
+  buildInvestigationLink,
+  type InvestigationContext,
+  type InvestigationSourceType,
+} from './contracts/investigation.contract';
+import { WorkspaceSearchDialog } from './components/search/WorkspaceSearchDialog';
+import { resolveSearchDestination } from './contracts/search.contract';
+import type { DomainDto } from '../../types/api';
 
+export type WorkspaceContextView =
+  | 'overview'
+  | 'findings'
+  | 'changes'
+  | 'infrastructure'
+  | 'memory';
+
+/**
+ * Authoritative Workspace Page (WX-902).
+ *
+ * Implements the canonical Infrastructure Intelligence navigation shell:
+ * - Left Product Navigation Sidebar: Overview, Findings, Changes, Infrastructure, Memory, Settings.
+ * - Global Header Domain Context Switcher with instant switching, search, and recency.
+ * - URL & browser history synchronization with preserved active domain context.
+ * - Unmistakable single-domain context governing all surfaces without data mixture.
+ */
 export const WorkspacePage: React.FC = () => {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { theme, setMode } = useTheme();
-  const [targetDomain, setTargetDomain] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('domainId') || null;
+  });
+  const [isAddDomainOpen, setIsAddDomainOpen] = useState(false);
+  const [domainToDelete, setDomainToDelete] = useState<DomainDto | null>(null);
+  const [deletedDomainNotification, setDeletedDomainNotification] = useState<string | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // 1. Unauthenticated Redirection Effect (Only triggers after loading completes)
+  // Global Keyboard Shortcut (Cmd+K / Ctrl+K) for Cross-Workspace Search
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-  }, [isLoading, isAuthenticated]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  // 2. Loading State (Prevents premature unauthenticated ejection)
-  if (isLoading) {
+  // Active Contextual Surface View ('overview' | 'findings' | 'changes' | 'infrastructure' | 'memory')
+  const [activeView, setActiveView] = useState<WorkspaceContextView>(() => {
+    if (typeof window === 'undefined') return 'overview';
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    if (path === '/workspace/findings' || viewParam === 'findings') return 'findings';
+    if (path === '/workspace/changes' || path === '/workspace/changes/compare' || viewParam === 'changes') return 'changes';
+    if (path === '/workspace/infrastructure' || viewParam === 'infrastructure' || viewParam === 'overview') return 'infrastructure';
+    if (path === '/workspace/memory' || viewParam === 'memory') return 'memory';
+    return 'overview';
+  });
+
+  // Deep Investigation Context
+  const [investigationContext, setInvestigationContext] = useState<InvestigationContext | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const sourceType = params.get('sourceType') as InvestigationSourceType | null;
+    const sourceId = params.get('sourceId');
+    const domainId = params.get('domainId');
+    const baseSnapshotId = params.get('baseSnapshotId');
+    const targetSnapshotId = params.get('targetSnapshotId');
+
+    if (path === '/workspace/changes/compare' || sourceType === 'historical_comparison') {
+      return {
+        domainId: domainId || '',
+        sourceType: 'historical_comparison',
+        sourceId: targetSnapshotId || sourceId || '',
+        baseSnapshotId: baseSnapshotId || undefined,
+        returnPath: '/workspace/changes',
+      };
+    }
+
+    if (sourceType && sourceId) {
+      return {
+        domainId: domainId || '',
+        sourceType,
+        sourceId,
+        baseSnapshotId: baseSnapshotId || undefined,
+        returnPath: params.get('returnPath') || '/workspace',
+      };
+    }
+    return null;
+  });
+
+  // Listen for browser Back/Forward (popstate)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const sourceType = params.get('sourceType') as InvestigationSourceType | null;
+      const sourceId = params.get('sourceId');
+      const domainId = params.get('domainId');
+      const baseSnapshotId = params.get('baseSnapshotId');
+      const targetSnapshotId = params.get('targetSnapshotId');
+
+      setSelectedDomainId(domainId || null);
+
+      if (path === '/workspace/changes/compare' || sourceType === 'historical_comparison') {
+        setActiveView('changes');
+        setInvestigationContext({
+          domainId: domainId || '',
+          sourceType: 'historical_comparison',
+          sourceId: targetSnapshotId || sourceId || '',
+          baseSnapshotId: baseSnapshotId || undefined,
+          returnPath: '/workspace/changes',
+        });
+      } else if (sourceType && sourceId) {
+        setInvestigationContext({
+          domainId: domainId || '',
+          sourceType,
+          sourceId,
+          baseSnapshotId: baseSnapshotId || undefined,
+          returnPath: params.get('returnPath') || '/workspace',
+        });
+      } else {
+        setInvestigationContext(null);
+        if (path === '/workspace/memory' || params.get('view') === 'memory') {
+          setActiveView('memory');
+        } else if (path === '/workspace/findings' || params.get('view') === 'findings') {
+          setActiveView('findings');
+        } else if (path === '/workspace/changes' || params.get('view') === 'changes') {
+          setActiveView('changes');
+        } else if (path === '/workspace/infrastructure' || params.get('view') === 'infrastructure' || params.get('view') === 'overview') {
+          setActiveView('infrastructure');
+        } else {
+          setActiveView('overview');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const domainsQuery = useDomains();
+  const deleteDomainMutation = useDeleteDomain();
+  const guestClaimContext = getStoredGuestClaimContext();
+
+  const userDomains = domainsQuery.data || [];
+  const hasDomains = userDomains.length > 0;
+
+  const isMultiDomainLanding =
+    !selectedDomainId &&
+    hasDomains &&
+    !investigationContext &&
+    activeView === 'overview';
+
+  const contextResolution = resolveWorkspaceContext({
+    user,
+    domains: userDomains,
+    guestClaimContext,
+    requestedDomainId: selectedDomainId,
+  });
+
+  const activeDomain = isMultiDomainLanding ? null : (contextResolution.activeDomain || (selectedDomainId ? userDomains.find((d) => d.id === selectedDomainId) : null) || null);
+
+  // Single Authoritative Workspace Understanding Synchronization Coordinator (WX-912)
+  useWorkspaceUnderstandingConvergence({
+    domainId: activeDomain?.id,
+  });
+
+  const handleSelectDomain = (newDomainId: string) => {
+    if (!newDomainId) {
+      setSelectedDomainId(null);
+      setInvestigationContext(null);
+      setIsNavOpen(false);
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.pushState({ domainId: null, view: 'overview' }, '', '/workspace');
+      }
+      return;
+    }
+
+    setSelectedDomainId(newDomainId);
+    setInvestigationContext(null);
+    setIsNavOpen(false);
+    if (typeof window !== 'undefined' && window.history) {
+      let path = '/workspace';
+      if (activeView === 'findings') path = '/workspace/findings';
+      else if (activeView === 'changes') path = '/workspace/changes';
+      else if (activeView === 'infrastructure') path = '/workspace/infrastructure';
+      else if (activeView === 'memory') path = '/workspace/memory';
+
+      const url = `${path}?domainId=${encodeURIComponent(newDomainId)}`;
+      window.history.pushState({ domainId: newDomainId, view: activeView }, '', url);
+    }
+  };
+
+  const navigateToView = (view: WorkspaceContextView, domainIdOverride?: string) => {
+    setActiveView(view);
+    setInvestigationContext(null);
+    const resolvedDomainId = domainIdOverride || selectedDomainId || (view !== 'overview' ? (contextResolution.activeDomain?.id || userDomains[0]?.id) : null);
+    if (resolvedDomainId) {
+      setSelectedDomainId(resolvedDomainId);
+    }
+    if (typeof window !== 'undefined' && window.history) {
+      const queryStr = resolvedDomainId ? `?domainId=${encodeURIComponent(resolvedDomainId)}` : '';
+      let path = '/workspace';
+      if (view === 'findings') path = '/workspace/findings';
+      else if (view === 'changes') path = '/workspace/changes';
+      else if (view === 'infrastructure') path = '/workspace/infrastructure';
+      else if (view === 'memory') path = '/workspace/memory';
+
+      window.history.pushState({ view, domainId: resolvedDomainId }, '', `${path}${queryStr}`);
+    }
+  };
+
+  const navigateToInvestigation = (context: InvestigationContext | null) => {
+    setInvestigationContext(context);
+    if (typeof window !== 'undefined' && window.history) {
+      if (context) {
+        if (context.sourceType === 'historical_comparison') {
+          const baseParam = context.baseSnapshotId ? `&baseSnapshotId=${encodeURIComponent(context.baseSnapshotId)}` : '';
+          const targetParam = context.sourceId ? `&targetSnapshotId=${encodeURIComponent(context.sourceId)}` : '';
+          const url = `/workspace/changes/compare?domainId=${encodeURIComponent(context.domainId)}${baseParam}${targetParam}`;
+          window.history.pushState({ investigation: context }, '', url);
+        } else {
+          const url = buildInvestigationLink(
+            context.domainId,
+            context.sourceType,
+            context.sourceId,
+            context.returnPath || '/workspace',
+            context.baseSnapshotId
+          );
+          window.history.pushState({ investigation: context }, '', url);
+        }
+      } else {
+        const domainParam = selectedDomainId || activeDomain?.id;
+        const queryStr = domainParam ? `?domainId=${encodeURIComponent(domainParam)}` : '';
+        let path = '/workspace';
+        if (activeView === 'findings') path = '/workspace/findings';
+        else if (activeView === 'changes') path = '/workspace/changes';
+        else if (activeView === 'infrastructure') path = '/workspace/infrastructure';
+        else if (activeView === 'memory') path = '/workspace/memory';
+
+        window.history.pushState({}, '', `${path}${queryStr}`);
+      }
+    }
+  };
+
+  const navigateToReturnPath = (returnPath?: string) => {
+    if (returnPath && returnPath !== '/workspace') {
+      if (returnPath === '/workspace/memory' || returnPath.includes('view=memory')) {
+        setActiveView('memory');
+        navigateToInvestigation(null);
+        return;
+      }
+      if (returnPath === '/workspace/findings' || returnPath.includes('view=findings')) {
+        setActiveView('findings');
+        navigateToInvestigation(null);
+        return;
+      }
+      if (returnPath === '/workspace/changes' || returnPath.includes('view=changes')) {
+        setActiveView('changes');
+        navigateToInvestigation(null);
+        return;
+      }
+      if (returnPath === '/workspace/infrastructure' || returnPath.includes('view=infrastructure') || returnPath.includes('view=overview')) {
+        setActiveView('infrastructure');
+        navigateToInvestigation(null);
+        return;
+      }
+      const queryStr = returnPath.includes('?') ? returnPath.split('?')[1] : '';
+      const params = new URLSearchParams(queryStr);
+      const prevType = params.get('sourceType') as InvestigationSourceType | null;
+      const prevId = params.get('sourceId');
+      const prevDomainId = params.get('domainId');
+      const prevReturnPath = params.get('returnPath');
+      if (prevType && prevId) {
+        navigateToInvestigation({
+          domainId: prevDomainId || activeDomain?.id || '',
+          sourceType: prevType,
+          sourceId: prevId,
+          returnPath: prevReturnPath || '/workspace',
+        });
+        return;
+      }
+    }
+    setActiveView('overview');
+    navigateToInvestigation(null);
+  };
+
+  const investigationResolution = investigationContext && activeDomain
+    ? resolveInvestigationTarget({
+        context: {
+          ...investigationContext,
+          domainId: investigationContext.domainId || activeDomain.id,
+        },
+        activeDomainId: activeDomain.id,
+        userDomains: contextResolution.availableDomains,
+      })
+    : null;
+
+  // Handle Domain Deletion (WX-812)
+  const handleDeleteDomain = async () => {
+    if (!domainToDelete) return;
+    const targetId = domainToDelete.id;
+    const targetDomainName = domainToDelete.domainName;
+    try {
+      await deleteDomainMutation.mutateAsync(targetId);
+      setDeletedDomainNotification(targetDomainName);
+    } catch (err) {
+      console.warn('Domain deletion warning (may already be removed):', err);
+      setDeletedDomainNotification(targetDomainName);
+    } finally {
+      setDomainToDelete(null);
+
+      // Handle active domain deletion fallback & URL synchronization
+      const remainingDomains = (domainsQuery.data || []).filter((d) => d.id !== targetId);
+      if (selectedDomainId === targetId || activeDomain?.id === targetId) {
+        if (remainingDomains.length > 0) {
+          setSelectedDomainId(remainingDomains[0].id);
+          if (typeof window !== 'undefined' && window.history) {
+            window.history.replaceState(
+              { domainId: remainingDomains[0].id, view: 'overview' },
+              '',
+              `/workspace?domainId=${encodeURIComponent(remainingDomains[0].id)}`
+            );
+          }
+        } else {
+          setSelectedDomainId(null);
+          if (typeof window !== 'undefined' && window.history) {
+            window.history.replaceState({}, '', '/workspace');
+          }
+        }
+      }
+      setInvestigationContext(null);
+      setActiveView('overview');
+    }
+  };
+
+  // 1. Loading state handled cleanly with Phase 0 LoadingState primitive
+  if (isAuthLoading || (isAuthenticated && domainsQuery.isLoading)) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
-        <NetworkBg dark={theme === 'dark'} />
-        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-xl border border-border bg-card/60 flex items-center justify-center shadow-sm">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-          <div className="space-y-1">
-            <p className="font-serif text-xl font-medium text-foreground">
-              Opening Nebula Workspace...
-            </p>
-            <p className="font-mono text-xs text-muted-foreground">
-              Verifying authenticated session credentials
-            </p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center relative overflow-hidden">
+        <LoadingState
+          label="Opening Nebula Workspace..."
+          description="Verifying authenticated infrastructure context"
+        />
       </div>
     );
   }
 
+  // 2. Unauthenticated ejections handled by ProtectedRoute
   if (!isAuthenticated) {
     return null;
   }
 
-  const greetingName = getGreetingName(user?.fullName);
   const dark = theme === 'dark';
-
-  const handleStartAnalysis = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetDomain.trim()) return;
-    setIsAnalyzing(true);
-    // Route to guest or workspace understanding engine
-    const sanitized = targetDomain.trim().replace(/^https?:\/\//, '').split('/')[0];
-    window.location.href = `/guest?domain=${encodeURIComponent(sanitized)}`;
-  };
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/workspace';
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/';
+    navigateTo('/');
   };
 
   const toggleTheme = () => {
     setMode(dark ? 'light' : 'dark');
   };
 
+  const headerSubSection = investigationResolution?.isValid
+    ? investigationResolution.sourceType === 'snapshot'
+      ? 'Snapshot History'
+      : investigationResolution.sourceType === 'historical_context'
+        ? 'Historical Context'
+        : 'Investigation'
+    : activeView === 'memory'
+      ? 'Memory'
+      : activeView === 'findings'
+        ? 'Findings'
+        : activeView === 'changes'
+          ? 'Changes'
+          : activeView === 'infrastructure'
+            ? 'Infrastructure'
+            : null;
+
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col selection:bg-primary/20 selection:text-foreground">
-      <NetworkBg dark={dark} />
-
-      {/* Workspace Top Navigation */}
-      <header className="relative z-20 h-16 border-b border-border bg-background/80 backdrop-blur-md px-6 md:px-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <a
-            href="/workspace"
-            className="font-mono text-xs tracking-[0.2em] uppercase font-semibold text-foreground hover:opacity-80 transition-opacity flex items-center gap-2"
-          >
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>ARGONION</span>
-            <span className="opacity-30">/</span>
-            <span>NEBULA</span>
-          </a>
-          <span
-            className="font-mono hidden sm:inline-block text-[10px] px-2 py-0.5 rounded bg-muted/60 border border-border text-muted-foreground uppercase tracking-wider"
-          >
-            Workspace
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-            aria-label="Toggle theme"
-          >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
-          <div className="h-4 w-px bg-border hidden sm:block" />
-
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-medium leading-none text-foreground">
-                {user?.fullName || 'User'}
-              </p>
-              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
-                {user?.email}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
-              title="Sign out of Nebula"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Sign out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main FMX Entry Experience Surface */}
-      <main className="flex-1 relative z-10 max-w-5xl w-full mx-auto px-6 md:px-10 py-12 md:py-20 flex flex-col justify-between">
-        <div className="space-y-10">
-          {/* Header Greeting */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span
-                className="font-mono text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                Infrastructure Intelligence Platform
-              </span>
-            </div>
-            <h1
-              className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-foreground leading-[1.1]"
-            >
-              Hi, {greetingName}.<br />
-              <em className="text-foreground/90 font-normal italic">
-                What are you trying to understand today?
-              </em>
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl leading-relaxed pt-1">
-              Nebula continuously builds and refines causal models of your public infrastructure,
-              helping you make technical decisions with certainty.
-            </p>
-          </div>
-
-          {/* Domain Intelligence Input */}
-          <form
-            onSubmit={handleStartAnalysis}
-            className="w-full max-w-2xl bg-card border border-border rounded-xl p-2 shadow-sm focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all"
-          >
-            <div className="flex items-center gap-3 px-3">
-              <Globe className="w-5 h-5 text-muted-foreground shrink-0" />
-              <input
-                type="text"
-                value={targetDomain}
-                onChange={(e) => setTargetDomain(e.target.value)}
-                placeholder="Enter a domain to understand (e.g. stripe.com, github.com)"
-                className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+    <WorkspaceShell
+      isNavOpen={isNavOpen}
+      onNavClose={() => setIsNavOpen(false)}
+      navigation={
+        <WorkspaceNav
+          currentPath={pathname}
+          user={user}
+          activeView={activeView}
+          onSelectView={navigateToView}
+          onItemClick={() => setIsNavOpen(false)}
+        />
+      }
+      header={
+        <WorkspaceHeader
+          domain={isMultiDomainLanding ? null : (activeDomain?.domainName || null)}
+          domains={userDomains}
+          activeDomainId={isMultiDomainLanding ? null : (activeDomain?.id || null)}
+          onSelectDomain={handleSelectDomain}
+          onAddDomain={() => setIsAddDomainOpen(true)}
+          onDeleteDomain={(domain) => setDomainToDelete(domain)}
+          sectionName="Workspace"
+          subSection={isMultiDomainLanding ? null : headerSubSection}
+          isNavOpen={isNavOpen}
+          onToggleNav={() => setIsNavOpen(!isNavOpen)}
+          user={user}
+          onLogout={handleLogout}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenSearch={() => setIsSearchOpen(true)}
+        />
+      }
+    >
+      <div className="relative min-h-[calc(100vh-4.5rem)] w-full flex-1 flex flex-col">
+        <WorkspaceCanvas mode="workspace" className="flex-1 flex flex-col justify-between">
+          {/* A. Zero-Domain First-Run Experience (WX-203 / WX-210-F) */}
+          {contextResolution.requiresFirstRunSetup || userDomains.length === 0 ? (
+            <FirstRunDomainSetup
+              onDomainEstablished={(created) => {
+                setSelectedDomainId(created.id);
+                domainsQuery.refetch();
+              }}
+            />
+          ) : isMultiDomainLanding ? (
+            /* WX-1025: Workspace Intelligence Landing & Multi-Domain Brief */
+            <WorkspaceIntelligenceLanding
+              domains={userDomains}
+              onSelectDomain={handleSelectDomain}
+              onAddDomain={() => setIsAddDomainOpen(true)}
+              onInvestigateChange={(domainId, changeId) => {
+                setSelectedDomainId(domainId);
+                navigateToInvestigation({
+                  domainId,
+                  sourceType: 'change',
+                  sourceId: changeId,
+                  returnPath: '/workspace',
+                });
+              }}
+              onViewDomainChanges={(domainId) => {
+                navigateToView('changes', domainId);
+              }}
+              onViewInfrastructureMemory={(domainId) => {
+                const targetId = domainId || userDomains[0]?.id;
+                if (targetId) {
+                  navigateToView('memory', targetId);
+                }
+              }}
+            />
+          ) : !activeDomain ? (
+            <FirstRunDomainSetup
+              onDomainEstablished={(created) => {
+                setSelectedDomainId(created.id);
+                domainsQuery.refetch();
+              }}
+            />
+          ) : investigationResolution?.isValid ? (
+            /* B. Deep Investigation View (WX-302 / WX-303) */
+            investigationResolution.sourceType === 'change' ? (
+              <ChangeInvestigation
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                changeId={investigationResolution.sourceId}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onViewFinding={(findingId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'finding',
+                    sourceId: findingId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'change', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewEvidence={(changeId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: changeId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'change', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewPreviousSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'change', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewCurrentSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'change', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewHistoricalContext={() => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'historical_context',
+                    sourceId: activeDomain.id,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'change', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
               />
-              <button
-                type="submit"
-                disabled={!targetDomain.trim() || isAnalyzing}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-xs font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>Understand</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            ) : investigationResolution.sourceType === 'snapshot' ? (
+              <SnapshotHistory
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                snapshotId={investigationResolution.sourceId}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onSelectSnapshot={(newSnapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: newSnapshotId,
+                    returnPath: investigationResolution.returnPath,
+                  });
+                }}
+                onViewEvidence={(findingOrEvidenceId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: findingOrEvidenceId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'snapshot', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewRelatedChange={(changeId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'change',
+                    sourceId: changeId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'snapshot', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewRelatedFinding={(findingId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'finding',
+                    sourceId: findingId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'snapshot', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewHistoricalContext={() => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'historical_context',
+                    sourceId: activeDomain.id,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'snapshot', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+              />
+            ) : investigationResolution.sourceType === 'historical_context' ? (
+              <HistoricalContext
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'historical_context', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onInvestigateChange={(changeId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'change',
+                    sourceId: changeId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'historical_context', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewEvidence={(evidenceId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: evidenceId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'historical_context', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+              />
+            ) : investigationResolution.sourceType === 'historical_comparison' ? (
+              <HistoricalComparisonSurface
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                baseSnapshotId={investigationContext?.baseSnapshotId || null}
+                targetSnapshotId={investigationResolution.sourceId}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onSelectSnapshots={(newBaseId, newTargetId) => {
+                  if (typeof window !== 'undefined' && window.history) {
+                    const url = `/workspace/changes/compare?domainId=${encodeURIComponent(activeDomain.id)}&baseSnapshotId=${encodeURIComponent(newBaseId)}&targetSnapshotId=${encodeURIComponent(newTargetId)}`;
+                    window.history.replaceState(
+                      { investigation: { ...investigationContext, sourceId: newTargetId, baseSnapshotId: newBaseId } },
+                      '',
+                      url
+                    );
+                  }
+                }}
+                onInvestigateChange={(changeId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'change',
+                    sourceId: changeId,
+                    returnPath: `/workspace/changes/compare?domainId=${encodeURIComponent(activeDomain.id)}&baseSnapshotId=${encodeURIComponent(investigationContext?.baseSnapshotId || '')}&targetSnapshotId=${encodeURIComponent(investigationResolution.sourceId)}`,
+                  });
+                }}
+                onViewEvidence={(evidenceId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: evidenceId,
+                    returnPath: `/workspace/changes/compare?domainId=${encodeURIComponent(activeDomain.id)}&baseSnapshotId=${encodeURIComponent(investigationContext?.baseSnapshotId || '')}&targetSnapshotId=${encodeURIComponent(investigationResolution.sourceId)}`,
+                  });
+                }}
+              />
+            ) : investigationResolution.sourceType === 'evidence' ? (
+              <ObservationEvidenceSurface
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                findingId={investigationResolution.sourceId}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'evidence', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+              />
+            ) : (
+              <FindingInvestigation
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                findingId={investigationResolution.sourceId}
+                onReturn={() => navigateToReturnPath(investigationResolution.returnPath)}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'finding', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+                onViewEvidence={() => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: investigationResolution.sourceId,
+                    returnPath: buildInvestigationLink(activeDomain.id, 'finding', investigationResolution.sourceId, investigationResolution.returnPath),
+                  });
+                }}
+              />
+            )
+          ) : activeView === 'findings' ? (
+            /* C. Infrastructure Findings Experience (What requires investigation?) */
+            <div className="w-full space-y-8" data-testid="infrastructure-findings-surface">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#EEEEEB] dark:border-border-divider">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-xl font-display font-medium text-foreground">
+                      Infrastructure Findings
+                    </h2>
+                    <span
+                      className="font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border border-[#B9E5D6] text-[#178A68] bg-[#EAF7F2]"
+                      data-testid="findings-source-badge"
+                    >
+                      CURRENT VERIFIED STATE
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#5F625F] dark:text-muted-foreground pt-1">
+                    Authoritative findings and security observations from current verified understanding for {activeDomain.domainName}
+                  </p>
+                </div>
+                <DomainIdentity
+                  domain={activeDomain.domainName}
+                  size="compact"
+                />
+              </div>
 
-          {/* Workspace Activity & Intelligence Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4">
-            {/* Card 1: Infrastructure Overview */}
-            <div className="p-5 rounded-xl border border-border bg-card/50 backdrop-blur-sm space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Layers className="w-4 h-4 text-primary" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">Infrastructure Briefs</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Synthesis of DNS, TLS, CDN edge networks, and security posture across your environments.
-              </p>
-              <div className="pt-1">
-                <span
-                  className="font-mono text-[10px] text-muted-foreground/80 uppercase tracking-wider"
-                >
-                  Continuous Monitoring: Active
-                </span>
-              </div>
-            </div>
-
-            {/* Card 2: Timeline & Changes */}
-            <div className="p-5 rounded-xl border border-border bg-card/50 backdrop-blur-sm space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">Causal Timeline</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Track infrastructure drift, configuration shifts, and provider migrations as they occur.
-              </p>
-              <div className="pt-1">
-                <span
-                  className="font-mono text-[10px] text-muted-foreground/80 uppercase tracking-wider"
-                >
-                  Zero Unchecked Drift
-                </span>
-              </div>
-            </div>
-
-            {/* Card 3: Security & Session Posture */}
-            <div className="p-5 rounded-xl border border-border bg-card/50 backdrop-blur-sm space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">Session Security</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Stateful session protected with HTTP-only cookies and Double-Submit CSRF hardening.
-              </p>
-              <div className="pt-1">
-                <span
-                  className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wider"
-                >
-                  ● Session Verified
-                </span>
+              <div className="space-y-6">
+                <PrimaryStory
+                  domainId={activeDomain.id}
+                  domainName={activeDomain.domainName}
+                  onInvestigate={(findingId) => {
+                    navigateToInvestigation({
+                      domainId: activeDomain.id,
+                      sourceType: 'finding',
+                      sourceId: findingId,
+                      returnPath: '/workspace/findings',
+                    });
+                  }}
+                  onViewEvidence={(lineage) => {
+                    navigateToInvestigation({
+                      domainId: activeDomain.id,
+                      sourceType: 'evidence',
+                      sourceId: lineage.observationKey,
+                      returnPath: '/workspace/findings',
+                    });
+                  }}
+                />
+                <SecondaryStories
+                  domainId={activeDomain.id}
+                  domainName={activeDomain.domainName}
+                  onInvestigate={(findingId) => {
+                    navigateToInvestigation({
+                      domainId: activeDomain.id,
+                      sourceType: 'finding',
+                      sourceId: findingId,
+                      returnPath: '/workspace/findings',
+                    });
+                  }}
+                  onViewEvidence={(lineage) => {
+                    navigateToInvestigation({
+                      domainId: activeDomain.id,
+                      sourceType: 'evidence',
+                      sourceId: lineage.observationKey,
+                      returnPath: '/workspace/findings',
+                    });
+                  }}
+                />
               </div>
             </div>
-          </div>
-        </div>
+          ) : activeView === 'changes' ? (
+            /* D. Infrastructure Changes Experience (What changed?) */
+            <div className="w-full space-y-8" data-testid="infrastructure-changes-surface">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
+                <div>
+                  <h2 className="text-xl font-display font-medium text-foreground">
+                    Infrastructure Changes
+                  </h2>
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Meaningful differences detected between verified understandings for {activeDomain.domainName}
+                  </p>
+                </div>
+                <DomainIdentity
+                  domain={activeDomain.domainName}
+                  size="compact"
+                />
+              </div>
 
-        {/* Footer info */}
-        <div className="pt-12 mt-12 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p className="font-mono">
-            Nebula Workspace &bull; Authenticated as {user?.email}
-          </p>
-          <div className="flex items-center gap-6">
-            <a href="/" className="hover:text-foreground transition-colors">
-              Platform Manifesto
-            </a>
-            <a href="/guest" className="hover:text-foreground transition-colors">
-              Guest Experience
-            </a>
-          </div>
-        </div>
-      </main>
-    </div>
+              <ChangesTimeline
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                domains={userDomains}
+                onSelectDomain={handleSelectDomain}
+                onInvestigateChange={(changeId, targetDomainId) => {
+                  const targetDomain = targetDomainId || activeDomain.id;
+                  navigateToInvestigation({
+                    domainId: targetDomain,
+                    sourceType: 'change',
+                    sourceId: changeId,
+                    returnPath: '/workspace/changes',
+                  });
+                }}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: '/workspace/changes',
+                  });
+                }}
+                onViewEvidence={(evidenceId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: evidenceId,
+                    returnPath: '/workspace/changes',
+                  });
+                }}
+                onViewInfrastructure={() => navigateToView('infrastructure')}
+                onCompareSnapshots={(baseSnapshotId, targetSnapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'historical_comparison',
+                    sourceId: targetSnapshotId,
+                    baseSnapshotId: baseSnapshotId,
+                    returnPath: '/workspace/changes',
+                  });
+                }}
+              />
+            </div>
+          ) : activeView === 'infrastructure' ? (
+            /* E. Contextual Infrastructure Overview Surface (What exists?) */
+            <div className="w-full space-y-8" data-testid="infrastructure-overview-surface">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
+                <div>
+                  <h2 className="text-xl font-display font-medium text-foreground">
+                    Infrastructure Overview
+                  </h2>
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Observed perimeter topology, DNS, HTTP, and TLS certificates for {activeDomain.domainName}
+                  </p>
+                </div>
+                <DomainIdentity
+                  domain={activeDomain.domainName}
+                  size="compact"
+                />
+              </div>
+
+              <InfrastructureOverview
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: '/workspace/infrastructure',
+                  });
+                }}
+                onViewFinding={(findingId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'finding',
+                    sourceId: findingId,
+                    returnPath: '/workspace/infrastructure',
+                  });
+                }}
+                onViewAllFindings={() => navigateToView('findings')}
+              />
+            </div>
+          ) : activeView === 'memory' ? (
+            /* F. Contextual Infrastructure Memory Surface (How has it evolved?) */
+            <div className="w-full space-y-8" data-testid="infrastructure-memory-surface">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
+                <div>
+                  <h2 className="text-xl font-display font-medium text-foreground">
+                    Infrastructure Memory
+                  </h2>
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Historical context and snapshot lineage for {activeDomain.domainName}
+                  </p>
+                </div>
+                <DomainIdentity
+                  domain={activeDomain.domainName}
+                  size="compact"
+                />
+              </div>
+
+              <InfrastructureTimeline
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                onInvestigateChange={(changeId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'change',
+                    sourceId: changeId,
+                    returnPath: '/workspace/memory',
+                  });
+                }}
+                onViewSnapshot={(snapshotId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'snapshot',
+                    sourceId: snapshotId,
+                    returnPath: '/workspace/memory',
+                  });
+                }}
+                onViewEvidence={(evidenceId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: evidenceId,
+                    returnPath: '/workspace/memory',
+                  });
+                }}
+                onViewHistoricalContext={() => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'historical_context',
+                    sourceId: activeDomain.id,
+                    returnPath: '/workspace/memory',
+                  });
+                }}
+              />
+            </div>
+          ) : (
+            /* G. Primary Workspace: Overview Experience (What is happening right now?) */
+            <ReturningWorkspaceEntry
+              activeDomain={activeDomain}
+              availableDomains={contextResolution.availableDomains}
+              onSelectDomain={handleSelectDomain}
+              onViewMemory={() => navigateToView('memory')}
+              onViewOverview={() => navigateToView('infrastructure')}
+            >
+              <CurrentIntelligence
+                domainId={activeDomain.id}
+                domainName={activeDomain.domainName}
+                onInvestigate={(findingId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'finding',
+                    sourceId: findingId,
+                    returnPath: '/workspace',
+                  });
+                }}
+                onViewEvidence={(lineage) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'evidence',
+                    sourceId: lineage.observationKey,
+                    returnPath: '/workspace',
+                  });
+                }}
+                onViewOverview={() => navigateToView('infrastructure')}
+                onViewMemory={() => navigateToView('memory')}
+              />
+            </ReturningWorkspaceEntry>
+          )}
+
+          {/* Modal Domain Entry Dialog for Additional Domains */}
+          {isAddDomainOpen && (
+            <DomainEntryDialog
+              isFirstDomain={false}
+              isModal={true}
+              isDismissable={true}
+              onClose={() => setIsAddDomainOpen(false)}
+              onDomainEstablished={(created) => {
+                setSelectedDomainId(created.id);
+                setIsAddDomainOpen(false);
+                domainsQuery.refetch();
+              }}
+            />
+          )}
+
+          {/* Controlled Delete Domain Confirmation Dialog */}
+          <DeleteDomainDialog
+            isOpen={Boolean(domainToDelete)}
+            domain={domainToDelete}
+            isDeleting={deleteDomainMutation.isPending}
+            onConfirm={handleDeleteDomain}
+            onCancel={() => setDomainToDelete(null)}
+          />
+
+          {/* Cross-Workspace Global Search Dialog (WX-604) */}
+          <WorkspaceSearchDialog
+            isOpen={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
+            domains={domainsQuery.data || []}
+            activeDomainId={activeDomain?.id}
+            onSelectResult={(item, targetDomainId) => {
+              setSelectedDomainId(targetDomainId);
+              const destination = resolveSearchDestination(item, targetDomainId);
+              const target = destination.navigationTarget;
+              if (target.resourceType && target.resourceId) {
+                navigateToInvestigation({
+                  domainId: target.domainId,
+                  sourceType: target.resourceType as InvestigationSourceType,
+                  sourceId: target.resourceId,
+                  returnPath: target.returnPath || '/workspace',
+                });
+              } else if (target.experience) {
+                const exp: WorkspaceContextView =
+                  target.experience === 'current'
+                    ? 'overview'
+                    : target.experience === 'memory'
+                    ? 'memory'
+                    : 'infrastructure';
+                navigateToView(exp, target.domainId);
+              } else {
+                setActiveView('overview');
+                setInvestigationContext(null);
+              }
+            }}
+          />
+
+          {/* Bottom Toast Notification on Successful Domain Deletion (WX-812) */}
+          <DomainDeletedToast
+            domainName={deletedDomainNotification}
+            onClose={() => setDeletedDomainNotification(null)}
+          />
+
+          {/* F. Frozen Workspace Signature Footer (WX-210-F) */}
+          <WorkspaceFooter />
+        </WorkspaceCanvas>
+      </div>
+    </WorkspaceShell>
   );
 };
 

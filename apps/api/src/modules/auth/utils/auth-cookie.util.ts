@@ -26,7 +26,7 @@ export function getRefreshCookieOptions(): CookieOptions {
     httpOnly: true,
     secure: isProduction,
     sameSite: 'lax',
-    path: '/api/v1/auth/refresh',
+    path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 }
@@ -43,6 +43,7 @@ export function setAuthCookies(
 
 export function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_COOKIE_NAME, { path: '/' });
+  res.clearCookie(REFRESH_COOKIE_NAME, { path: '/' });
   res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/v1/auth/refresh' });
   clearCsrfCookie(res);
 }
@@ -84,4 +85,3 @@ export function extractRefreshToken(req: Request): string | undefined {
   }
   return undefined;
 }
-

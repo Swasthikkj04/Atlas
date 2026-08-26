@@ -33,7 +33,9 @@ describe('OAuth Authentication & Guest Session Claim Flow (E2E)', () => {
     googleAuthService = app.get(GoogleAuthService);
     githubAuthService = app.get(GitHubAuthService);
 
-    jest.spyOn(UnderstandingEngine.prototype, 'execute').mockResolvedValue(undefined as any);
+    jest
+      .spyOn(UnderstandingEngine.prototype, 'execute')
+      .mockResolvedValue(undefined);
 
     await app.init();
   });
@@ -58,7 +60,9 @@ describe('OAuth Authentication & Guest Session Claim Flow (E2E)', () => {
         .expect(302);
 
       expect(response.headers.location).toBeDefined();
-      expect(response.headers.location).toContain('github.com/login/oauth/authorize');
+      expect(response.headers.location).toContain(
+        'github.com/login/oauth/authorize',
+      );
     });
   });
 
@@ -79,20 +83,21 @@ describe('OAuth Authentication & Guest Session Claim Flow (E2E)', () => {
       const googleEmail = `new-google-user-${Date.now()}@gmail.com`;
       const googleFullName = 'Google Explorer';
 
-      const authResult = await googleAuthService.resolveAndAuthenticateGoogleUser(
-        {
-          googleId: googleSub,
-          email: googleEmail,
-          fullName: googleFullName,
-          avatarUrl: 'https://lh3.googleusercontent.com/avatar.jpg',
-        },
-        {
-          browser: 'Chrome',
-          operatingSystem: 'Linux',
-          deviceType: 'Desktop',
-          deviceName: 'Chrome on Linux',
-        },
-      );
+      const authResult =
+        await googleAuthService.resolveAndAuthenticateGoogleUser(
+          {
+            googleId: googleSub,
+            email: googleEmail,
+            fullName: googleFullName,
+            avatarUrl: 'https://lh3.googleusercontent.com/avatar.jpg',
+          },
+          {
+            browser: 'Chrome',
+            operatingSystem: 'Linux',
+            deviceType: 'Desktop',
+            deviceName: 'Chrome on Linux',
+          },
+        );
 
       expect(authResult.accessToken).toBeDefined();
       expect(authResult.user.email).toBe(googleEmail);
@@ -145,21 +150,22 @@ describe('OAuth Authentication & Guest Session Claim Flow (E2E)', () => {
 
       // 2. Simulate GitHub OAuth resolution with same email (Case C: Upgrades & Links)
       const githubId = `gh_${Date.now()}`;
-      const authResult = await githubAuthService.resolveAndAuthenticateGitHubUser(
-        {
-          githubId,
-          email: localEmail,
-          emailVerified: true,
-          fullName: 'Local Developer',
-          avatarUrl: 'https://avatars.githubusercontent.com/u/12345',
-        },
-        {
-          browser: 'Firefox',
-          operatingSystem: 'Linux',
-          deviceType: 'Desktop',
-          deviceName: 'Firefox on Linux',
-        },
-      );
+      const authResult =
+        await githubAuthService.resolveAndAuthenticateGitHubUser(
+          {
+            githubId,
+            email: localEmail,
+            emailVerified: true,
+            fullName: 'Local Developer',
+            avatarUrl: 'https://avatars.githubusercontent.com/u/12345',
+          },
+          {
+            browser: 'Firefox',
+            operatingSystem: 'Linux',
+            deviceType: 'Desktop',
+            deviceName: 'Firefox on Linux',
+          },
+        );
 
       // Verify same User ID is reused
       expect(authResult.user.id).toBe(existingUserId);

@@ -36,4 +36,40 @@ export class FindingEvidenceDto {
     description: 'URL to retrieve immutable raw payload.',
   })
   rawUrl!: string;
+
+  @ApiProperty({
+    example: 'sha256-verified-evidence-proof',
+    required: false,
+  })
+  hashSha256?: string;
+
+  @ApiProperty({
+    example: 'https://example.com',
+    required: false,
+  })
+  target?: string;
+
+  @ApiProperty({
+    example: 200,
+    required: false,
+  })
+  responseStatus?: number;
+
+  @ApiProperty({
+    example: 'GET',
+    required: false,
+  })
+  requestMethod?: string;
+
+  @ApiProperty({
+    example: 'HTTP/2',
+    required: false,
+  })
+  protocolVersion?: string;
+
+  @ApiProperty({
+    example: '{"headers": {"server": "cloudflare"}}',
+    required: false,
+  })
+  payload?: string;
 }

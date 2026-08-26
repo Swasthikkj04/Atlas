@@ -5,6 +5,7 @@ import type { EmailProvider } from './providers/email-provider.interface';
 import { buildVerificationEmailTemplate } from './templates/verification-email.template';
 import { buildPasswordResetEmailTemplate } from './templates/password-reset-email.template';
 import { buildPasswordResetConfirmationTemplate } from './templates/password-reset-confirmation.template';
+import { buildAccountReactivationEmailTemplate } from './templates/account-reactivation-email.template';
 
 @Injectable()
 export class EmailService {
@@ -123,6 +124,38 @@ export class EmailService {
     } catch (error: any) {
       this.logger.error(
         `Failed to deliver password reset confirmation to ${toEmail}: ${error?.message || error}`,
+      );
+    }
+  }
+
+  async sendAccountReactivationEmail(
+    toEmail: string,
+    rawReactivationToken: string,
+    recipientName?: string,
+  ): Promise<void> {
+    const baseUrl = this.getAppUrl();
+    const reactivationUrl = `${baseUrl}/auth/reactivate?token=${rawReactivationToken}`;
+
+    const { subject, html, text } = buildAccountReactivationEmailTemplate({
+      recipientName,
+      reactivationUrl,
+      expiryMinutes: 15,
+    });
+
+    try {
+      await this.emailProvider.send({
+        to: toEmail,
+        from: this.getSender(),
+        replyTo: this.getReplyTo(),
+        subject,
+        html,
+        text,
+      });
+
+      this.logger.log(`Account reactivation email dispatched to ${toEmail}.`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to deliver account reactivation email to ${toEmail}: ${error?.message || error}`,
       );
     }
   }

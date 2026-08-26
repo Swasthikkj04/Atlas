@@ -24,7 +24,7 @@ interface AuthenticatedRequest extends Request {
 @ApiTags('Global Search')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('search')
+@Controller(['search', 'workspace/search'])
 export class SearchController {
   constructor(
     private readonly searchExperienceService: SearchExperienceService,

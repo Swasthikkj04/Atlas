@@ -24,10 +24,56 @@ export class InfrastructureSnapshotRepository {
     });
   }
 
+  async findByJobId(jobId: string) {
+    return this.prisma.infrastructureSnapshot.findUnique({
+      where: {
+        jobId,
+      },
+      include: {
+        domain: true,
+      },
+    });
+  }
+
+  async findByIdForUser(snapshotId: string, userId: string) {
+    return this.prisma.infrastructureSnapshot.findFirst({
+      where: {
+        id: snapshotId,
+        domain: {
+          userId,
+        },
+      },
+      include: {
+        domain: true,
+      },
+    });
+  }
+
   async findByDomain(domainId: string, page: number, limit: number) {
     return this.prisma.infrastructureSnapshot.findMany({
       where: {
         domainId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
+  async findByDomainForUser(
+    domainId: string,
+    userId: string,
+    page: number,
+    limit: number,
+  ) {
+    return this.prisma.infrastructureSnapshot.findMany({
+      where: {
+        domainId,
+        domain: {
+          userId,
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -52,6 +98,17 @@ export class InfrastructureSnapshotRepository {
     return this.prisma.infrastructureSnapshot.count({
       where: {
         domainId,
+      },
+    });
+  }
+
+  async countByDomainForUser(domainId: string, userId: string) {
+    return this.prisma.infrastructureSnapshot.count({
+      where: {
+        domainId,
+        domain: {
+          userId,
+        },
       },
     });
   }

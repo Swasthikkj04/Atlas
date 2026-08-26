@@ -1,4 +1,5 @@
 export interface InfrastructureBriefHighlight {
+  id?: string;
   severity: string;
   title: string;
   description: string;

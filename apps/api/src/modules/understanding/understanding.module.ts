@@ -13,6 +13,7 @@ import { UnderstandingRepository } from './repositories/understanding.repository
 import { InfrastructureVerificationRepository } from './repositories/infrastructure-verification.repository';
 import { InfrastructureVerificationService } from './services/infrastructure-verification.service';
 import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
+import { ChangeDetectionEngine } from './services/change-detection.engine';
 import { HttpModule } from '../../infrastructure/discovery/http/http.module';
 import { DiscoveryModule } from '../../infrastructure/discovery/discovery.module';
 import { InfrastructureSnapshotsModule } from '../infrastructure-snapshots/infrastructure-snapshots.module';
@@ -22,6 +23,7 @@ import { InfrastructureBriefModule } from '../infrastructure-brief/infrastructur
 import { WorkerReliabilityService } from './services/worker-reliability.service';
 
 import { GuestModule } from '../guest/guest.module';
+import { AttributionModule } from '../../infrastructure/attribution/attribution.module';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { GuestModule } from '../guest/guest.module';
     FindingsModule,
     InfrastructureFindingsModule,
     InfrastructureBriefModule,
+    AttributionModule,
   ],
   controllers: [UnderstandingController],
   providers: [
@@ -43,6 +46,7 @@ import { GuestModule } from '../guest/guest.module';
     InfrastructureVerificationRepository,
     InfrastructureVerificationService,
     SnapshotEqualityEngine,
+    ChangeDetectionEngine,
     WorkerReliabilityService,
     UnderstandingWorker,
     UnderstandingEngine,
@@ -53,6 +57,7 @@ import { GuestModule } from '../guest/guest.module';
     InfrastructureVerificationRepository,
     InfrastructureVerificationService,
     SnapshotEqualityEngine,
+    ChangeDetectionEngine,
     WorkerReliabilityService,
     UnderstandingEngine,
   ],

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { DiscoverySnapshot } from '../../../infrastructure/discovery/contracts/discovery-snapshot.interface';
@@ -34,7 +34,26 @@ export class InfrastructureSnapshotService {
     });
   }
 
-  async getSnapshotById(snapshotId: string) {
+  async findByJobId(jobId: string) {
+    return this.snapshotRepository.findByJobId(jobId);
+  }
+
+  async getSnapshotById(userId: string, snapshotId: string) {
+    const snapshot = await this.snapshotRepository.findByIdForUser(
+      snapshotId,
+      userId,
+    );
+
+    if (!snapshot) {
+      throw new NotFoundException(
+        `Snapshot with ID '${snapshotId}' not found.`,
+      );
+    }
+
+    return SnapshotMapper.toDetailDto(snapshot);
+  }
+
+  async getSnapshotByIdInternal(snapshotId: string) {
     const snapshot = await this.snapshotRepository.findById(snapshotId);
 
     if (!snapshot) {
@@ -44,10 +63,20 @@ export class InfrastructureSnapshotService {
     return SnapshotMapper.toDetailDto(snapshot);
   }
 
-  async getSnapshotsByDomain(domainId: string, page: number, limit: number) {
+  async getSnapshotsByDomain(
+    userId: string,
+    domainId: string,
+    page: number,
+    limit: number,
+  ) {
     const [snapshots, total] = await Promise.all([
-      this.snapshotRepository.findByDomain(domainId, page, limit),
-      this.snapshotRepository.countByDomain(domainId),
+      this.snapshotRepository.findByDomainForUser(
+        domainId,
+        userId,
+        page,
+        limit,
+      ),
+      this.snapshotRepository.countByDomainForUser(domainId, userId),
     ]);
 
     return {
@@ -56,7 +85,7 @@ export class InfrastructureSnapshotService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / limit) || 1,
       },
     };
   }

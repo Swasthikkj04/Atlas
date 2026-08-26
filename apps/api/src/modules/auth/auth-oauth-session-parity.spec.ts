@@ -189,7 +189,9 @@ describe('AUTH-011: OAuth Session Cookie Parity & Refresh Continuity', () => {
         {
           provide: JwtService,
           useValue: {
-            signAsync: jest.fn().mockResolvedValue('signed_jwt_access_token_123'),
+            signAsync: jest
+              .fn()
+              .mockResolvedValue('signed_jwt_access_token_123'),
           },
         },
         { provide: UsersService, useValue: mockUsers },
@@ -237,18 +239,12 @@ describe('AUTH-011: OAuth Session Cookie Parity & Refresh Continuity', () => {
         );
 
       expect(establishSpy).toHaveBeenCalledTimes(2);
-      expect(establishSpy).toHaveBeenNthCalledWith(
-        1,
-        mockUser,
-        mockDeviceMeta,
-      );
-      expect(establishSpy).toHaveBeenNthCalledWith(
-        2,
-        mockUser,
-        mockDeviceMeta,
-      );
+      expect(establishSpy).toHaveBeenNthCalledWith(1, mockUser, mockDeviceMeta);
+      expect(establishSpy).toHaveBeenNthCalledWith(2, mockUser, mockDeviceMeta);
 
-      expect(passwordLoginResult.accessToken).toBe('signed_jwt_access_token_123');
+      expect(passwordLoginResult.accessToken).toBe(
+        'signed_jwt_access_token_123',
+      );
       expect(googleOAuthResult.accessToken).toBe('signed_jwt_access_token_123');
       expect(passwordLoginResult.refreshToken).toBeDefined();
       expect(googleOAuthResult.refreshToken).toBeDefined();
@@ -296,7 +292,8 @@ describe('AUTH-011: OAuth Session Cookie Parity & Refresh Continuity', () => {
 
   describe('2. Cookie Attribute Parity (OAuth vs Password Login)', () => {
     it('Google OAuth callback sets identical cookie names and attributes as password login', async () => {
-      const passwordCookies: Record<string, { value: string; options: any }> = {};
+      const passwordCookies: Record<string, { value: string; options: any }> =
+        {};
       const oauthCookies: Record<string, { value: string; options: any }> = {};
 
       const mockPasswordRes = {

@@ -33,4 +33,15 @@ export class UsersRepository {
       data: user,
     });
   }
+
+  async updateProfile(id: string, data: { fullName: string }) {
+    return this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        fullName: data.fullName,
+      },
+    });
+  }
 }

@@ -85,4 +85,3 @@ describe('GoogleAuthService', () => {
     expect(result.refreshToken).toBe('raw_google_refresh_token');
   });
 });
-

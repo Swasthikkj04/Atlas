@@ -1,0 +1,12 @@
+.readingSurface {
+  width: 100%;
+  max-width: var(--max-w-reading, 760px);
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+}

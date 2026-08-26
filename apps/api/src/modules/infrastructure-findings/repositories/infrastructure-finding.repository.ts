@@ -55,6 +55,28 @@ export class InfrastructureFindingRepository {
         ...(where.snapshot as Prisma.InfrastructureSnapshotWhereInput),
         domainId: query.domainId,
       };
+
+      // P0 Freshness & Staleness Invariant (WX-1020):
+      // When domainId is requested without an explicit snapshotId, scope to the latest verified snapshot
+      // unless historical findings are explicitly requested (e.g. Memory tab).
+      if (!query.snapshotId && !query.includeHistorical) {
+        const latestSnapshot = await this.prisma.infrastructureSnapshot.findFirst({
+          where: { domainId: query.domainId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true },
+        });
+
+        if (latestSnapshot) {
+          where.snapshotId = latestSnapshot.id;
+        } else {
+          // No snapshot exists for this domain yet -> 0 current findings
+          where.snapshotId = 'nonexistent-snapshot-boundary';
+        }
+      }
+    }
+
+    if (query.snapshotId) {
+      where.snapshotId = query.snapshotId;
     }
 
     if (query.severity) {
@@ -164,10 +186,46 @@ export class InfrastructureFindingRepository {
     });
   }
 
+  async findBySnapshotForUser(
+    snapshotId: string,
+    userId: string,
+    page: number,
+    limit: number,
+  ) {
+    return this.prisma.infrastructureFinding.findMany({
+      where: {
+        snapshotId,
+        snapshot: {
+          domain: {
+            userId,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
   async countBySnapshot(snapshotId: string) {
     return this.prisma.infrastructureFinding.count({
       where: {
         snapshotId,
+      },
+    });
+  }
+
+  async countBySnapshotForUser(snapshotId: string, userId: string) {
+    return this.prisma.infrastructureFinding.count({
+      where: {
+        snapshotId,
+        snapshot: {
+          domain: {
+            userId,
+          },
+        },
       },
     });
   }

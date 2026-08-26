@@ -4,6 +4,7 @@ import { UserAccountStatus } from '@prisma/client';
 import { GitHubAuthService } from './github-auth.service';
 import { AuthService } from './auth.service';
 import { OAuthIdentityResolver } from '../resolvers/oauth-identity.resolver';
+import { OAuthAuthenticationException } from '../exceptions/oauth.exception';
 
 describe('GitHubAuthService', () => {
   let service: GitHubAuthService;
@@ -99,7 +100,7 @@ describe('GitHubAuthService', () => {
         unverifiedProfile,
         mockDeviceMeta,
       ),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrow(OAuthAuthenticationException);
   });
 
   it('should reject GitHub login gracefully if email is missing', async () => {
@@ -113,7 +114,6 @@ describe('GitHubAuthService', () => {
         missingEmailProfile,
         mockDeviceMeta,
       ),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrow(OAuthAuthenticationException);
   });
 });
-

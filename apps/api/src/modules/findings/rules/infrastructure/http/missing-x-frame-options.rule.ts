@@ -16,27 +16,38 @@ export class MissingXFrameOptionsRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
-    if (!http?.reachable) {
+    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
       return [];
     }
 
-    if (http.headers['x-frame-options']) {
+    const finalResponse = http.finalResponse;
+    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
+
+    if (evaluatedHeaders && evaluatedHeaders['x-frame-options']) {
       return [];
     }
+
+    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {
         ruleId: this.id,
         title: 'Missing X-Frame-Options Header',
-        description:
-          'The application does not send the X-Frame-Options header. This may allow the site to be embedded in malicious pages, increasing the risk of clickjacking attacks.',
+        description: `The authoritative response (${evaluatedUrl}) does not send an X-Frame-Options or equivalent frame-ancestors directive. This may allow pages to be framed in third-party contexts.`,
         category: FindingCategory.SECURITY_HEADER,
         severity: Severity.MEDIUM,
+        confidence,
+        riskClassification: 'SECURITY_HARDENING_GAP',
+        severityRationale:
+          'Framing controls prevent malicious sites from rendering the application inside hidden frames to execute clickjacking attacks.',
+        whatThisDoesNotProve:
+          'This observation does not prove that the site is actively being framed or vulnerable to successful clickjacking. It identifies the absence of explicit framing restrictions.',
         recommendations: [
           {
             title: 'Configure X-Frame-Options',
             description:
-              'Configure the X-Frame-Options response header with DENY or SAMEORIGIN to help protect against clickjacking attacks.',
+              'Configure the X-Frame-Options response header with DENY or SAMEORIGIN, or specify frame-ancestors in Content-Security-Policy.',
           },
         ],
       },

@@ -1,0 +1,35 @@
+.divider {
+  border: none;
+  background-color: var(--border, rgba(0, 0, 0, 0.07));
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.horizontal {
+  width: 100%;
+  height: 1px;
+}
+
+.vertical {
+  width: 1px;
+  height: 100%;
+  align-self: stretch;
+}
+
+/* ── Horizontal Spacing Margins ──────────────────────────────────────────── */
+.horizontal.spacing-none { margin-top: 0; margin-bottom: 0; }
+.horizontal.spacing-xs   { margin-top: var(--space-xs, 8px); margin-bottom: var(--space-xs, 8px); }
+.horizontal.spacing-sm   { margin-top: var(--space-sm, 12px); margin-bottom: var(--space-sm, 12px); }
+.horizontal.spacing-md   { margin-top: var(--space-md, 16px); margin-bottom: var(--space-md, 16px); }
+.horizontal.spacing-lg   { margin-top: var(--space-lg, 24px); margin-bottom: var(--space-lg, 24px); }
+.horizontal.spacing-xl   { margin-top: var(--space-xl, 32px); margin-bottom: var(--space-xl, 32px); }
+
+/* ── Vertical Spacing Margins ────────────────────────────────────────────── */
+.vertical.spacing-none { margin-left: 0; margin-right: 0; }
+.vertical.spacing-xs   { margin-left: var(--space-xs, 8px); margin-right: var(--space-xs, 8px); }
+.vertical.spacing-sm   { margin-left: var(--space-sm, 12px); margin-right: var(--space-sm, 12px); }
+.vertical.spacing-md   { margin-left: var(--space-md, 16px); margin-right: var(--space-md, 16px); }
+.vertical.spacing-lg   { margin-left: var(--space-lg, 24px); margin-right: var(--space-lg, 24px); }
+.vertical.spacing-xl   { margin-left: var(--space-xl, 32px); margin-right: var(--space-xl, 32px); }

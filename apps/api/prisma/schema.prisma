@@ -18,6 +18,7 @@ enum JobStatus {
   RUNNING
   COMPLETED
   FAILED
+  CANCELLED
 }
 
 enum UserAccountStatus {
@@ -25,12 +26,25 @@ enum UserAccountStatus {
   ACTIVE
   LOCKED
   SUSPENDED
+  DEACTIVATED
   DELETED
 }
 
 enum OAuthProvider {
   GOOGLE
   GITHUB
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum MotionPreference {
+  SYSTEM
+  STANDARD
+  REDUCED
 }
 
 enum GuestSessionStatus {
@@ -41,9 +55,18 @@ enum GuestSessionStatus {
 }
 
 enum TriggerType {
+  INITIAL
   MANUAL
   SCHEDULED
   EVENT
+}
+
+enum DomainUnderstandingStatus {
+  IDLE
+  QUEUED
+  UNDERSTANDING
+  FAILED
+  STALE
 }
 
 enum FindingModule {
@@ -121,8 +144,10 @@ model User {
   domains             Domain[]
   verificationTokens  VerificationToken[]
   passwordResetTokens PasswordResetToken[]
+  reactivationTokens  AccountReactivationToken[]
   sessions            UserSession[]
   oauthAccounts       OAuthAccount[]
+  preferences         UserPreference?
 
   @@map("users")
 }
@@ -136,6 +161,12 @@ model Domain {
   userId            String
   domainName        String
   monitoringEnabled Boolean @default(false)
+
+  // INTEL-002: Domain Understanding Schedule & State
+  lastUnderstoodAt     DateTime?
+  nextUnderstandingAt DateTime?
+  understandingStatus  DomainUnderstandingStatus @default(IDLE)
+  understandingCadence Int                       @default(86400)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -151,6 +182,7 @@ model Domain {
   @@unique([userId, domainName])
   @@index([userId])
   @@index([domainName])
+  @@index([monitoringEnabled, nextUnderstandingAt])
   @@map("domains")
 }
 
@@ -170,6 +202,14 @@ model UnderstandingJob {
   startedAt   DateTime  @default(now())
   completedAt DateTime?
 
+  // REFINEMENT-004: Distributed Lease, Heartbeat & Worker Recovery
+  leaseUntil   DateTime?
+  heartbeatAt  DateTime?
+  attemptCount Int       @default(0)
+  maxAttempts  Int       @default(3)
+  workerId     String?
+  nextRetryAt  DateTime?
+
   errorMessage String?
 
   domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
@@ -180,6 +220,8 @@ model UnderstandingJob {
   @@index([domainId])
   @@index([status])
   @@index([startedAt])
+  @@index([status, leaseUntil])
+  @@index([status, nextRetryAt])
   @@map("understanding_jobs")
 }
 
@@ -475,6 +517,43 @@ model OAuthAccount {
   @@index([userId])
   @@map("oauth_accounts")
 }
+
+///////////////////////////////////////////////////////////
+// USER PREFERENCES & APPEARANCE (AX-107)
+///////////////////////////////////////////////////////////
+
+model UserPreference {
+  id        String           @id @default(uuid())
+  userId    String           @unique
+  theme     ThemePreference  @default(SYSTEM)
+  motion    MotionPreference @default(SYSTEM)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+///////////////////////////////////////////////////////////
+// ACCOUNT REACTIVATION TOKEN (AX-112)
+///////////////////////////////////////////////////////////
+
+model AccountReactivationToken {
+  id         String    @id @default(uuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("account_reactivation_tokens")
+}
+
 
 
 

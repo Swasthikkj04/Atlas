@@ -1,1 +1,2 @@
-// Shared libraries barrier export layer
+export * from './api-client';
+export * from './query-client';

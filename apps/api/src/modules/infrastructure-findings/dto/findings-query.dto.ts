@@ -13,6 +13,14 @@ export class FindingsQueryDto {
   domainId?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter findings by snapshot ID.',
+    example: '3f6c752d-c186-41de-8c68-144f58308e25',
+  })
+  @IsOptional()
+  @IsString()
+  snapshotId?: string;
+
+  @ApiPropertyOptional({
     description: 'Filter findings by severity.',
     enum: Severity,
   })
@@ -77,4 +85,11 @@ export class FindingsQueryDto {
   @Min(1)
   @Max(100)
   limit: number = 20;
+
+  @ApiPropertyOptional({
+    description: 'Whether to include historical findings across superseded snapshots (default false, returns latest verified snapshot findings only).',
+    default: false,
+  })
+  @IsOptional()
+  includeHistorical?: boolean;
 }

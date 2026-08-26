@@ -3,3 +3,7 @@ export * from './layout';
 export * from './branding';
 export * from './navigation';
 export * from './feedback';
+export * from './typography';
+export * from './icons';
+export * from './accessibility';
+export * from './states';

@@ -6,6 +6,7 @@ import { InfrastructureFindingService } from '../infrastructure-findings/service
 import { InfrastructureSnapshotService } from '../infrastructure-snapshots/services/infrastructure-snapshot.service';
 import { InfrastructureVerificationService } from './services/infrastructure-verification.service';
 import { SnapshotEqualityEngine } from './services/snapshot-equality.engine';
+import { ChangeDetectionEngine } from './services/change-detection.engine';
 import { UnderstandingEngine } from './understanding.engine';
 
 describe('UnderstandingEngine', () => {
@@ -16,6 +17,7 @@ describe('UnderstandingEngine', () => {
   let infrastructureFindingService: jest.Mocked<InfrastructureFindingService>;
   let infrastructureBriefService: jest.Mocked<InfrastructureBriefService>;
   let snapshotEqualityEngine: jest.Mocked<SnapshotEqualityEngine>;
+  let changeDetectionEngine: jest.Mocked<ChangeDetectionEngine>;
   let verificationService: jest.Mocked<InfrastructureVerificationService>;
   let understandingRepository: jest.Mocked<any>;
 
@@ -42,6 +44,7 @@ describe('UnderstandingEngine', () => {
     snapshotService = {
       getLatestByDomain: jest.fn(),
       saveSnapshot: jest.fn(),
+      findByJobId: jest.fn().mockResolvedValue(null),
     } as unknown as jest.Mocked<InfrastructureSnapshotService>;
 
     findingRuleEngine = {
@@ -50,6 +53,9 @@ describe('UnderstandingEngine', () => {
 
     infrastructureFindingService = {
       saveFindings: jest.fn().mockResolvedValue(undefined),
+      getFindingsBySnapshotInternal: jest
+        .fn()
+        .mockResolvedValue({ data: [], pagination: {} } as any),
     } as unknown as jest.Mocked<InfrastructureFindingService>;
 
     infrastructureBriefService = {
@@ -61,12 +67,26 @@ describe('UnderstandingEngine', () => {
       isEqual: jest.fn(),
     } as unknown as jest.Mocked<SnapshotEqualityEngine>;
 
+    changeDetectionEngine = {
+      detectAndPersistChanges: jest.fn().mockResolvedValue(1),
+    } as unknown as jest.Mocked<ChangeDetectionEngine>;
+
     verificationService = {
       create: jest.fn().mockResolvedValue({} as any),
     } as unknown as jest.Mocked<InfrastructureVerificationService>;
 
     understandingRepository = {
       linkJobToSnapshot: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const providerAttributionService = {
+      attributeInfrastructure: jest.fn().mockReturnValue({
+        hosting: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
+        edgeCdn: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
+        dns: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
+        webServer: { provider: 'nginx', decision: 'CONFIRMED', confidence: 'HIGH' },
+        application: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
+      }),
     };
 
     engine = new UnderstandingEngine(
@@ -76,8 +96,10 @@ describe('UnderstandingEngine', () => {
       infrastructureFindingService,
       infrastructureBriefService,
       snapshotEqualityEngine,
+      changeDetectionEngine,
       verificationService,
       understandingRepository,
+      providerAttributionService as any,
     );
   });
 
@@ -117,7 +139,32 @@ describe('UnderstandingEngine', () => {
     );
   });
 
-  it('should skip snapshot creation and analysis when newly collected snapshot is identical to latest', async () => {
+  it('should resume idempotently without creating duplicate snapshot if snapshot already exists for jobId', async () => {
+    const existingJobSnapshot = {
+      id: 'snapshot-pre-existing',
+      domainId: 'domain-1',
+      jobId: 'job-crashed-1',
+      responseTimeMs: 100,
+      httpStatus: 200,
+      payload: mockSnapshot as any,
+      createdAt: new Date(),
+    };
+
+    snapshotService.findByJobId.mockResolvedValue(existingJobSnapshot as any);
+    infrastructureFindingService.getFindingsBySnapshotInternal.mockResolvedValue(
+      {
+        data: [{ id: 'finding-1' } as any],
+        pagination: {} as any,
+      },
+    );
+
+    await engine.execute('job-crashed-1', 'domain-1', 'example.com');
+
+    expect(snapshotService.saveSnapshot).not.toHaveBeenCalled();
+    expect(verificationService.create).not.toHaveBeenCalled();
+  });
+
+  it('should persist snapshot and record changeDetected: false when newly collected snapshot is identical to latest', async () => {
     const existingSnapshot = {
       id: 'existing-snapshot-id',
       domainId: 'domain-1',
@@ -131,19 +178,33 @@ describe('UnderstandingEngine', () => {
     snapshotService.getLatestByDomain.mockResolvedValue(existingSnapshot);
     snapshotEqualityEngine.isEqual.mockReturnValue(true);
 
+    snapshotService.saveSnapshot.mockResolvedValue({
+      id: 'snapshot-2',
+      domainId: 'domain-1',
+      jobId: 'job-2',
+      responseTimeMs: 100,
+      httpStatus: 200,
+      payload: mockSnapshot as any,
+      createdAt: new Date(),
+    });
+
     await engine.execute('job-2', 'domain-1', 'example.com');
 
-    expect(snapshotService.saveSnapshot).not.toHaveBeenCalled();
-    expect(findingRuleEngine.evaluate).not.toHaveBeenCalled();
-    expect(infrastructureFindingService.saveFindings).not.toHaveBeenCalled();
-    expect(infrastructureBriefService.generate).not.toHaveBeenCalled();
+    expect(snapshotService.saveSnapshot).toHaveBeenCalledWith(
+      'domain-1',
+      'job-2',
+      expect.anything(),
+    );
+    expect(findingRuleEngine.evaluate).toHaveBeenCalled();
+    expect(infrastructureFindingService.saveFindings).toHaveBeenCalled();
+    expect(infrastructureBriefService.generate).toHaveBeenCalled();
 
     expect(verificationService.create).toHaveBeenCalledWith(
       expect.objectContaining({
         domainId: 'domain-1',
         jobId: 'job-2',
-        snapshotId: 'existing-snapshot-id',
-        snapshotCreated: false,
+        snapshotId: 'snapshot-2',
+        snapshotCreated: true,
         changeDetected: false,
       }),
     );
@@ -192,6 +253,13 @@ describe('UnderstandingEngine', () => {
     );
 
     expect(findingRuleEngine.evaluate).toHaveBeenCalled();
+    expect(changeDetectionEngine.detectAndPersistChanges).toHaveBeenCalledWith(
+      'domain-1',
+      'existing-snapshot-id',
+      'new-snapshot-id',
+      mockSnapshot,
+      expect.anything(),
+    );
     expect(infrastructureBriefService.generate).toHaveBeenCalledWith(
       'new-snapshot-id',
     );

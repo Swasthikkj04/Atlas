@@ -40,6 +40,7 @@ describe('FindingController', () => {
   const mockDetailResponse: FindingDetailDto = {
     id: 'find-123',
     domainId: 'domain-1',
+    snapshotId: 'snp-123',
     domainName: 'example.com',
     title: 'Missing HSTS Header',
     description: 'Strict-Transport-Security header is absent.',
@@ -99,5 +100,64 @@ describe('FindingController', () => {
     );
     expect(result.rule.ruleId).toBe('http.missing-hsts');
     expect(result.confidence).toBe('CERTAIN');
+  });
+
+  it('should pass user ID and snapshotId when calling getFindingsBySnapshot', async () => {
+    const req = { user: mockUser } as any;
+    service.getFindingsBySnapshot.mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 20, total: 0, pages: 1 },
+    });
+
+    await controller.getFindingsBySnapshot(req, 'snp-123', 1, 20);
+
+    expect(service.getFindingsBySnapshot).toHaveBeenCalledWith(
+      'user-1',
+      'snp-123',
+      1,
+      20,
+    );
+  });
+
+  it('should return observation evidence payload for GET /findings/:findingId/evidence', async () => {
+    const req = { user: mockUser } as any;
+    const mockEvidenceResponse = {
+      findingId: 'find-123',
+      domainId: 'domain-1',
+      domainName: 'example.com',
+      snapshotId: 'snp-123',
+      rule: mockDetailResponse.rule,
+      observations: [
+        {
+          key: 'security_header',
+          state: 'NON_COMPLIANT',
+          observedAt: new Date('2026-07-24T20:00:00.000Z'),
+          evidenceRef: 'ev-123',
+        },
+      ],
+      evidence: [
+        {
+          evidenceId: 'ev-123',
+          collector: 'http-collector',
+          collectionTime: new Date('2026-07-24T20:00:00.000Z'),
+          category: 'HTTP_RESPONSE',
+          integrityStatus: 'VERIFIED',
+          rawUrl: '/api/v1/evidence/ev-123',
+        },
+      ],
+    };
+    (service as any).getFindingEvidence = jest
+      .fn()
+      .mockResolvedValue(mockEvidenceResponse);
+
+    const result = await controller.getFindingEvidence(req, 'find-123');
+
+    expect(service.getFindingEvidence).toHaveBeenCalledWith(
+      'user-1',
+      'find-123',
+    );
+    expect(result.findingId).toBe('find-123');
+    expect(result.observations).toHaveLength(1);
+    expect(result.evidence).toHaveLength(1);
   });
 });

@@ -10,7 +10,563 @@ The format follows semantic versioning and documents significant architectural, 
 
 ## Added
 
-- Placeholder for upcoming frontend work.
+### Design & Visual Language Freeze (Phase 0)
+- **WX-000 — Product Visual Language Audit & Freeze**:
+  - Established canonical typography specification (`DM Sans` UI + `Newsreader` display + `JetBrains Mono` technical data).
+  - Frozen canonical color specification: app surface hierarchy (`#FAFAFA` / `#0F1115`), primary card (`#FFFFFF` / `#14171C`), 6-tier semantic severity tokens.
+  - Frozen Base-8 spatial rhythm (`--space-3xs` through `--space-4xl`) and container boundaries (`420px` to `1440px`).
+  - Frozen shape & elevation: `--radius-xs` to `--radius-pill`, hairline borders, and elevation shadow scale.
+  - Established `lucide-react` as canonical icon system with standardized stroke widths (`1.75` for UI, `1.5` for display, `2.0` for micro).
+  - Frozen motion language with standard easing `cubic-bezier(0.16, 1, 0.3, 1)` and `520ms` Nebula Pause.
+  - Defined brand continuity progression from Argonion through Guest to Authenticated Workspace.
+- **WX-001 — Frontend Foundation**:
+  - Established canonical frontend structure with typed `config/`, `lib/`, `routes/`, `components/feedback/`, and `components/accessibility/`.
+  - Configured `@tanstack/react-query` foundation with calm query defaults (`staleTime: 60s`, `refetchOnWindowFocus: false`, selective error retry policy).
+  - Established centralized API Client in `src/lib/api-client.ts` with typed error hierarchy (`ApiError`, `NetworkError`, `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `InsufficientSignalError`, `RateLimitError`) and automated Double-Submit CSRF cookie protection.
+  - Implemented `ProtectedRoute` component and SPA navigation helpers (`navigateTo`).
+  - Implemented application-level `ErrorBoundary` with controlled fallback UI conforming to WX-000 tokens, reference ID tracking, and safe dev/prod separation.
+  - Added accessible `SkipToContent` link targeting `#main-content`.
+- **WX-002 — Design Token Foundation**:
+  - Encoded authoritative TypeScript Design Token Registry in `src/styles/tokens.ts` and barrel export in `src/styles/index.ts`.
+  - Enforced light and dark semantic surface hierarchy (`surface-app`, `surface-understanding`, `surface-matters`, `surface-infrastructure`, `surface-evidence`, `surface-preserve`, `muted`).
+  - Implemented 6-tier restrained semantic severity tokens (`critical`, `high`, `medium`, `low`, `informational`, `success`) with paired text, subtle background (8–12%), and hairline borders.
+  - Implemented Base-8 spatial scale (`space-3xs` 2px to `space-4xl` 96px) and border radius scale (`radius-xs` 2px to `radius-pill` 9999px).
+  - Encoded layout boundaries (`max-w-form` 420px, `max-w-dialog` 640px, `max-w-reading` 760px, `max-w-workspace` 1440px) and canonical z-index stacking layers (`z-base` 0 to `z-toast` 1200).
+  - Synchronized Tailwind v4 `@theme inline` mappings in `src/styles/semantic/theme.css` for instant utility class consumption.
+- **WX-003 — Typography + Icon System**:
+  - Encoded typographic scale and font families in `src/styles/tokens.ts` and `src/styles/foundation/typography.css`.
+  - Created polymorphic `Typography` component and semantic role shorthands (`Display`, `DisplayXl`, `PageTitle`, `SectionTitle`, `CardTitle`, `Subheader`, `BodyLarge`, `Body`, `BodySmall`, `Caption`, `Eyebrow`, `Technical`, `TechnicalSmall`) in `src/components/typography/`.
+  - Enforced `tabular-nums` / `font-feature-settings: "tnum" 1` for all technical metrics, timestamps, IPs, and hashes.
+  - Implemented authoritative `Icon` component in `src/components/icons/` standardizing `lucide-react` usage, 5 semantic sizes (`micro` 12px to `large` 24px), 3 contextual stroke widths (`display` 1.5, `ui` 1.75, `micro` 2.0), and automated accessibility labelling (`aria-hidden="true"` / `role="img"`).
+- **WX-004 — Layout Primitives**:
+  - Implemented canonical spatial vocabulary in `src/components/layout/`: `Container`, `Stack`, `Cluster`, `Inline`, `Grid`, `Section`, `Divider`, and `ReadingSurface`.
+  - Enforced width boundaries (`form` 420px, `dialog` 640px, `reading` 760px, `workspace` 1440px, `fluid` 100%).
+  - Enforced Base-8 / Base-4 spatial scale for `Stack` and `Cluster` gaps without arbitrary pixel sizing.
+  - Implemented responsive collapsing for `Grid` (1, 2, 3, 4, 6, 12, auto-fit, auto-fill).
+  - Implemented `ReadingSurface` with strict 65–75 CPL readability measure (max-w: 760px) and safe word breaking for narrative and evidence interpretation.
+- **WX-005 — UI State Primitives**:
+  - Built canonical UI state language in `src/components/states/`: `LoadingState`, `EmptyState`, `QuietState`, `PartialState`, `ErrorState`, `UnavailableState`, `Feedback`, `SuccessFeedback`, and `Skeleton`.
+  - Implemented `LoadingState` with calm non-interruptive indicators, accessible `role="status"` / `aria-live="polite"`, and zero fake percentage/progress theater.
+  - Implemented `EmptyState` distinguishing "nothing created yet" from "no change occurred".
+  - Implemented `QuietState` embodying the principle that "silence is valuable" when the system actively verified infrastructure and nothing changed.
+  - Implemented `PartialState` distinctly splitting established observations from unverified missing signals without false certainty.
+  - Implemented `ErrorState` consuming WX-001 `ApiError` hierarchy (`NetworkError`, `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `RateLimitError`, `InsufficientSignalError`) with reference IDs and recovery actions.
+  - Implemented `UnavailableState` differentiating unavailable evidence from system failures.
+  - Implemented `Feedback` consuming 6-tier restrained severity tokens and `Skeleton` respecting reduced-motion preferences.
+- **WX-006 — Data / API Contracts**:
+  - Established canonical public API DTO contracts in `src/types/api/`: `auth.dto`, `domain.dto`, `understanding.dto`, `snapshot.dto`, `finding.dto`, `brief.dto`, `timeline.dto`, and `workspace.dto`.
+  - Built frontend API service layer in `src/services/` wrapping `apiClient` exclusively.
+  - Implemented typed TanStack Query hooks in `src/hooks/queries/` with standardized query key factory (`queryKeys`).
+  - Enforced the core architectural invariant: *"The frontend consumes intelligence. It does not create intelligence."*
+  - Documented Backend Capability & Contract Gap Register in `frontend_docs/WX-006-Data-API-Contracts.md`.
+- **WX-007 — Foundation Verification**:
+  - Executed architecture-wide verification of Phase 0 across all 7 layers (WX-000 through WX-006).
+  - Verified visual language, design token authority, typography scales, Lucide icon system, layout primitives, UI state primitives, API contracts, and route resolutions.
+  - Confirmed all 133 automated unit, integration, and contract tests pass with 0 errors across 62 test suites.
+  - Confirmed production build and ESLint pass with 0 errors.
+
+### Workspace Shell & Core Navigation (Phase 1)
+- **WX-101 — Workspace Route & Entry**:
+  - Established `/workspace` as the canonical authenticated entry point for Nebula Workspace.
+  - Bound `/workspace` to `ProtectedRoute` with calm loading state and redirect return-URL retention.
+  - Refactored `WorkspacePage` to strictly consume the Phase 0 foundation (tokens, `Typography`, `Icon`, `Container`, `Section`, `Grid`, `Stack`, `Cluster`, and `LoadingState`).
+  - Preserved backward-compatible route aliases (`/dashboard` -> `WORKSPACE`, `/workspace/create` -> `CREATE_WORKSPACE`).
+- **WX-102 — Workspace Shell Architecture**:
+  - Implemented the permanent `WorkspaceShell` structural architecture in `src/features/workspace/components/shell/`.
+  - Built semantic landmark regions: `WorkspaceNavigationRegion` (`<nav aria-label="Workspace Navigation">`), `WorkspaceHeaderRegion` (`<header role="banner">`), and `WorkspaceCanvasRegion` (`<main id="main-content">`).
+  - Enforced the 1440px Workspace Canvas Boundary and 760px Reading Measure consuming Phase 0 layout primitives (`Container`, `Section`, `Stack`, `Cluster`).
+  - Implemented responsive reflow (persistent fixed/sticky left sidebar on desktop >= 1024px, drawer overlay on tablet/mobile).
+  - Maintained accessibility contracts: skip-to-content target `#main-content`, logical DOM order, keyboard navigable regions.
+- **WX-103 — Primary Navigation**:
+  - Implemented the minimal, route-aware, accessible primary navigation system in `src/features/workspace/components/navigation/`.
+  - Defined human-centered navigation mental model: **Workspace** (`/workspace`) and **Infrastructure Memory** (`/workspace/memory`), with no internal backend module terminology.
+  - Implemented `WorkspaceNavItem` with accessible `aria-current="page"` and restrained Phase 0 active states.
+  - Implemented `WorkspaceProfileMenu` providing contextual account entry, theme toggle, and sign out at the bottom of the sidebar.
+  - Supported keyboard navigation, drawer close on click for mobile/tablet, and focus rings.
+- **WX-104 — Workspace Header**:
+  - Implemented contextual `WorkspaceHeader` and `WorkspaceBreadcrumbs` in `src/features/workspace/components/header/`.
+  - Established contextual orientation (`Workspace` / `[domain]`) with safe truncation for long domain names.
+  - Integrated mobile navigation drawer toggle button with full `aria-expanded` and `aria-controls` accessibility support.
+  - Enforced strict intelligence boundary: no finding counts, health scores, or infrastructure metrics in the header.
+- **WX-105 — Workspace Canvas**:
+  - Implemented `WorkspaceCanvas` and modular `WorkspaceEntrySurface` in `src/features/workspace/components/canvas/`.
+  - Supported dual content boundary modes: **Workspace Surface** (1440px) and **Reading Surface** (760px, 65–75 CPL measure).
+  - Established the structural insertion points for future intelligence experiences (Executive Brief, Primary Story, Secondary Stories, Overview, Timeline) without premature logic.
+  - Enforced strict Phase 0 restraint on the entry canvas: zero fake findings, fake metrics, or AI theater.
+- **WX-106 — Shell States & Interaction**:
+  - Implemented interaction behavior for the navigation drawer: `Escape` key close listener, backdrop click dismiss, and document body scroll locking when modal.
+  - Implemented focus management: focus moves into navigation on drawer open and restores to previous active trigger on close.
+  - Enforced Phase 0 state semantics across the shell: calm and truthful `LoadingState`, mutually exclusive `QuietState`, `EmptyState`, `PartialState`, `UnavailableState`, and `ErrorState` consuming `ApiError` hierarchy.
+- **WX-107 — Workspace Shell Verification**:
+  - Executed final architecture-wide verification across all 6 Phase 1 layers (WX-101 through WX-106).
+  - Verified route entry, shell architecture, primary navigation, contextual header, dual-mode canvas, and interactive states.
+  - Confirmed all 176 automated unit, integration, and contract tests pass with 0 errors across 89 test suites.
+  - Confirmed production build and ESLint pass with 0 errors.
+- **WX-201 — Workspace Entry-State Contract**:
+  - Established canonical 3-tier authenticated Workspace entry contract (`direct`, `guestClaim`, `returning`) in `src/features/workspace/contracts/entry-state.contract.ts`.
+  - Implemented pure `resolveWorkspaceEntry(params)` resolver distinguishing First-Run Domain Setup, Guest Continuity, and Current Intelligence.
+  - Documented formal architecture specification and gap register in `frontend_docs/WX-201-Workspace-Entry-State-Contract.md`.
+- **WX-202 — Workspace Context Resolution**:
+  - Implemented authoritative `resolveWorkspaceContext(params)` pure resolver in `src/features/workspace/contracts/context-resolution.contract.ts`.
+  - Enforced domain ownership security boundary: unauthorized `requestedDomainId` parameters are rejected with `isRequestedDomainMismatch: true` without exposing unowned tenant data.
+- **WX-203 — New User Entry**:
+  - Implemented `FirstRunDomainSetup` in `src/features/workspace/components/first-run/` for new registered users with zero established domains.
+  - Implemented domain creation and understanding lifecycle orchestration consuming `domainService` and `understandingService`.
+- **WX-204 — Guest Experience → Workspace Continuity**:
+  - Implemented Guest claim context parsing, storage normalization, and claim response mapping in `src/features/workspace/contracts/guest-continuity.contract.ts`.
+  - Enforced zero-reset continuity invariant: claimed domain becomes active Workspace context with zero duplicate scans or domain creation.
+- **WX-205 — Returning Workspace Entry**:
+  - Implemented `ReturningWorkspaceEntry` in `src/features/workspace/components/returning/` for returning users with established domains.
+- **WX-206 — Executive Brief Experience**:
+  - Implemented `ExecutiveBrief` in `src/features/workspace/components/brief/` as the primary intelligence layer on the Workspace Canvas.
+  - Bound brief queries strictly to `activeDomain.id` via `useDomainBrief(domainId)` with complete domain isolation.
+  - Implemented editorial `ReadingSurface` layout for narrative synthesis, key developments list, and traceable metadata footer.
+- **WX-207 — Primary Story Experience**:
+  - Implemented `PrimaryStory` in `src/features/workspace/components/story/` answering *"What is the most important development right now?"*.
+  - Bound story rendering directly to authoritative backend finding DTO (`InfrastructureFindingDto`) and evidence lineage (`FindingEvidenceLineageDto`).
+  - Rendered technical values (observation keys, observed values, snapshot hashes) in JetBrains Mono (`TechnicalSmall`).
+- **WX-208 — Secondary Stories Experience**:
+  - Implemented `SecondaryStories` in `src/features/workspace/components/story/` answering *"What else is important to know?"*.
+- **WX-209 — Current Intelligence Verification Gate**:
+  - Executed final architecture-wide verification across all 8 Phase 2 layers (WX-201 through WX-208).
+  - Verified entry state matrix, context resolution & security boundary, GX continuity, first-run setup, returning entry, Executive Brief, Primary Story, and Secondary Stories.
+- **WX-210-F — Workspace Signature Footer**:
+  - Added the frozen Nebula Workspace signature to the Workspace footer: `"Intelligence before data · Context before details · Summary before evidence"`.
+  - Positioned the signature at the bottom of the Workspace immediately before the static `NEBULA / WORKSPACE` logo lockup.
+  - Implemented quiet, muted, restrained, spacious, editorial presentation with zero animations or promotional links.
+  - Enforced single-line presentation on normal desktop viewports with graceful responsive wrapping on narrow mobile screens.
+  - Exported `WorkspaceFooter` from `src/features/workspace/components/footer/` and integrated into `WorkspacePage.tsx`.
+  - Added test suite in `src/features/workspace/workspace-signature-footer.spec.ts` (all 234 web tests and 284 api tests passing).
+- **WX-211 — Direct Entry Workspace Visual Redesign**:
+  - Redesigned the Direct Entry Workspace (0 established domains) with deliberate editorial center of gravity and luxurious surrounding whitespace.
+  - Implemented exact hierarchy: `YOUR WORKSPACE` eyebrow -> Newsreader display headline ("Understand what matters across your infrastructure") -> concise copy ("Your workspace is ready. Add your first domain to begin.") -> focused CTA ("Add your first domain").
+  - Removed giant card container so the Workspace canvas itself is the surface.
+  - Redesigned Sidebar navigation with approved 256px expanded width, distinct `WORKSPACE` navigation section, flexible middle space, and intentional `ACCOUNT` hierarchy at bottom without fake avatars.
+  - Ensured topbar remains quiet with `WORKSPACE` breadcrumb and `● Active` session indicator without distracting telemetry or fake status.
+  - Preserved atmospheric constellation backdrop and frozen footer philosophy signature.
+  - Added test suite in `src/features/workspace/workspace-direct-entry-redesign.spec.ts` (all 245 web tests and 284 api tests passing).
+- **WX-210-G — New Workspace First-Run Experience**:
+  - Distinctly separated Workspace Entry (Experience) from Add Domain (Action).
+  - Built a spacious, calm, editorial first-run surface on the Workspace canvas (`max-w-2xl`, Newsreader serif typography, "Understand what matters across your infrastructure").
+  - Configured the primary action CTA to trigger the focused minimal `DomainEntryDialog` as a modal overlay.
+  - Guaranteed that returning users and GX-claimed users bypass the first-run onboarding directly into Current Intelligence.
+- **WX-301 — Investigation & Evidence Contract**:
+  - Established the authoritative contract for moving from Current Intelligence into Investigation in `src/features/workspace/contracts/investigation.contract.ts`.
+  - Implemented `resolveInvestigationTarget` enforcing domain ownership boundaries and tenant isolation with safe return navigation.
+  - Formulated hard invariants prohibiting client-side snapshot diffing or local finding generation.
+  - Documented formal architecture specification in `frontend_docs/WX-301-Investigation-Evidence-Contract.md`.
+  - Added unit and contract test suite in `src/features/workspace/workspace-investigation-contract.spec.ts` (219/219 tests passing across 124 suites).
+- **WX-302 — Finding Investigation Experience**:
+  - Implemented `FindingInvestigation` in `src/features/workspace/components/investigation/` providing deep-dive understanding of authoritative findings.
+  - Rendered progressive disclosure hierarchy: Narrative ("What Happened"), Significance ("Why It Matters / Remediation"), and Observed Evidence Lineage (`observationKey`, `observedValue` in JetBrains Mono).
+  - Enforced domain ownership security boundary, rejecting unowned finding IDs with `UnavailableState`.
+  - Documented formal architecture specification in `frontend_docs/WX-302-Finding-Investigation-Experience.md`.
+- **WX-303 — Change Investigation Experience**:
+  - Implemented `ChangeInvestigation` in `src/features/workspace/components/investigation/` presenting authoritative before/after state transitions.
+  - Enforced the hard invariant: React presents the change; React never discovers changes or diffs snapshots in JSON.
+  - Rendered explicit temporal comparison (`Previous State` vs `Current State`) in JetBrains Mono with snapshot lineage links.
+- **WX-303-A — Investigation Target ID Resolution**:
+  - Fixed root cause where executive brief highlights lacked persisted `id: finding.id` in `InfrastructureBriefBuilder`, causing fallback to presentation indices (`hl-0`).
+  - Guaranteed authoritative finding ID propagation across all entry points: Findings List, Overview, Executive Brief, Primary Story, Secondary Stories, Changes Timeline, and Global Search.
+  - Preserved canonical investigation resolution in `resolveInvestigationTarget` with strict domain ownership security boundaries.
+  - Added comprehensive verification suite in `workspace-investigation-target-resolution.spec.ts`.
+- **WX-303-B — Backend-Confirmed Investigation Evidence**:
+  - Enriched backend explainability payload with `processingStatus` (`COMPLETED`, `PARTIAL`, `INVALID`, `FAILED`), `processingSummary`, structured `processingEvidence` array, `lineage`, and top-level `explanation`.
+  - Resolved `Detected: Invalid Date` bug by returning `detectedAt` from backend and applying safe formatting (`formatFindingDate`) that never produces raw JavaScript `Invalid Date`.
+  - Handled invalid date conditions as structured backend warning evidence with clear explanation.
+  - Enhanced `FindingInvestigation` surface `WHAT HAPPENED` section with backend-confirmed narrative, structured processing path checklist, and explicit snapshot-finding lineage.
+  - Added test coverage in `workspace-finding-investigation.spec.ts` guaranteeing zero raw server log leakage.
+- **WX-304 — Observation Evidence Surface**:
+  - Established backend evidence drill-down endpoint `GET /findings/:findingId/evidence` in `FindingController` and `InfrastructureFindingService`.
+  - Implemented `ObservationEvidenceSurface` in `src/features/workspace/components/investigation/` presenting authoritative observed facts and underlying protocol evidence lineage.
+  - Preserved strict progressive disclosure model: Finding → Investigation → Observation → Evidence without dumping raw JSON as the primary experience.
+  - Honestly rendered 4-state observation model (`OBSERVED`, `MISSING`, `UNKNOWN`, `FAILED`, `NON_COMPLIANT`) and cryptographic SHA-256 integrity verification.
+  - Supported on-demand progressive disclosure of raw protocol payloads, headers, and collector metadata.
+- **WX-305 — Snapshot Lineage & Historical Context**:
+  - Implemented `SnapshotLineageSurface` in `src/features/workspace/components/investigation/` answering "Which infrastructure states are we comparing?".
+  - Strictly established backend authority: immutable snapshot metadata (`currentSnapshot` vs `previousSnapshot`), timestamps, HTTP response codes, response times, and certificates.
+  - Enforced zero client-side diffing invariant: React never computes `previousValue !== currentValue` or fabricates prior snapshots.
+  - Handled initial single-snapshot domains honestly (*"No previous snapshot is available for comparison. This snapshot represents the initial established baseline."*).
+  - Wired cohesive investigation navigation: Current Intelligence &rarr; Change/Finding Investigation &rarr; Snapshot Lineage &rarr; Observation Evidence (`WX-304`) &rarr; Raw Protocol Payload.
+- **WX-401 — Search Architecture & Contract**:
+  - Established canonical architecture, entity taxonomy, navigation mapping, ranking hierarchy, keyboard contract, and deterministic state model for **Nebula Workspace Search** in `frontend_docs/WX-401-Search-Architecture-Contract.md`.
+  - Defined searchable entity taxonomy: `Domain`, `Finding`, `Change`, `Infrastructure`, `Executive Intelligence`, and `Investigation Target`.
+  - Formalized authoritative `SearchItemDto` contract across `apps/web/src/types/api/search.dto.ts` and `apps/api/src/modules/search/dto/search-item.dto.ts`.
+  - Implemented deterministic grouping (`groupSearchResults`), 5-step explainable ranking hierarchy (`rankSearchResults`), keyboard contracts (`⌘K`, arrow navigation, Enter, Esc), and navigation mapping (`mapSearchResultToNavigationTarget`) in `search.contract.ts`.
+  - Enforced strict tenant isolation, zero client-side intelligence calculation, and zero LLM search loop invariants with 100% test coverage in `workspace-cross-workspace-search.spec.ts`.
+  - Unblocked Phase 4 implementation tickets: `WX-402` through `WX-407`.
+- **WX-402 — Search Index & Retrieval**:
+  - Implemented backend retrieval service (`SearchRepository`, `SearchQueryService`, `SearchExperienceService`) and controller endpoints (`GET /api/v1/search` and `GET /api/v1/workspace/search`).
+  - Implemented deterministic matching across all 6 authoritative entity sources: `Domain`, `InfrastructureFinding`, `ChangeHistory`, `InfrastructureSnapshot` (web servers, technologies, IP addresses, TLS certs), `InfrastructureBrief`, and `InfrastructureVerification`.
+  - Enforced multi-tenant isolation and optional `domainId` scoping with immediate rejection of unowned domains.
+  - Implemented whitespace query short-circuiting returning empty result sets without database overhead.
+  - Added unit test suite in `search.repository.spec.ts`, `search-experience.service.spec.ts`, and `search-query.service.spec.ts` with 100% test pass across 401 backend tests.
+  - Unblocked `WX-403 — Search Surface & Interaction`.
+- **WX-403 — Search Surface & Interaction**:
+  - Implemented production-grade Nebula Workspace Search surface (`WorkspaceSearchDialog`) and interaction model adhering to WX-401 architecture and WX-402 retrieval contracts.
+  - Implemented 200ms debounced queries with stale response protection and zero layout jumps across `IDLE`, `LOADING`, `READY`, `NO_RESULTS`, and `ERROR` states.
+  - Implemented full keyboard navigation (`⌘K` / `Ctrl+K` global trigger, circular `↑` / `↓` traversal across grouped results, `Enter` selection, `Esc` dismissal with previous element focus restoration).
+  - Implemented grouped rendering across authoritative entity categories (`DOMAINS`, `FINDINGS`, `CHANGES`, `INFRASTRUCTURE`, `INTELLIGENCE`) with semantic tokens and JetBrains Mono metadata.
+  - Preserved single canonical navigation routing (`mapSearchResultToNavigationTarget`) for both mouse and keyboard interactions.
+  - Added WX-403 test suites to `workspace-cross-workspace-search.spec.ts` with 100% pass rate across 949 web tests.
+  - Unblocked `WX-404 — Search Filters & Faceting`.
+- **WX-404 — Search Filters & Faceting**:
+  - Extended search contracts and retrieval layers (`SearchQueryDto`, `SearchResponseDto`, `SearchRepository`, `SearchQueryService`, `SearchExperienceService`) with multi-dimensional filtering (`type`, `domainId`, `severity`, `timeRange`, `status`).
+  - Implemented backend retrieval filtering directly in database queries with tenant isolation and authoritative contextual facet count computation.
+  - Added interactive filtering UX to `WorkspaceSearchDialog` with primary entity type pills, contextual secondary filters (Domain, Severity, Time range), and authoritative count badges.
+  - Added active filter chips with individual removal and dedicated `Reset filters` action preserving typed query text.
+  - Added contextual filtered zero-result empty state distinguishing between query non-matches and filter exclusions.
+  - Verified 100% pass across 403 API tests and 953 Web tests.
+  - Unblocked `WX-405 — Navigation & Deep Linking`.
+- **WX-405 — Search Navigation & Deep Linking**:
+  - Centralized canonical destination resolution in `resolveSearchDestination` (`search.contract.ts`), mapping all 6 searchable entity types (`DOMAIN`, `FINDING`, `CHANGE`, `INFRASTRUCTURE`, `BRIEF`, `ACTIVITY`) directly to their authoritative Workspace routes.
+  - Hardened cross-domain isolation and domain preservation: result's authoritative `domainId` is strictly honored over the currently active workspace domain.
+  - Guaranteed interaction parity between mouse clicks and keyboard `Enter` selection with immediate clean search overlay closure.
+  - Guaranteed zero leakage of transient discovery state (`q`, `type`, `severity`, `timeRange`) into the canonical destination URLs.
+  - Hardened browser history back/forward and direct deep-link rehydration supporting `view=overview` alongside findings, changes, and memory.
+  - Verified 100% pass across 403 backend API tests and 962 frontend Web tests.
+  - Unblocked `WX-406 — Search States & Resilience`.
+- **WX-406 — Search States & Resilience**:
+  - Hardened deterministic non-overlapping search state machine (`IDLE`, `LOADING`, `READY`, `NO_RESULTS`, `ERROR`).
+  - Enforced zero backend network requests on empty or whitespace queries, preserving WX-402 zero-query optimization.
+  - Implemented defensive sanitization against malformed items and graceful degradation for partial/incomplete backend metadata.
+  - Implemented boundary clamping for keyboard navigation `activeIndex`, guaranteeing safety when result sets update or filter facets change.
+  - Enhanced ARIA accessibility with `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, `role="listbox"`, `role="option"`, and an `aria-live="polite"` status live region.
+  - Hardened retry recovery, focus restoration upon Escape/close across all states, and error isolation preventing search disruptions from impacting Workspace surfaces.
+  - Verified 100% pass across 403 backend API tests and 967 frontend Web tests.
+  - Unblocked `WX-407 — Search QA & Production Verification`.
+- **WX-UX-406 — Search Surface Visual Refinement**:
+  - Redesigned `WorkspaceSearchDialog` as a spacious, premium command surface (~720px width) anchored near the upper-center of the Workspace.
+  - Dominant 56–64px search input with larger typography and integrated `ESC` dismiss affordance.
+  - Implemented progressive disclosure: hidden filter pills on initial `IDLE` state, revealing compact segmented controls and contextual secondary dropdowns only after active querying.
+  - Expanded result rows (~64–72px height) with calm typography, subtle hover/selected states, and integrated `↵ SELECT` affordances.
+  - Redesigned empty, loading, no-results, and footer strips with quiet technical mono metadata and unbroken keyboard navigation.
+- **WX-UX-406-B — Search Surface Opaque Visual Treatment Fix**:
+  - Eliminated all unintended backdrop transparency, blur, and alpha channels across the Search Dialog to guarantee zero bleed-through of underlying Workspace content.
+  - Applied solid opaque surface styling (`bg-white dark:bg-[#14171C]`) with a 1px crisp hairline border and soft elevation shadow (`shadow-xl`).
+  - Differentiated the search input with a subtle off-white background (`bg-[#FAFAFA] dark:bg-[#181C22]`) and hairline bottom divider.
+  - Configured a clean, restrained background scrim (`bg-black/40`) without heavy blur or glassmorphism.
+  - Verified 100% test pass across 403 API tests and 967 Web tests.
+- **WX-303 — Investigation Related Evidence Deduplication & Primary Exclusion**:
+  - Fixed duplicate observations in "Other Things Worth Knowing": scoped findings retrieval in `WorkspaceExperienceService.getWorkspaceOverview` to the domain's `latestSnapshot.id` rather than querying across all historical snapshots.
+  - Added `snapshotId` filter support to `FindingsQueryDto` and `InfrastructureFindingRepository.findUserFindings`.
+  - Implemented authoritative backend/domain aggregation boundary identity deduplication using `type + canonicalId` (`FINDING:${id}`, `CHANGE:${id}`, `VERIFICATION:${id}`, `JOB:${id}`, `DOMAIN:${id}`), and included `ruleId` and canonical category+signature deduplication.
+  - Applied Primary Exclusion: guaranteed that the Primary Story / Investigation Entity never reappears inside Secondary Stories or related evidence panels.
+  - Titles and descriptions are strictly prohibited from being used as identity; entities with matching titles but distinct IDs are properly preserved as unique.
+  - Deduplicated activity events, recent changes, and executive brief highlights at the service query boundary.
+  - Reinforced frontend defense-in-depth in `CurrentIntelligence.tsx` and `SecondaryStories.tsx` to ensure 0 duplicate UI entity rendering.
+  - Added regression test suites across backend (`workspace-overview-experience.spec.ts`) and frontend (`workspace-finding-investigation.spec.ts`).
+  - Verified 100% pass across 406 backend API tests and 976 frontend Web tests with 0 build errors.
+- **WX-407 — Search QA & Production Verification (Phase 4 Freeze Gate)**:
+  - Conducted complete end-to-end verification across the entire search pipeline (⌘K trigger -> debounced retrieval -> backend execution -> ranking -> faceting -> selection -> canonical navigation -> browser history/deep links).
+  - Verified 100% entity coverage across all 6 authoritative types (`DOMAIN`, `FINDING`, `CHANGE`, `INFRASTRUCTURE`, `BRIEF`, `ACTIVITY`) with verified target resolution.
+  - Verified deterministic query normalization, zero-query optimization (0 network calls on empty/whitespace), and zero AI/vector/LLM dependency invariant.
+  - Hardened multi-tenant domain isolation and cross-domain security guarantees.
+  - Verified complete keyboard accessibility and interaction parity between mouse clicks and Enter selection.
+  - 100% test pass across 403 backend API tests and 973 frontend Web tests; clean production builds for both API and Web.
+  - **PHASE 4 — INFRASTRUCTURE DISCOVERY IS OFFICIALLY COMPLETE & FROZEN (🔒 WX-401 through WX-407)**.
+  - Unblocks Phase 5.
+- **WX-401-A — Infrastructure Overview Contract (Legacy)**:
+  - Inspected backend infrastructure endpoints (`GET /domains/:domainId/overview`), mappers (`InfrastructureOverviewMapper`), and discovery services (DNS, HTTP, SSL, Technology).
+  - Defined authoritative TypeScript contract in `src/types/api/overview.dto.ts` and `src/features/workspace/contracts/overview.contract.ts`.
+  - Established 5-category infrastructure taxonomy: `edge_delivery`, `web_server`, `security_tls`, `dns_network`, `web_application`.
+  - Defined 7-tier state resolution engine: `LOADING`, `READY`, `EMPTY`, `PARTIAL`, `UNAVAILABLE`, `ERROR`, `QUIET`.
+  - Enforced strict hard invariants: React never infers CDNs from raw headers, never calculates health scores locally, and never reconstructs missing cloud providers.
+- **WX-402-A — Infrastructure Overview Experience (Legacy)**:
+  - Implemented `InfrastructureOverview` in `src/features/workspace/components/overview/` rendering the primary architectural model.
+  - Formatted 5 structured category panels (Edge Delivery & CDN, Web Server & Reverse Proxy, Security & TLS, DNS & Network, Web & Application Technologies) using calm, restrained design tokens.
+  - Honestly rendered `PRESENT` / `ABSENT` / `UNAVAILABLE` semantics without calculating health scores, uptime widgets, or fabricated dashboard metrics.
+  - Formatted technical timestamps, IP addresses, HTTP status codes, and response times in JetBrains Mono (`font-mono`).
+  - Embedded `InfrastructureOverview` seamlessly into `WorkspacePage.tsx` beneath Current Intelligence.
+- **WX-403-A — Technology & Platform Overview (Legacy)**:
+  - Inspected backend `TechnologyDiscoveryService` and `InfrastructureOverviewMapper.fromSnapshot`.
+  - Implemented `TechnologyOverviewSection` in `src/features/workspace/components/overview/` answering "What are we running?".
+  - Rendered authoritative `technologies: readonly string[]` in semantic `<ul role="list">` and `<li>` with JetBrains Mono (`font-mono`) typography.
+  - Honestly rendered `PRESENT`, `ABSENT` (*"No application framework or runtime technology detected"*), and `UNAVAILABLE` states without calculating fake stack health scores or rendering vanity count badges.
+  - Enforced responsive text wrapping for long technology names and multi-word frameworks without truncation.
+- **WX-404 — DNS & Network Overview**:
+  - Inspected backend `DnsDiscoveryService` and `InfrastructureOverviewMapper.fromSnapshot`.
+  - Implemented `DnsNetworkOverviewSection` in `src/features/workspace/components/overview/` answering "How is this domain configured?".
+  - Rendered authoritative `ipv4Addresses` and `ipv6Addresses` in JetBrains Mono (`font-mono`) with accessible list semantics and break-all styling for long IPv6 strings.
+  - Honestly handled `PRESENT`, `ABSENT` (*"IPv6: Not observed"*), and `UNAVAILABLE` states without calculating fake DNS health scores or running client-side DNS lookups.
+- **WX-405 — TLS & Certificate Overview**:
+  - Inspected backend `SslDiscoveryService` and `InfrastructureOverviewMapper.fromSnapshot`.
+  - Implemented `TlsCertificateOverviewSection` in `src/features/workspace/components/overview/` answering "Will anything expire or require attention?".
+  - Rendered authoritative `sslValid` and `sslExpiresAt` states cleanly without evaluating client-side expiration thresholds, PEM decoding, or security posture percentages.
+  - Honestly handled `VALID` / `UNVERIFIED`, `null` expiry (*"Expiry: Not available"*), `ABSENT` (*"No TLS certificate observed"*), and `UNAVAILABLE` states.
+- **WX-406 — Infrastructure Overview Navigation**:
+  - Wired deep investigation navigation pathways across all overview and intelligence surfaces in `WorkspacePage.tsx`.
+  - Added browser history integration with `window.history.pushState` and a reactive `popstate` event listener for seamless Back / Forward navigation.
+  - Implemented multi-hop return path preservation: Overview &rarr; Finding &rarr; Evidence &rarr; Snapshot Lineage &rarr; Return.
+  - Enforced domain isolation and automatic context clearing when switching domains.
+- **WX-407 — Infrastructure Overview Verification Gate**:
+  - Validated complete Phase 4 experience answering "What exists in this infrastructure right now?".
+  - Verified clean progression: Current Intelligence ("What matters?") &rarr; Overview ("What exists?") &rarr; Investigation ("Why?") &rarr; Evidence ("How do we know?") &rarr; Snapshot Lineage ("Which states are compared?").
+  - Verified 7-tier state matrix (`LOADING`, `READY`, `QUIET`, `EMPTY`, `PARTIAL`, `UNAVAILABLE`, `ERROR`) and all 5 taxonomy categories.
+  - Certified zero client-side inferencing, strict tenant domain isolation, accessible markup, and smooth browser Back / Forward history.
+  - Documented formal gate sign-off in `frontend_docs/WX-407-Infrastructure-Overview-Verification.md`.
+- **WX-501 — Infrastructure Memory Contract**:
+  - Established authoritative frontend contract for Phase 5 — Infrastructure Memory answering "How did my infrastructure evolve?".
+  - Defined 7-tier historical state matrix: `LOADING`, `READY`, `EMPTY`, `PARTIAL`, `UNAVAILABLE`, `ERROR`, `QUIET`.
+  - Implemented immutable snapshot identity contracts and pure deterministic resolvers (`resolveMemoryState`, `resolveMemoryBaseline`).
+  - Added unit tests in `src/features/workspace/workspace-memory-contract.spec.ts`.
+- **WX-502 — Infrastructure Timeline**:
+  - Implemented the primary Infrastructure Memory timeline experience answering "What changed over time?".
+  - Created `InfrastructureTimeline.tsx` and `TimelineEventCard.tsx` in `src/features/workspace/components/timeline/`.
+  - Preserved backend-authoritative chronology without client-side sorting or synthetic diffing.
+  - Implemented anti-activity-feed filtering, focusing purely on meaningful infrastructure evolution.
+  - Handled initial single-snapshot baseline (*"Initial baseline established. No previous infrastructure state is available for comparison."*).
+  - Handled multi-snapshot quiet state (*"No meaningful infrastructure changes were observed during this period."*).
+  - Integrated direct navigation from timeline events to Change Investigation (WX-303) and Snapshot Lineage (WX-305).
+  - Added unit test suite in `src/features/workspace/workspace-infrastructure-timeline.spec.ts` (all 336 web tests and 285 api tests passing).
+- **Add Domain — Nonexistent Domain UX Correction**:
+  - Implemented calm, human-readable product error states in `DomainEntryDialog` without exposing raw API/HTTP error strings (e.g. `API Error 404: Not Found`).
+  - Added pure deterministic resolver `resolveDomainEntryError` in `src/features/workspace/contracts/domain-entry-error.contract.ts`.
+  - Preserved clear distinctions between unresolvable/nonexistent domain (*"We couldn't find that domain. Check the domain name and try again."*), network failure (*"Unable to reach Nebula. Check your connection and try again."*), and backend server failure (*"Something went wrong. An unexpected error occurred. Please try again."*).
+  - Provided interactive actions for **Edit domain** (restores input state and cursor focus) and **Try again**.
+- **Workspace Domain Context & Production Shell Hardening**:
+  - Transformed the secondary sidebar into the primary authoritative Domain Context area displaying user-owned domains with active indicator dot `●`, domain limit counter (`n / 4`), and `+ Add domain` action (hidden at `4 / 4`).
+  - Added backend enforcement for `MAX_DOMAINS = 4` in `DomainsService.create` with `400 BadRequestException`.
+  - Fixed parameter order in `DomainsService.delete(userId, id)`.
+  - Implemented controlled `DeleteDomainDialog` with confirmation modal and deterministic active-domain deletion fallback to the next available domain or zero-state.
+  - Relocated Account info, theme switcher, and Sign out to the top-right `WorkspaceHeader` profile dropdown.
+- **WX-210-R2 — Workspace Current Intelligence API Alignment**:
+  - Implemented authoritative backend endpoint `GET /api/v1/workspace/overview?domainId=...` in `WorkspaceController` and `WorkspaceExperienceService`, synthesizing `ExecutiveBrief`, `PrimaryStory`, `SecondaryStories`, `LatestSnapshot`, `RecentChanges`, and `QuietStatus`.
+  - Implemented `GET /api/v1/domains/:domainId/brief` in `DomainDetailsController` and `DomainExperienceService` with auto-generation fallback.
+  - Enforced strict tenant domain authorization, returning 404 for unowned domains.
+  - Restored full authoritative Current Intelligence flow: `ExecutiveBrief` &rarr; `PrimaryStory` &rarr; `SecondaryStories` &rarr; `Infrastructure Overview` &rarr; `Infrastructure Memory`.
+  - Verified 100% test coverage with 642 passing monorepo tests and clean turbo build.
+- **WX-504 — Snapshot History**:
+  - Implemented the primary Snapshot History experience answering *"What did my infrastructure look like at that point in time?"*.
+  - Created `SnapshotHistory.tsx` in `src/features/workspace/components/snapshots/` consuming authoritative `GET /api/v1/domains/:domainId/snapshots` and `GET /api/v1/snapshots/:snapshotId`.
+  - Implemented `extractSnapshotInfrastructureState` and `resolveSnapshotHistoryState` in `src/features/workspace/contracts/snapshot-history.contract.ts`.
+  - Enforced hard invariants: zero client-side sorting (`snapshots.sort(...)` prohibited), zero client-side diffing, and zero synthetic score calculations.
+  - Implemented progressive disclosure hierarchy: Summary &rarr; Infrastructure State &rarr; Lineage &rarr; Evidence &rarr; Raw JSON payload inspection with copy support.
+  - Rendered authoritative snapshot infrastructure properties (HTTP status, response latency, web server, TLS state with issuer/validity, detected technologies, observed DNS records).
+  - Honestly handled single-snapshot initial baseline (*"Initial baseline established. No previous infrastructure state is available for comparison."*) without fabricating fake prior states.
+  - Handled zero-snapshot domain (*"No infrastructure snapshot is available yet. Nebula has not established an infrastructure baseline for this domain."*) as a calm empty state.
+  - Enforced strict P0 tenant/domain isolation boundary, rejecting cross-domain snapshot accesses as `UNAVAILABLE`.
+  - Integrated canonical navigation pathways connecting Timeline, Change History, and Observation Evidence with full return-path preservation.
+  - Added unit test suite in `src/features/workspace/workspace-snapshot-history.spec.ts` (21 tests, 663 / 663 monorepo tests passing).
+- **WX-505 — Historical Context**:
+  - Implemented the primary Historical Context experience answering *"How does the current infrastructure state fit into its history?"*.
+  - Created `HistoricalContext.tsx` in `src/features/workspace/components/historical-context/` rendering authoritative temporal lineage (`Earlier → Previous → Current`).
+  - Implemented `resolveHistoricalContext`, `extractHistoricalSnapshotNode`, and `extractHistoricalEvolutionLinks` in `src/features/workspace/contracts/historical-context.contract.ts`.
+  - Enforced hard invariants: strictly prohibited client-side snapshot diffing, client-side chronology sorting (`snapshots.sort(...)`), synthetic causality generation, and score invention.
+  - Implemented Recent Infrastructure Evolution section exposing authoritative previous vs current state comparisons with direct investigation deep-links.
+  - Handled single-snapshot initial baseline (*"Initial baseline established. No previous infrastructure state is available for comparison."*) without fake *"Previous: Unknown"* states.
+  - Handled multi-snapshot quiet state (*"Infrastructure has remained stable across observed states."*) and zero-snapshot empty state.
+  - Enforced strict P0 tenant/domain isolation boundary, resolving cross-domain requests directly to `UNAVAILABLE`.
+  - Added unit test suite in `src/features/workspace/workspace-historical-context.spec.ts` (18 tests, 681 / 681 monorepo tests passing).
+- **WX-506 — Infrastructure Memory Navigation**:
+  - Implemented continuous, unified navigation across all Phase 5 Infrastructure Memory surfaces: `Timeline` &rarr; `Change History` &rarr; `Snapshot History` &rarr; `Historical Context` &rarr; `Evidence`.
+  - Enforced multi-hop `returnPath` preservation and hierarchical unwinding via `navigateToReturnPath` without premature root `/workspace` redirects.
+  - Implemented contextual entry to `Infrastructure Memory →` from the primary Workspace canvas under Current Intelligence.
+  - Hardened domain switching to completely clear memory, timeline, snapshot, and evidence state, guaranteeing zero cross-domain leakage.
+  - Enforced P0 cross-domain security boundary and deep-link hydration without inventing a parallel router.
+  - Added automated test suite in `src/features/workspace/workspace-memory-navigation.spec.ts` (8 tests, 689 / 689 monorepo tests passing).
+- **WX-507 — Infrastructure Memory Verification Gate**:
+  - Validated the complete end-to-end Infrastructure Memory flow: `Current Intelligence` &rarr; `Timeline` &rarr; `Change History` &rarr; `Snapshot History` &rarr; `Historical Context` &rarr; `Evidence`.
+  - Validated hierarchical return-path unwinding: `Evidence` &rarr; `Historical Context` &rarr; `Snapshot` &rarr; `Change` &rarr; `Timeline` &rarr; `Memory` &rarr; `Workspace`.
+  - Verified 7-tier canonical memory state matrix: `LOADING`, `READY`, `EMPTY`, `PARTIAL`, `QUIET`, `UNAVAILABLE`, `ERROR`.
+  - Verified P0 tenant domain security boundary and cross-domain access rejection with zero metadata leakage.
+  - Verified absolute enforcement of hard invariants: zero client-side JSON diffing, zero chronology re-sorting, zero synthetic causality narrative, and zero parallel routers.
+  - Added comprehensive verification test suite in `src/features/workspace/workspace-phase5-verification.spec.ts` (14 tests).
+  - Executed full monorepo verification gate: **703 / 703 tests passing** (415 Web, 288 API), clean `pnpm build` (FULL TURBO), and 0 ESLint warnings/errors.
+  - Formally certified **Phase 5 — Infrastructure Memory as 100% COMPLETE 🔒**.
+- **WX-601 — Cross-Experience Navigation Contract**:
+  - Established the unified cross-experience navigation contract (`cross-experience-navigation.contract.ts`) across all major Workspace experiences: `Current Intelligence`, `Infrastructure Overview`, `Infrastructure Memory`, and deep `Investigation` surfaces.
+  - Defined the canonical `WORKSPACE_TRANSITION_MATRIX` specifying strictly allowed transitions across top-level experiences (`'current' | 'overview' | 'memory'`) and deep resource types (`'story' | 'finding' | 'change' | 'snapshot' | 'historical_context' | 'evidence' | 'timeline_event'`).
+  - Implemented `resolveCrossExperienceNavigation`, `buildWorkspaceNavigationUrl`, `parseWorkspaceNavigationUrl`, and `unwindWorkspaceNavigationReturnPath`.
+  - Enforced mandatory domain context, P0 cross-domain isolation, and hierarchical return-path preservation.
+  - Added unit test suite in `src/features/workspace/workspace-cross-experience-navigation.spec.ts` (12 tests, 715 / 715 monorepo tests passing).
+- **WX-602 — Contextual Navigation**:
+  - Implemented intuitive, discoverable contextual action pathways across all 7 Workspace experience layers: `Current Intelligence` (`[ Investigate → ]`, `Infrastructure Overview →`, `Infrastructure Memory →`), `Infrastructure Overview` (`[ Investigate Findings → ]`, `[ View Snapshot → ]`), `Memory / Timeline` (`[ Investigate change → ]`, `[ View snapshot → ]`), `Change Investigation` (`[ View Supporting Evidence → ]`, `[ View Previous Snapshot → ]`, `[ View Current Snapshot → ]`, `[ Related Finding → ]`), `Snapshot History` (`[ View Historical Context → ]`, `[ View Related Change → ]`), `Historical Context` (`[ Inspect Snapshot → ]`, `[ Investigate this change → ]`), and `Observation Evidence` (`← Back to [Origin]`).
+  - Enforced the zero-navigation-hallucination invariant: actions render strictly when backed by authoritative backend resource identifiers.
+  - Replaced admin-style breadcrumb trails with calm contextual orientation and hierarchical return-path unwinding.
+  - Added unit test suite in `src/features/workspace/workspace-contextual-navigation.spec.ts` (8 tests, 723 / 723 monorepo tests passing).
+- **WX-603 — Domain Context Switching**:
+  - Implemented atomic domain context switching in `WorkspacePage.tsx`: selecting a new domain purges all active investigation states, resets `activeView` to `'current'`, clears `returnPath`, and normalizes the URL to `/workspace?domainId=<domainId>`.
+  - Verified TanStack Query cache key isolation across all domain-scoped hooks (`overview`, `timeline`, `snapshots`, `findings`, `memory`), eliminating cache cross-talk and async race conditions between domains.
+  - Hardened P0 tenant domain security boundary and cross-domain access rejection against unauthorized or stale resource links.
+  - Added automated test suite in `src/features/workspace/workspace-domain-context-switching.spec.ts` (9 tests, 732 / 732 monorepo tests passing).
+- **WX-604 — Cross-Workspace Search / Discovery**:
+  - Completed backend capability audit: confirmed authoritative global search endpoint (`GET /api/v1/search?q=:query&limit=:limit`) with server-side Prisma tenant isolation on `userId` and 5 authoritative resource types (`DOMAIN`, `FINDING`, `TIMELINE`, `BRIEF`, `ACTIVITY`).
+  - Implemented search DTOs (`search.dto.ts`), API service (`search.service.ts`), query key factory (`queryKeys.search.query`), and TanStack Query hook (`useSearch.ts`).
+  - Created search contract (`search.contract.ts`) mapping search results directly to WX-601 navigation targets.
+  - Built `WorkspaceSearchDialog.tsx` with `⌘K` / `Ctrl+K` global keyboard shortcut, accessible `Escape` dismissal, type badges, domain pills, and calm UI states.
+  - Added unit test suite in `src/features/workspace/workspace-cross-workspace-search.spec.ts` (13 tests, 745 / 745 monorepo tests passing).
+- **WX-605 — Workspace Relationship Navigation**:
+  - Established typed relationship contract (`relationship.contract.ts`) defining 7 authoritative relationship types (`RELATED_FINDING`, `RELATED_CHANGE`, `PREVIOUS_SNAPSHOT`, `CURRENT_SNAPSHOT`, `RELATED_SNAPSHOT`, `SUPPORTING_EVIDENCE`, `HISTORICAL_CONTEXT`).
+  - Implemented pure relationship resolvers for Findings (`resolveFindingRelationships`), Timeline Changes (`resolveChangeRelationships`), and Snapshots (`resolveSnapshotRelationships`).
+  - Mapped all relationship connections directly to WX-601 Navigation Targets via `buildRelationshipNavigationTarget`, enforcing strict domain isolation and prohibiting client-side graph heuristics or snapshot diffing.
+  - Added automated test suite in `src/features/workspace/workspace-relationship-navigation.spec.ts` (7 tests, 752 / 752 monorepo tests passing).
+- **WX-606 — Workspace Continuity & Return Paths**:
+  - Validated multi-hop journey continuity and exact step-by-step hierarchical return unwinding across `Current Intelligence`, `Finding Investigation`, `Observation Evidence`, `Snapshot History`, `Historical Context`, `Change Investigation`, and `Infrastructure Memory`.
+  - Implemented return path continuity for global search discoveries, preserving originating surface context upon return.
+  - Verified browser history rehydration (`popstate`), direct deep-link parsing, and domain switch return path isolation.
+  - Added automated test suite in `src/features/workspace/workspace-continuity-return-paths.spec.ts` (5 tests, 757 / 757 monorepo tests passing).
+- **WX-607 — Cross-Workspace Verification Gate (Phase 6 Complete)**:
+  - Formal certification and verification of the complete Phase 6 experience: WX-601 (Navigation Contract), WX-602 (Contextual Navigation), WX-603 (Domain Switching), WX-604 (Global Search), WX-605 (Relationships), and WX-606 (Continuity & Return Paths).
+  - Certified all hard invariants: zero client-side snapshot diffing, zero synthetic graph inference, zero fake search scoring, strict P0 tenant domain isolation, and full browser continuity.
+  - Added full verification suite in `src/features/workspace/workspace-phase6-verification.spec.ts` (12 tests, 769 / 769 monorepo tests passing).
+- **WX-701 — Workspace State Matrix**:
+  - Established canonical 7-tier semantic state contract (`workspace-state-matrix.contract.ts`) defining `LOADING`, `READY`, `QUIET`, `EMPTY`, `PARTIAL`, `UNAVAILABLE`, and `ERROR`.
+  - Defined explicit experience scope applicability matrix across `current`, `overview`, `investigation`, `evidence`, `memory`, `search`, and `domain_switching`.
+  - Implemented deterministic state precedence: `UNAVAILABLE` > `ERROR` > `LOADING` > `EMPTY` > `PARTIAL` > `QUIET` > `READY`.
+  - Created pure resolvers for Current Intelligence, Overview, Investigation, and Memory, guaranteeing zero client-side health calculation or error conflation.
+  - Added unit test suite in `src/features/workspace/workspace-state-matrix.spec.ts` (9 tests, 778 / 778 monorepo tests passing).
+- **WX-702 — Partial Intelligence**:
+  - Implemented partial intelligence contract (`partial-intelligence.contract.ts`) defining `SignalAvailabilityState` (`AVAILABLE`, `ABSENT`, `UNAVAILABLE`, `PENDING`).
+  - Created pure resolvers for Infrastructure Overview (`resolveOverviewSignalCoverage`) and Observation Evidence (`resolveEvidenceSignalCoverage`), guaranteeing that verified observations remain visible while incomplete categories are explicitly identified.
+  - Enforced strict distinction between `ABSENT` (verified 0 records) and `UNAVAILABLE` (telemetry not captured), prohibiting synthetic coverage percentages or error conflation.
+  - Added unit test suite in `src/features/workspace/workspace-partial-intelligence.spec.ts` (5 tests, 783 / 783 monorepo tests passing).
+- **WX-703 — Unavailable Infrastructure**:
+  - Established unavailable infrastructure contract (`unavailable-infrastructure.contract.ts`) defining 6 authoritative unavailable reasons (`CROSS_DOMAIN_BOUNDARY`, `UNAUTHORIZED_RESOURCE`, `CAPABILITY_UNSUPPORTED`, `EVIDENCE_UNAVAILABLE`, `HISTORICAL_CONTEXT_UNAVAILABLE`, `RESOURCE_NOT_FOUND`).
+  - Hardened P0 cross-domain boundary resolution, preventing foreign domain name, ID, and metadata leakage.
+  - Enhanced `UnavailableState.tsx` with contextual return action unwinding (`action` prop), eliminating dead-end states.
+  - Added unit test suite in `src/features/workspace/workspace-unavailable-infrastructure.spec.ts` (6 tests, 789 / 789 monorepo tests passing).
+- **WX-704 — Error & Recovery**:
+  - Established error recovery contract (`error-recovery.contract.ts`) mapping the typed `ApiError` hierarchy into 8 actionable recovery categories.
+  - Implemented contextual retry and re-auth resolution with support for correlation IDs without leaking internal stack traces.
+  - Guaranteed context preservation across failures (`returnPath`), preventing unintended collapse to root `/workspace`.
+  - Added unit test suite in `src/features/workspace/workspace-error-recovery.spec.ts` (7 tests, 796 / 796 monorepo tests passing).
+- **WX-705 — Resilience & Navigation Recovery**:
+  - Implemented navigation resilience contract (`navigation-resilience.contract.ts`) providing return path sanitization (`validateReturnPath`), safe recovery hierarchy (`resolveNearestValidNavigationContext`), and unified URL parameter hydration (`hydrateWorkspaceUrlParams`).
+  - Added in-flight domain switch protection (`isResponseValidForActiveContext`), ensuring late responses from previously selected domains are cleanly discarded.
+  - Enforced graceful degradation across failing deep links, preventing full Workspace crashes or unvalidated external redirects.
+  - Added unit test suite in `src/features/workspace/workspace-navigation-resilience.spec.ts` (9 tests, 805 / 805 monorepo tests passing).
+- **WX-706 — Accessibility & Reduced Motion**:
+  - Implemented accessibility contract (`accessibility.contract.ts`) providing concise semantic state announcements (`resolveSemanticStateAnnouncement`), truncation-safe technical identifier accessible names (`formatAccessibleTechnicalIdentifier`), and color-independent 6-tier severity descriptors (`getSeverityAccessibleDescriptor`).
+  - Added `@media (prefers-reduced-motion: reduce)` style rules in `globals.css` to respect user motion preferences across all animations and transitions.
+  - Verified keyboard navigation, landmark structure, focus management, and color independence across all Workspace states.
+  - Added unit test suite in `src/features/workspace/workspace-accessibility.spec.ts` (5 tests, 810 / 810 monorepo tests passing).
+- **WX-707 — Phase 7 Verification Gate (Phase 7 Complete 🔒)**:
+  - Formally verified and certified the entire Phase 7 UX States & Resilience architecture: WX-701 (State Matrix), WX-702 (Partial Intelligence), WX-703 (Unavailable Infrastructure), WX-704 (Error & Recovery), WX-705 (Navigation Resilience), and WX-706 (Accessibility & Reduced Motion).
+  - Validated end-to-end resilience journey simulation (`Current` -> `Finding` -> `Evidence` [Fails] -> `ERROR` -> `Retry` -> `UNAVAILABLE` -> `Back` -> `Finding` -> `Memory`).
+  - Added full verification suite in `src/features/workspace/workspace-phase7-verification.spec.ts` (17 tests, 827 / 827 monorepo tests passing).
+- **WX-801 — Production Readiness Contract**:
+  - Established cross-cutting production readiness contract (`production-readiness.contract.ts`) defining 8 mandatory readiness domains (`SECURITY`, `RELIABILITY`, `DATA_INTEGRITY`, `API_CORRECTNESS`, `OBSERVABILITY`, `PERFORMANCE`, `DEPLOYABILITY`, `RUNTIME_EXPERIENCE`).
+  - Defined strict 3-tier severity classifications (`P0_BLOCKER`, `P1_RISK`, `P2_IMPROVEMENT`) and pure audit evaluation (`evaluateProductionReadiness`).
+  - Formalized zero-shortcut production invariants prohibiting unit-test-only sign-offs or mocked endpoint verifications.
+  - Added unit test suite in `src/features/workspace/workspace-production-readiness.spec.ts` (4 tests, 831 / 831 monorepo tests passing).
+- **WX-802 — Security Hardening**:
+  - Implemented security contract (`security.contract.ts`) providing tenant domain access control (`validateTenantDomainAccess`), cross-domain lineage isolation (`validateSnapshotLineageIsolation`), global search isolation (`validateSearchIsolation`), and sanitized security logging (`formatSanitizedSecurityLog`).
+  - Formally verified 10 certified P0 security hard invariants ensuring zero cross-tenant leakage, IDOR prevention, and secret masking.
+  - Added unit test suite in `src/features/workspace/workspace-security-hardening.spec.ts` (9 tests, 840 / 840 monorepo tests passing).
+- **WX-803 — API Correctness & Contract Verification**:
+  - Established canonical API correctness contract (`api-correctness.contract.ts`) providing full inventory of all 15 production backend routes, HTTP methods, DTO schemas, and status codes.
+  - Implemented route parity validator (`verifyRouteContract`) preventing runtime 404s, method mismatches, and phantom endpoints.
+  - Formalized 10 certified P0 API correctness hard invariants prohibiting route divergence and mock-only verifications.
+  - Added unit test suite in `src/features/workspace/workspace-api-correctness.spec.ts` (4 tests, 844 / 844 monorepo tests passing).
+- **WX-804 — Data Integrity & Historical Truth**:
+  - Implemented data integrity contract (`data-integrity.contract.ts`) providing snapshot immutability validation (`validateSnapshotImmutability`), change lineage boundary enforcement (`validateChangeLineageBoundary`), and trusted-state preservation on discovery failure (`resolveTrustedSnapshotOnJobCompletion`).
+  - Formalized 10 certified P0 data integrity hard invariants prohibiting historical mutation, orphan records, and cross-domain lineage drift.
+  - Added unit test suite in `src/features/workspace/workspace-data-integrity.spec.ts` (7 tests, 851 / 851 monorepo tests passing).
+- **WX-805 — Observability & Operational Telemetry**:
+  - Implemented observability contract (`observability.contract.ts`) providing structured logging generator (`createStructuredLog`), correlation ID lifecycle binding, and health vs. readiness probe distinction (`validateHealthProbeSemantics`).
+  - Formalized 10 certified P0 observability hard invariants ensuring no untraceable failures, sensitive payload stripping, and diagnostic module tracing.
+  - Added unit test suite in `src/features/workspace/workspace-observability.spec.ts` (5 tests, 856 / 856 monorepo tests passing).
+- **WX-806 — Performance & Load Readiness**:
+  - Implemented performance contract (`performance.contract.ts`) establishing application SLA latency budgets (`validateLatencyBudget`) and upper-bounded historical query pagination (`validatePaginationBounds`).
+  - Formalized 10 certified P0 performance hard invariants prohibiting unbounded historical scans, worker starvation, and critical latency budget regressions.
+  - Added unit test suite in `src/features/workspace/workspace-performance.spec.ts` (4 tests, 860 / 860 monorepo tests passing).
+- **WX-807 — Reliability & Deployability**:
+  - Implemented reliability contract (`reliability-deployability.contract.ts`) providing production environment validation (`validateStartupEnvironment`), Kubernetes readiness probe evaluation (`evaluateReadinessState`), and dependency failure mapping (`mapDependencyFailureToSemanticState`).
+  - Formalized 10 certified P0 reliability hard invariants prohibiting false readiness, unsafe startups, and silent dependency failures.
+  - Added unit test suite in `src/features/workspace/workspace-reliability-deployability.spec.ts` (8 tests, 868 / 868 monorepo tests passing).
+- **WX-808 — Runtime UX & Production Browser Verification**:
+  - Implemented runtime UX contract (`runtime-ux.contract.ts`) establishing domain context isolation validation (`validateDomainSwitchingStateIsolation`), stale async response race condition guard (`resolveAsyncResponseRelevance`), and deep link hydration resilience.
+  - Formalized 10 certified P0 runtime UX hard invariants prohibiting domain context leakage, broken browser continuity, and premature workspace resets.
+  - Added unit test suite in `src/features/workspace/workspace-runtime-ux.spec.ts` (5 tests, 873 / 873 monorepo tests passing).
+- **WX-809 — Final Production Verification & Release Gate**:
+  - Implemented final production release gate contract (`final-production-gate.contract.ts`) establishing the 13 canonical P0 production certification gates (`evaluateFinalReleaseGate`).
+  - Certified all 13 production readiness gates across Security, API Correctness, Data Integrity, Observability, Performance, Reliability, Deployability, and Runtime UX with 0 remaining P0 defects.
+  - Formally certified release decision: `NEBULA PRODUCTION CERTIFIED — RELEASE APPROVED`.
+  - Added unit test suite in `src/features/workspace/workspace-final-production-gate.spec.ts` (4 tests, 877 / 877 monorepo tests passing).
+- **AX-101 — Account & Settings Platform: Implementation Truth Audit**:
+  - Conducted complete repository audit of identity, profile, password, session, OAuth, settings routing, security activity, theme, and account lifecycle subsystems across backend, API, frontend, and tests.
+  - Published authoritative Implementation Truth Matrix distinguishing existing capabilities from missing requirements without introducing premature code.
+  - Documented findings and established the implementation roadmap for AX-102 through AX-109.
+- **AX-102 — Settings Navigation, Routing & Layout Shell Foundation**:
+  - Implemented canonical settings routing contract (`settings-routing.contract.ts`), route definitions (`/settings`, `/settings/account`, `/settings/security`, `/settings/appearance`), and layout shell (`SettingsLayout.tsx`).
+  - Integrated settings navigation into `WorkspaceHeader.tsx` profile dropdown menu.
+  - Formalized 10 certified P0 settings hard invariants prohibiting dead navigation links and unprotected settings routes.
+  - Added unit test suite in `src/features/settings/settings-navigation-shell.spec.ts` (10 tests, 889 / 889 monorepo tests passing).
+- **AX-103 — Profile & Account Management**:
+  - Implemented backend profile update endpoint `PATCH /api/v1/users/profile`, `UpdateProfileDto`, `UserProfileResponseDto`, `UsersController`, `UsersService`, and `UsersRepository.updateProfile`.
+  - Implemented frontend `profile-management.contract.ts`, `validateProfileFullName`, `authService.updateProfile`, and `AuthContext.updateProfile`.
+  - Enhanced `AccountSettingsView.tsx` with interactive profile editing, validation, quiet success feedback, and real-time Workspace Header synchronization.
+  - Added unit tests in `users.controller.spec.ts` and `settings-profile-management.spec.ts` (898 / 898 monorepo tests passing).
+- **AX-104 — Password Management & Credential Security**:
+  - Implemented authenticated password change endpoint `POST /api/v1/auth/change-password`, `ChangePasswordDto`, `AuthService.changePassword`, and rate-limiting guard.
+  - Implemented frontend `password-management.contract.ts`, `validatePasswordChangeInput`, and `authService.changePassword`.
+- **WX-905 — Manual Understanding Control**:
+  - Implemented the first-class `Understand now` action in the Workspace domain/intelligence header alongside `Last understood` metadata.
+  - Bound manual understanding strictly to the authoritative active domain context (`activeDomain.id`) via `POST /api/v1/domains/:domainId/understand` (202 Accepted).
+  - Implemented `UnderstandNowButton` component with Idle (`Understand now`), Processing (`Understanding…`), and truthful Failure (`Understanding couldn't be completed.` + `Try again`) states.
+  - Enforced zero fake progress percentages, zero scanning theater, and prohibited generic scanner wording.
+  - Implemented complete cache reconciliation across domains, briefs, snapshots, findings, timeline, and workspace overview on completion.
+  - Added unit, contract, and invariant tests in `workspace-manual-understanding.spec.ts` and updated truth contracts.
+- **WX-906 — Understanding Job State & Workspace Convergence**:
+  - Implemented authoritative asynchronous understanding lifecycle orchestration: `IDLE` → `ACCEPTED` → `RUNNING` → `COMPLETED` / `FAILED`.
+  - Prevented premature query invalidation: Workspace intelligence surfaces (Executive Brief, Stories, Snapshots, Overview) refetch only after server worker reports `COMPLETED`.
+  - Implemented active job discovery and reload persistence via `useDomainUnderstandingJobs` and `findActiveJob`, preserving running state across page refreshes.
+  - Ensured strict domain isolation: active jobs belong to `domainId`, decoupling state when switching domains and re-deriving truth when returning.
+  - Distinctly isolated HTTP request rejections from backend worker execution failures.
+  - Added bounded job observation and accessible screen-reader live announcements without spamming polling ticks.
+  - Added unit, contract, and invariant test suite in `workspace-understanding-convergence.spec.ts` (100% passing).
+- **WX-907 — Manual Understanding Action Emphasis & Active Understanding Experience**:
+  - Re-architected `UnderstandNowButton` with comfortable hit area (`min-h-[38px] px-4 py-2 sm:px-5 sm:py-2.5`), elevated tactile surface, and prominent primary action visual weight.
+  - Composed the domain header in `ReturningWorkspaceEntry` to feature the prominent manual understanding action alongside domain title.
+  - Implemented `ActiveUnderstandingBanner` providing clear cognitive feedback when Nebula is actively understanding the selected domain: "Nebula is understanding {domainName}".
+  - Enforced temporal distinction (`NO_HISTORICAL_TRUTH_ERASURE`): existing intelligence remains visible and available as historical truth while understanding is in progress.
+  - Prohibited scanning theater and fake progress percentages (`NO_SCANNING_THEATER`, `NO_FAKE_PROGRESS`).
+  - Added truthful error recovery banner with direct retry action for worker failures.
+  - Added unit, contract, and invariant test suite in `workspace-action-emphasis-active-experience.spec.ts` (100% passing).
+- **WX-908 — Manual Understanding Action Placement & Visual Authority Correction**:
+  - Established canonical Deliberate Header Action Zone in `ReturningWorkspaceEntry`, structurally co-locating domain title, live understanding metadata, and primary action.
+  - Upgraded `UnderstandNowButton` to high-contrast solid primary action styling (`bg-foreground text-background`, `min-h-[42px] px-5 py-2.5 rounded-xl text-sm font-medium`), eliminating weak outline utility appearance.
+  - Bound domain understanding metadata directly to live backend worker state: displaying `● ACTIVE · Understanding in progress` when active, and `● ACTIVE · Last understood {time} · Confidence High` when idle.
+  - Prohibited placement in sidebar, domain dropdown, executive brief, page footer, or floating corner.
+  - Added unit, contract, and invariant test suite in `workspace-action-placement-visual-authority.spec.ts` (100% passing).
+- **WX-909 — Infrastructure Overview Surface Recomposition**:
+  - Recomposed infrastructure presentation into a compact, authoritative inventory card matching reference specification.
+  - Represented 8 canonical infrastructure categories: Edge, Web Server, Application, Hosting, DNS, TLS / SSL, IP Address, and Open Ports.
+  - Added pure resolver `resolveCompactInfrastructure` in `compact-infrastructure.contract.ts`.
+  - Added unit, contract, and invariant test suite in `workspace-infrastructure-overview-recomposition.spec.ts` (100% passing).
+- **WX-910 — Restore Overview Intelligence & Move Infrastructure Inventory to Infrastructure Experience**:
+  - Restored Workspace Overview composition to focus strictly on synthesized intelligence (`ExecutiveBrief`, `PrimaryStory`, `SecondaryStories`).
+  - Removed infrastructure inventory card from Workspace Overview canvas (`NO_OVERVIEW_INVENTORY_POLLUTION`).
+  - Relocated 8-category compact inventory card to the dedicated `/workspace/infrastructure` experience alongside detailed categorized components (`INFRASTRUCTURE_PAGE_IS_INVENTORY_HOME`).
+  - Standardized product hierarchy: Overview = Intelligence, Infrastructure = Inventory + Model (`OVERVIEW_EQUALS_INTELLIGENCE`).
+  - Added unit, contract, and invariant test suite in `workspace-overview-restoration-infrastructure-relocation.spec.ts` (100% passing).
+- **WX-911 — Infrastructure Findings Integration**:
+  - Integrated active infrastructure findings section into the dedicated `/workspace/infrastructure` experience (`InfrastructureFindingsSection`).
+  - Rendered 6-tier severity badges, finding titles, explanations, categories, and direct `Investigate finding →` links.
+  - Sourced findings strictly from backend finding queries (`useFindings`) without inferring or inventing findings from infrastructure categories (`NO_INVENTED_INFRASTRUCTURE_FINDINGS`).
+  - Implemented calm empty state (`No infrastructure findings`) without obscuring the infrastructure model when zero findings are observed (`TRUTHFUL_INFRASTRUCTURE_FINDINGS_EMPTY_STATE`).
+  - Added unit, contract, and invariant test suite in `workspace-infrastructure-findings-integration.spec.ts` (100% passing).
+- **WX-912 — Workspace Understanding Synchronization & Truth Convergence**:
+  - Implemented unified understanding convergence coordinator (`useWorkspaceUnderstandingConvergence`) mounted at the Workspace root.
+  - Unified manual and automatic understanding convergence into one coherent pathway (`UNIFIED_MANUAL_AND_AUTOMATIC_CONVERGENCE`).
+  - Ensured atomic cache invalidation across all 5 Workspace surfaces (Overview, Findings, Changes, Infrastructure, Memory) upon job completion (`ONE_DOMAIN_ONE_AUTHORITATIVE_TRUTH`).
+  - Enforced strict domain boundary isolation (`DOMAIN_ISOLATED_SYNCHRONIZATION`) and prohibited independent page registries (`NO_INDEPENDENT_PAGE_REGISTRY`).
+  - Added unit, contract, and invariant test suite in `workspace-understanding-synchronization.spec.ts` (100% passing).
+- **WX-913 — Workspace Visual Authority & Premium Surface Refinement**:
+  - Strengthened Workspace surface hierarchy with crisp, tactile card borders and restrained elevation (`WORKSPACE_VISUAL_AUTHORITY`).
+  - Applied controlled semantic color mapping (Emerald, Amber, Red, Blue, Neutral) communicating truthful meaning without dashboard clutter (`NO_RAINBOW_DASHBOARD`).
+  - Elevated Primary Story ("WHAT MATTERS NOW") to read as the authoritative dominant intelligence event without oversized headlines.
+  - Refined Executive Brief posture badges, internal highlight cards, and metadata lineage separation.
+  - Upgraded Compact Infrastructure Overview 8-category card and findings section into high-precision product instruments.
+  - Enforced strict anti-theatrical styling rules prohibiting glassmorphism, neon gradients, and fake metrics (`NO_DECORATIVE_THEATER`).
+  - Added unit, contract, and invariant test suite in `workspace-visual-authority-refinement.spec.ts` (100% passing).
+- **WX-914 — Workspace Composition & Information Density Correction**:
+  - Recomposed the Overview surface into a high-density 2-column desktop intelligence grid pairing Executive Brief (`lg:col-span-7`) and Compact Infrastructure Overview (`lg:col-span-5`) side-by-side (`TWO_COLUMN_DESKTOP_INTELLIGENCE_GRID`).
+  - Eliminated full-width report document sprawl and single-column stretching (`COMPACT_OVERVIEW_COMPOSITION`).
+  - Positioned dominant Primary Story ("WHAT MATTERS NOW") directly beneath the top intelligence composition with compact narrative and evidence tracing.
+  - Positioned supporting Secondary Stories ("OTHER THINGS WORTH KNOWING") in a clean 2-column subordinate finding grid.
+  - Added unit, contract, and invariant test suite in `workspace-composition-information-density.spec.ts` (100% passing).
 
 ---
 

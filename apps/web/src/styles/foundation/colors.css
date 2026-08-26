@@ -1,25 +1,93 @@
 :root {
-  /* Raw Primitive Color Scale */
-  --color-bg-base: #030712;
-  --color-bg-primary: #030712;
-
-  --color-neutral-0: #ffffff;
+  /* ── Primitive Neutral Palette ─────────────────────────────────────────── */
+  --color-neutral-0:   #ffffff;
+  --color-neutral-50:  #f9f9f7;
+  --color-neutral-100: #f2f2f0;
+  --color-neutral-200: #e5e5e2;
+  --color-neutral-300: #d1d1cc;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6c6c72;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #1e1e1c;
+  --color-neutral-800: #161615;
+  --color-neutral-900: #0f0f0e;
   --color-neutral-950: #030712;
-  --color-neutral-900: #08090d;
-  --color-neutral-800: #0f1117;
-  --color-neutral-700: #161922;
-  --color-neutral-600: #1c202c;
-  --color-neutral-500: #2e354a;
-  --color-neutral-400: #4b5563;
-  --color-neutral-300: #9ca3af;
-  --color-neutral-100: #f3f4f6;
 
-  --color-accent-violet: #8B5CF6;
-  --color-accent-cyan: #06B6D4;
-  --color-gradient-accent: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+  /* ── Core Brand Primitives ─────────────────────────────────────────────── */
+  --color-brand-blue:       #1a56db;
+  --color-brand-blue-dark:  #2563eb;
+  --color-brand-blue-hover: #1545b3;
+  --color-brand-violet:     #8B5CF6;
+  --color-brand-cyan:       #06B6D4;
+  --color-gradient-accent:  linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
 
-  --color-blue-500: #3b82f6;
-  --color-blue-500-12: rgba(59, 130, 246, 0.12);
-  --color-blue-600: #4b44e0;
-  --color-blue-400: #8b7cf6;
+  /* ── Legacy & Component Primitives ─────────────────────────────────────── */
+  --color-bg-base:          var(--color-neutral-950);
+  --color-bg-primary:       var(--color-neutral-950);
+  --color-blue-500:         #3b82f6;
+  --color-blue-500-12:      rgba(59, 130, 246, 0.12);
+  --color-blue-600:         #4b44e0;
+  --color-blue-400:         #8b7cf6;
+  --color-accent-violet:    var(--color-brand-violet);
+  --color-accent-cyan:      var(--color-brand-cyan);
+
+  /* ── Semantic Status Primitives ────────────────────────────────────────── */
+  --color-status-critical-light: #d4183d;
+  --color-status-critical-dark:  #ef4444;
+  --color-status-high-light:     #d97706;
+  --color-status-high-dark:      #f59e0b;
+  --color-status-medium-light:   #b45309;
+  --color-status-medium-dark:    #fbbf24;
+  --color-status-low-light:      #2563eb;
+  --color-status-low-dark:       #60a5fa;
+  --color-status-info-light:     #64748b;
+  --color-status-info-dark:      #94a3b8;
+  --color-status-success-light:  #059669;
+  --color-status-success-dark:   #10b981;
+
+  /* ── WX-1017 Premium Neutral Surface Palette ───────────────────────────── */
+  --color-surface-canvas:    #f7f7f5;
+  --color-surface-primary:   #ffffff;
+  --color-surface-secondary: #fafaf8;
+  --color-surface-elevated:  #fcfcfa;
+  --color-surface-metadata:  #f4f4f1;
+  --color-surface-row-hover: #f7f8f6;
+  --color-surface-row-active: #f1f6f3;
+
+  --color-border-neutral:        #e7e7e3;
+  --color-border-neutral-strong: #dcdcd7;
+  --color-border-divider:        #eeeeeb;
+  --color-border-card:           #e1e1dc;
+  --color-border-brief:          #e2e2de;
+  --color-border-metadata:       #e2e2dd;
+  --color-border-card-hover:     #dadad5;
+
+  --color-text-metadata:         #5f625f;
+  --color-link-primary:          #3568c8;
+
+  /* ── WX-1017 Frozen Semantic Palette ───────────────────────────────────── */
+  --color-semantic-stable-primary:    #178a68;
+  --color-semantic-stable-bg:         #eaf7f2;
+  --color-semantic-stable-border:     #b9e5d6;
+  --color-semantic-stable-accent:     #1f9d73;
+
+  --color-semantic-attention-primary: #b86f18;
+  --color-semantic-attention-bg:      #fff4e3;
+  --color-semantic-attention-border:  #f0d3a5;
+  --color-semantic-attention-accent:  #c98224;
+
+  --color-semantic-high-primary:      #c24d57;
+  --color-semantic-high-bg:           #fff0f1;
+  --color-semantic-high-border:       #f0c3c7;
+
+  --color-semantic-critical-primary:  #a93442;
+  --color-semantic-critical-bg:       #fdebec;
+  --color-semantic-critical-border:   #e9b3b9;
+  --color-semantic-critical-accent:   #c94b58;
+
+  --color-semantic-info-primary:      #3568c8;
+  --color-semantic-info-bg:           #eef4ff;
+  --color-semantic-info-border:       #c8d8f6;
 }
+
+

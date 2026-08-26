@@ -36,8 +36,38 @@ export class InfrastructureBriefService {
     return brief;
   }
 
+  async getBySnapshotForUser(userId: string, snapshotId: string) {
+    const brief = await this.repository.findBySnapshotForUser(
+      snapshotId,
+      userId,
+    );
+
+    if (!brief) {
+      throw new NotFoundException(
+        `Infrastructure brief for snapshot '${snapshotId}' not found.`,
+      );
+    }
+
+    return brief;
+  }
+
   async getLatestByDomain(domainId: string) {
     return this.repository.findLatestByDomain(domainId);
+  }
+
+  async getLatestByDomainForUser(userId: string, domainId: string) {
+    const brief = await this.repository.findLatestByDomainForUser(
+      domainId,
+      userId,
+    );
+
+    if (!brief) {
+      throw new NotFoundException(
+        `Infrastructure brief for domain '${domainId}' not found.`,
+      );
+    }
+
+    return brief;
   }
 
   async create(
@@ -61,13 +91,55 @@ export class InfrastructureBriefService {
   }
 
   async generate(snapshotId: string) {
-    const snapshot = await this.snapshotService.getSnapshotById(snapshotId);
+    const snapshot =
+      await this.snapshotService.getSnapshotByIdInternal(snapshotId);
 
     if (!snapshot) {
       throw new NotFoundException('Snapshot not found.');
     }
 
+    const findingsResponse =
+      await this.findingService.getFindingsBySnapshotInternal(
+        snapshotId,
+        1,
+        1000,
+      );
+
+    const brief = this.briefBuilder.build(snapshot, findingsResponse.data);
+
+    const existing = await this.repository.findBySnapshot(snapshotId);
+    if (existing) {
+      return this.repository.update(existing.id, {
+        overallHealth: brief.overallHealth,
+        summary: brief.summary,
+        highlights: this.toJson(brief.highlights),
+        recommendations: this.toJson(brief.recommendations),
+      });
+    }
+
+    return this.create(
+      snapshotId,
+      brief.overallHealth,
+      brief.summary,
+      this.toJson(brief.highlights),
+      this.toJson(brief.recommendations),
+    );
+  }
+
+  async generateForUser(userId: string, snapshotId: string) {
+    // 1. Authorize: verify snapshot belongs to user before doing any generation work
+    const snapshot = await this.snapshotService.getSnapshotById(
+      userId,
+      snapshotId,
+    );
+
+    if (!snapshot) {
+      throw new NotFoundException(`Snapshot '${snapshotId}' not found.`);
+    }
+
+    // 2. Query user-scoped findings
     const findingsResponse = await this.findingService.getFindingsBySnapshot(
+      userId,
       snapshotId,
       1,
       1000,
@@ -75,7 +147,11 @@ export class InfrastructureBriefService {
 
     const brief = this.briefBuilder.build(snapshot, findingsResponse.data);
 
-    const existing = await this.repository.findBySnapshot(snapshotId);
+    const existing = await this.repository.findBySnapshotForUser(
+      snapshotId,
+      userId,
+    );
+
     if (existing) {
       return this.repository.update(existing.id, {
         overallHealth: brief.overallHealth,

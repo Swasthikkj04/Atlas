@@ -21,7 +21,8 @@ export class RegisterDto {
   email!: string;
 
   @ApiProperty({
-    description: 'Account password satisfying canonical password strength policy',
+    description:
+      'Account password satisfying canonical password strength policy',
     example: 'SuperSecurePassword123!',
     minLength: 8,
     maxLength: 128,

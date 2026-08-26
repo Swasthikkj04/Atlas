@@ -25,6 +25,26 @@ export class HttpMissingHstsRule implements AtlasRulePlugin {
       return null;
     }
 
+    // Invariant: NO_FAILED_LOOKUP_AS_HEADER_ABSENCE (failed lookups do not produce findings)
+    if (obs.observation.state === 'FAILED') {
+      return null;
+    }
+
+    if (obs.observation.state === 'UNKNOWN') {
+      return new FindingBuilder()
+        .setRule(this.metadata.id, this.metadata.version)
+        .setModule(FindingModule.HTTP)
+        .setCategory(FindingCategory.SECURITY_HEADER)
+        .setSeverity(Severity.LOW)
+        .setTitle('HSTS Header Status Unknown')
+        .setDescription(
+          `HSTS header status could not be verified due to probe state (${obs.observation.state}).`,
+        )
+        .setState('UNKNOWN')
+        .addObservation('strictTransportSecurity', obs)
+        .build();
+    }
+
     if (obs.observation.state === 'MISSING') {
       return new FindingBuilder()
         .setRule(this.metadata.id, this.metadata.version)
@@ -35,24 +55,6 @@ export class HttpMissingHstsRule implements AtlasRulePlugin {
         .setDescription(
           'The application does not send the Strict-Transport-Security header. Browsers cannot enforce HTTPS for future requests.',
         )
-        .addObservation('strictTransportSecurity', obs)
-        .build();
-    }
-
-    if (
-      obs.observation.state === 'UNKNOWN' ||
-      obs.observation.state === 'FAILED'
-    ) {
-      return new FindingBuilder()
-        .setRule(this.metadata.id, this.metadata.version)
-        .setModule(FindingModule.HTTP)
-        .setCategory(FindingCategory.SECURITY_HEADER)
-        .setSeverity(Severity.HIGH)
-        .setTitle('HSTS Header Status Unknown')
-        .setDescription(
-          `HSTS header status could not be verified due to probe state (${obs.observation.state}).`,
-        )
-        .setState('UNKNOWN')
         .addObservation('strictTransportSecurity', obs)
         .build();
     }

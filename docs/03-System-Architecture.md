@@ -1352,16 +1352,54 @@ Together, these documents define the complete architectural foundation of Atlas.
 
 ---
 
+# Understanding Worker Reliability & Crash Recovery (REFINEMENT-004)
+
+Atlas implements a database-backed distributed lease and crash recovery architecture for all asynchronous `UnderstandingJob` executions.
+
+## Job State Machine
+
+```
+                 ┌──────────┐
+                 │ PENDING  │◄────────────────────────┐
+                 └────┬─────┘                         │
+                      │ Atomic Claim & Lease          │
+                      ▼                               │
+                 ┌──────────┐                         │ Retry (attempts < max)
+                 │ RUNNING  │─────────┐               │ Exponential Backoff
+                 └────┬─────┘         │               │
+                      │               │ Lease Expired │
+       ┌──────────────┼─────────────┐ └───────►───────┘
+       │              │             │                 │
+       ▼              ▼             ▼                 │
+┌─────────────┐ ┌───────────┐ ┌───────────┐           │
+│  COMPLETED  │ │  FAILED   │ │ CANCELLED │           │
+└─────────────┘ └───────────┘ └───────────┘           │
+                      ▲                               │
+                      └───────────────────────────────┘
+                        Max Attempts Exceeded
+```
+
+### State Machine Invariants
+1. **Atomic Claim**: Workers atomically transition `PENDING` $\to$ `RUNNING` using conditional database updates that establish a bounded lease (`leaseUntil = NOW() + 60s`) and increment `attemptCount`.
+2. **Database-Backed Heartbeat**: While executing discovery modules, workers periodically extend `leaseUntil` and update `heartbeatAt` in PostgreSQL.
+3. **Stale Job Reconciliation**: At worker startup and during background polling loops, orphaned jobs with expired leases are discovered in PostgreSQL and transitioned:
+   - If `attemptCount < maxAttempts`: Re-queued to `PENDING` with bounded exponential backoff delay (`nextRetryAt`).
+   - If `attemptCount >= maxAttempts`: Terminated into `FAILED` with machine-readable failure reason `[MAX_ATTEMPTS_EXCEEDED]`.
+4. **Idempotent Snapshot Persistence**: If a worker crashes after saving a snapshot, retrying workers detect the existing snapshot by `jobId` and resume downstream intelligence generation without creating duplicate snapshots or findings.
+5. **Cancellation Guard**: Cancelled jobs (`CANCELLED`) can never be claimed, retried, or resurrected.
+
+---
+
 # Document Status
 
 | Property | Value |
 |----------|-------|
 | **Document** | 03 – System Architecture |
-| **Version** | **2.1** |
+| **Version** | **2.2** |
 | **Status** | **Approved (Frozen)** |
 | **Classification** | Canonical Architecture Document |
 | **Owner** | Atlas Architecture Team |
-| **Last Updated** | July 2026 |
+| **Last Updated** | August 2026 |
 | **Next Review Trigger** | Major Architectural Change |
 | **Review Process** | Architecture Review Required |
 

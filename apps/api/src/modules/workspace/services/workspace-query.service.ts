@@ -217,11 +217,13 @@ export class WorkspaceQueryService {
       }),
     ]);
 
-    const events: RecentActivityDto[] = [];
+    const rawEvents: (RecentActivityDto & { canonicalType: string; canonicalId: string })[] = [];
 
     for (const d of userDomains) {
-      events.push({
+      rawEvents.push({
         id: `domain-${d.id}`,
+        canonicalType: 'DOMAIN',
+        canonicalId: d.id,
         type: 'DOMAIN_ADDED',
         title: `Domain ${d.domainName} added to workspace`,
         domainId: d.id,
@@ -232,8 +234,10 @@ export class WorkspaceQueryService {
 
     for (const j of jobs) {
       const dName = domainMap.get(j.domainId) || 'Unknown Domain';
-      events.push({
+      rawEvents.push({
         id: `job-${j.id}`,
+        canonicalType: 'JOB',
+        canonicalId: j.id,
         type: 'UNDERSTANDING_COMPLETED',
         title: `Understanding completed for ${dName}`,
         domainId: j.domainId,
@@ -244,8 +248,10 @@ export class WorkspaceQueryService {
 
     for (const c of changes) {
       const dName = domainMap.get(c.domainId) || 'Unknown Domain';
-      events.push({
+      rawEvents.push({
         id: `change-${c.id}`,
+        canonicalType: 'CHANGE',
+        canonicalId: c.id,
         type: 'INFRASTRUCTURE_CHANGED',
         title: c.title,
         domainId: c.domainId,
@@ -256,8 +262,10 @@ export class WorkspaceQueryService {
 
     for (const v of verifications) {
       const dName = domainMap.get(v.domainId) || 'Unknown Domain';
-      events.push({
+      rawEvents.push({
         id: `verif-${v.id}`,
+        canonicalType: 'VERIFICATION',
+        canonicalId: v.id,
         type: 'EVIDENCE_COLLECTED',
         title: `Infrastructure verification completed for ${dName}`,
         domainId: v.domainId,
@@ -269,8 +277,10 @@ export class WorkspaceQueryService {
     for (const f of findings) {
       const dId = f.snapshot.domainId;
       const dName = domainMap.get(dId) || 'Unknown Domain';
-      events.push({
+      rawEvents.push({
         id: `finding-${f.id}`,
+        canonicalType: 'FINDING',
+        canonicalId: f.id,
         type: 'FINDINGS_GENERATED',
         title: f.title,
         domainId: dId,
@@ -279,10 +289,25 @@ export class WorkspaceQueryService {
       });
     }
 
-    events.sort(
-      (a, b) =>
-        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
-    );
+    // Deterministic sort: occurredAt desc, then canonicalId asc
+    rawEvents.sort((a, b) => {
+      const timeDiff =
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
+      if (timeDiff !== 0) return timeDiff;
+      return a.canonicalId.localeCompare(b.canonicalId);
+    });
+
+    // Identity Deduplication by type + canonicalId
+    const seenActivity = new Set<string>();
+    const events: RecentActivityDto[] = [];
+    for (const ev of rawEvents) {
+      const key = `${ev.canonicalType}:${ev.canonicalId}`;
+      if (seenActivity.has(key)) continue;
+      seenActivity.add(key);
+      const { canonicalType: _t, canonicalId: _cid, ...cleanEvent } = ev;
+      events.push(cleanEvent);
+    }
+
     return events.slice(0, 10);
   }
 
@@ -291,18 +316,27 @@ export class WorkspaceQueryService {
       where: { domain: { userId } },
       include: { domain: { select: { domainName: true } } },
       orderBy: { detectedAt: 'desc' },
-      take: 10,
+      take: 20,
     });
 
-    return changes.map((c) => ({
-      id: c.id,
-      domainId: c.domainId,
-      domainName: c.domain.domainName,
-      changeType: c.module,
-      title: c.title,
-      severity: c.severity,
-      detectedAt: c.detectedAt,
-    }));
+    const seenChanges = new Set<string>();
+    const result: RecentChangeDto[] = [];
+    for (const c of changes) {
+      const key = `CHANGE:${c.id}`;
+      if (seenChanges.has(key)) continue;
+      seenChanges.add(key);
+      result.push({
+        id: c.id,
+        domainId: c.domainId,
+        domainName: c.domain.domainName,
+        changeType: c.module,
+        title: c.title,
+        severity: c.severity,
+        detectedAt: c.detectedAt,
+      });
+    }
+
+    return result.slice(0, 10);
   }
 
   async buildCriticalFindings(userId: string): Promise<CriticalFindingDto[]> {
@@ -320,17 +354,26 @@ export class WorkspaceQueryService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 10,
+      take: 20,
     });
 
-    return findings.map((f) => ({
-      id: f.id,
-      domainId: f.snapshot.domainId,
-      title: f.title,
-      severity: f.severity,
-      category: f.category,
-      createdAt: f.createdAt,
-    }));
+    const seenFindings = new Set<string>();
+    const result: CriticalFindingDto[] = [];
+    for (const f of findings) {
+      const key = `FINDING:${f.id}`;
+      if (seenFindings.has(key)) continue;
+      seenFindings.add(key);
+      result.push({
+        id: f.id,
+        domainId: f.snapshot.domainId,
+        title: f.title,
+        severity: f.severity,
+        category: f.category,
+        createdAt: f.createdAt,
+      });
+    }
+
+    return result.slice(0, 10);
   }
 
   async buildRecentDomains(userId: string): Promise<RecentDomainDto[]> {

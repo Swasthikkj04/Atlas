@@ -58,6 +58,7 @@ export interface AuthContextValue {
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (credentials: RegisterCredentials) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
+  updateProfile: (data: { fullName: string }) => Promise<User>;
   refetchUser: () => Promise<User | null>;
   verifyEmail: (token: string) => Promise<VerifyEmailResponse>;
   claimGuestSession: (sessionToken: string) => Promise<ClaimGuestSessionResponse>;

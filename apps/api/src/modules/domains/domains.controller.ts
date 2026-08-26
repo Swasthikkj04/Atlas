@@ -123,7 +123,8 @@ export class DomainsController {
   async remove(
     @Req() request: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.domainsService.delete(request.user.id, id);
+  ): Promise<{ success: boolean; message: string }> {
+    await this.domainsService.delete(request.user.id, id);
+    return { success: true, message: 'Domain deleted successfully.' };
   }
 }

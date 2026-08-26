@@ -89,6 +89,7 @@ export class InfrastructureBriefBuilder {
         )
         .slice(0, 5)
         .map((finding) => ({
+          id: finding.id,
           severity: finding.severity,
           title: finding.title,
           description: finding.description,

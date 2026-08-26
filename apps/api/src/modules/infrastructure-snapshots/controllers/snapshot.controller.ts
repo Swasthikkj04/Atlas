@@ -4,6 +4,7 @@ import {
   Param,
   ParseIntPipe,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -13,9 +14,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { InfrastructureSnapshotService } from '../services/infrastructure-snapshot.service';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
 
 @ApiTags('Infrastructure Snapshots')
 @ApiBearerAuth()
@@ -45,12 +55,22 @@ export class SnapshotController {
     status: 401,
     description: 'Unauthorized access.',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Domain or snapshots not found.',
+  })
   async getSnapshotsByDomain(
+    @Req() req: AuthenticatedRequest,
     @Param('domainId') domainId: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
   ) {
-    return this.snapshotService.getSnapshotsByDomain(domainId, page, limit);
+    return this.snapshotService.getSnapshotsByDomain(
+      req.user.id,
+      domainId,
+      page,
+      limit,
+    );
   }
 
   @Get('snapshots/:snapshotId')
@@ -76,7 +96,10 @@ export class SnapshotController {
     status: 404,
     description: 'Snapshot not found.',
   })
-  async getSnapshotById(@Param('snapshotId') snapshotId: string) {
-    return this.snapshotService.getSnapshotById(snapshotId);
+  async getSnapshotById(
+    @Req() req: AuthenticatedRequest,
+    @Param('snapshotId') snapshotId: string,
+  ) {
+    return this.snapshotService.getSnapshotById(req.user.id, snapshotId);
   }
 }

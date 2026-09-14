@@ -214,6 +214,15 @@ function PayloadCopyButton({ value }: { value: string }) {
   );
 }
 
+const SEVERITY_ORDER: Record<string, number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+  informational: 0,
+  info: 0,
+};
+
 export function SplitIntelligenceSurface({
   domain,
   data,
@@ -226,9 +235,9 @@ export function SplitIntelligenceSurface({
   const [expandedFindingKeys, setExpandedFindingKeys] = useState<Record<string, boolean>>({});
 
   const paragraphs = data.brief?.paragraphs ?? [];
-  const observations = data.observations ?? [];
+  const observations = useMemo(() => data.observations ?? [], [data.observations]);
   const technologies = data.technologies ?? [];
-  const evidenceList = data.evidence ?? [];
+  const evidenceList = useMemo(() => data.evidence ?? [], [data.evidence]);
 
   // Severity counts
   const criticalCount = observations.filter(
@@ -249,15 +258,6 @@ export function SplitIntelligenceSurface({
       o.severity?.toLowerCase() === "info"
   ).length;
 
-  const severityOrder: Record<string, number> = {
-    critical: 4,
-    high: 3,
-    medium: 2,
-    low: 1,
-    informational: 0,
-    info: 0,
-  };
-
   // Filter out internal processing events
   const userFacingObservations = useMemo(() => {
     return observations.filter(
@@ -277,8 +277,8 @@ export function SplitIntelligenceSurface({
       )
       .sort(
         (a, b) =>
-          (severityOrder[b.severity?.toLowerCase() ?? ""] ?? 0) -
-          (severityOrder[a.severity?.toLowerCase() ?? ""] ?? 0)
+          (SEVERITY_ORDER[b.severity?.toLowerCase() ?? ""] ?? 0) -
+          (SEVERITY_ORDER[a.severity?.toLowerCase() ?? ""] ?? 0)
       );
   }, [userFacingObservations]);
 
@@ -292,8 +292,8 @@ export function SplitIntelligenceSurface({
       )
       .sort(
         (a, b) =>
-          (severityOrder[b.severity?.toLowerCase() ?? ""] ?? 0) -
-          (severityOrder[a.severity?.toLowerCase() ?? ""] ?? 0)
+          (SEVERITY_ORDER[b.severity?.toLowerCase() ?? ""] ?? 0) -
+          (SEVERITY_ORDER[a.severity?.toLowerCase() ?? ""] ?? 0)
       );
   }, [userFacingObservations]);
 

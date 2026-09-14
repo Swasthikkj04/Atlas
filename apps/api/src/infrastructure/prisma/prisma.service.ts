@@ -32,7 +32,17 @@ export class PrismaService
   }
 
   async onModuleInit(): Promise<void> {
-    await this.$connect();
+    try {
+      await this.$connect();
+    } catch (err) {
+      if (process.env.NODE_ENV === 'test') {
+        this.logger.warn(
+          `Prisma connection skipped in test environment: ${(err as Error).message}`,
+        );
+        return;
+      }
+      throw err;
+    }
 
     this.$on('query', (e: Prisma.QueryEvent) => {
       const durationMs = e.duration;

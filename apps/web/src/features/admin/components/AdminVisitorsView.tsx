@@ -31,7 +31,7 @@ export const AdminVisitorsView: React.FC = () => {
   const [surfaceTab, setSurfaceTab] = useState<'gx' | 'landing' | 'docs' | 'all'>('gx');
   const [, startTransition] = useTransition();
 
-  const loadData = async (selectedPeriod = period, selectedDomain = domainFilter) => {
+  const loadData = useCallback(async (selectedPeriod = period, selectedDomain = domainFilter) => {
     setLoading(true);
     setError(null);
     try {
@@ -45,11 +45,11 @@ export const AdminVisitorsView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, domainFilter]);
 
   useEffect(() => {
     loadData(period, domainFilter);
-  }, [period, domainFilter]);
+  }, [loadData, period, domainFilter]);
 
   const handlePeriodChange = (newPeriod: VisitorPeriod) => {
     setPeriod(newPeriod);

@@ -96,5 +96,6 @@ export function useSeoMetadata({
         scriptTag.parentNode.removeChild(scriptTag);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, description, canonicalUrl, robots, ogType, ogImage, JSON.stringify(keywords), JSON.stringify(structuredData)]);
 }

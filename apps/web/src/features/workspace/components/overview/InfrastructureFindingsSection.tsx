@@ -55,11 +55,10 @@ export const InfrastructureFindingsSection: React.FC<InfrastructureFindingsSecti
   ...rest
 }) => {
   const findingsQuery = useFindings(domainId);
-  const rawFindings = findingsQuery.data?.findings ?? [];
-  const findings = React.useMemo(
-    () => rawFindings.filter((f) => f.status === 'ACTIVE' && f.state !== 'RESOLVED'),
-    [rawFindings]
-  );
+  const findings = React.useMemo(() => {
+    const raw = findingsQuery.data?.findings ?? [];
+    return raw.filter((f) => f.status === 'ACTIVE' && f.state !== 'RESOLVED');
+  }, [findingsQuery.data?.findings]);
   const isLoading = findingsQuery.isLoading;
 
   if (isLoading) {

@@ -371,7 +371,9 @@ describe('S-06 — Secrets & Cryptographic Security Contract Spec (API Common Se
 
   describe('10. Secret Scanner Utility (security-secret-scan) (S06-I09)', () => {
     it('detects private key blocks and live API keys in code snippets', () => {
-      const mockStripeKey = ['sk', 'live', '123456789012345678901234'].join('_');
+      const mockStripeKey = ['sk', 'live', '123456789012345678901234'].join(
+        '_',
+      );
       const testContent = `
         const key = "-----BEGIN RSA PRIVATE KEY-----
         MIIEowIBAAKCAQEA0";

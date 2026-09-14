@@ -165,8 +165,7 @@ describe('TECH-007: Technology Finding Rules & Architecture Risk Engine Integrat
           confidence: 'AUTHORITATIVE',
           error: null,
         },
-        htmlBody:
-          `<html><script>const stripe = Stripe("${['sk', 'live', '51Mabc1234567890abcdefghijklm'].join('_')}");</script></html>`,
+        htmlBody: `<html><script>const stripe = Stripe("${['sk', 'live', '51Mabc1234567890abcdefghijklm'].join('_')}");</script></html>`,
       };
 
       leakedSnapshot.technology = await techDiscovery.discover(

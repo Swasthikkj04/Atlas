@@ -260,8 +260,7 @@ describe('Technology Finding Rules (TECH-007)', () => {
         domainId: 'dom-1',
         snapshotId: 'snp-1',
         snapshot: {
-          htmlBody:
-            `<html><script>const stripe = Stripe("${['sk', 'live', '51Abcdefghijklmnopqrstuvwxyz123456'].join('_')}");</script></html>`,
+          htmlBody: `<html><script>const stripe = Stripe("${['sk', 'live', '51Abcdefghijklmnopqrstuvwxyz123456'].join('_')}");</script></html>`,
         },
       };
 

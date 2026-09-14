@@ -16,19 +16,25 @@ export class MissingXFrameOptionsRule implements FindingRule {
   async evaluate(context: FindingContext): Promise<FindingResult[]> {
     const http = context.snapshot.http;
 
-    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
+    if (
+      !http?.reachable ||
+      (http.queryStatus && http.queryStatus !== 'SUCCESS')
+    ) {
       return [];
     }
 
     const finalResponse = http.finalResponse;
-    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const evaluatedHeaders = finalResponse
+      ? finalResponse.headers
+      : http.headers;
     const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
 
     if (evaluatedHeaders && evaluatedHeaders['x-frame-options']) {
       return [];
     }
 
-    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
+    const confidence =
+      http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {

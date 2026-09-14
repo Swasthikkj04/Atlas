@@ -3,51 +3,97 @@ import { Module } from '@nestjs/common';
 import { FindingFactory } from './factories/finding.factory';
 import { FindingRuleEngineService } from './services/finding-rule-engine.service';
 import { FindingRuleRegistryService } from './services/finding-rule-registry.service';
-import { CertificateExpiryRule } from './rules/infrastructure/ssl/certificate-expiry.rule';
-import { SslUnsupportedRule } from './rules/infrastructure/ssl/ssl-not-supported.rule';
-import { WeakTlsVersionRule } from './rules/infrastructure/ssl/weak-tls-version.rule';
-import { SelfSignedCertificateRule } from './rules/infrastructure/ssl/self-signed-certificate.rule';
-import { SslEndpointUnreachableRule } from './rules/infrastructure/ssl/ssl-endpoint-unreachable.rule';
-import { MissingSpfRule } from './rules/infrastructure/dns/missing-spf.rule';
-import { MissingDmarcRule } from './rules/infrastructure/dns/missing-dmarc.rules';
-import { MissingMxRule } from './rules/infrastructure/dns/missing-mx.rules';
-import { SingleNameserverRule } from './rules/infrastructure/dns/single-nameserver.rule';
-import { MissingIpv6Rule } from './rules/infrastructure/dns/missing-ipv6.rule';
-import { MissingHstsRule } from './rules/infrastructure/http/missing-hsts.rule';
-import { MissingContentSecurityPolicyRule } from './rules/infrastructure/http/missing-content-security-policy.rule';
-import { MissingXFrameOptionsRule } from './rules/infrastructure/http/missing-x-frame-options.rule';
-import { MissingXContentTypeOptionsRule } from './rules/infrastructure/http/missing-x-content-type-options.rule';
-import { MissingReferrerPolicyRule } from './rules/infrastructure/http/missing-referrer-policy.rule';
-import { SlowResponseRule } from './rules/infrastructure/http/slow-response.rule';
-import { HttpServiceUnreachableRule } from './rules/infrastructure/http/http-service-unreachable.rule';
+
+// Analyzers
+import { HttpTransitAnalyzerService } from './services/http-transit-analyzer.service';
+import { ContentSecurityAnalyzerService } from './services/content-security-analyzer.service';
+import { CookieSecurityAnalyzerService } from './services/cookie-security-analyzer.service';
+import { DataLeakageAnalyzerService } from './services/data-leakage-analyzer.service';
+import { DnsSecurityAnalyzerService } from './services/dns-security-analyzer.service';
+import { PerimeterExposureAnalyzerService } from './services/perimeter-exposure-analyzer.service';
+import { TlsHygieneAnalyzerService } from './services/tls-hygiene-analyzer.service';
+import { AdvancedDnsRoutingAnalyzerService } from './services/advanced-dns-routing-analyzer.service';
+
+import * as Rules from './rules';
+
+const ALL_RULES = [
+  Rules.CertificateExpiryRule,
+  Rules.SslUnsupportedRule,
+  Rules.WeakTlsVersionRule,
+  Rules.SelfSignedCertificateRule,
+  Rules.SslEndpointUnreachableRule,
+  Rules.SanCoverageMismatchRule,
+  Rules.ModernTlsUpgradeOpportunityRule,
+  Rules.MissingSpfRule,
+  Rules.MissingDmarcRule,
+  Rules.MissingMxRule,
+  Rules.SingleNameserverRule,
+  Rules.MissingIpv6Rule,
+  Rules.SpfPermissivePolicyRule,
+  Rules.DmarcPolicyHygieneRule,
+  Rules.DnssecValidationRule,
+  Rules.CaaPolicyComplianceRule,
+  Rules.BgpRpkiValidationRule,
+  Rules.DanglingCnameTakeoverRule,
+  Rules.MissingHstsRule,
+  Rules.HstsPolicyHygieneRule,
+  Rules.MissingContentSecurityPolicyRule,
+  Rules.CspPermissiveDirectivesRule,
+  Rules.MissingXFrameOptionsRule,
+  Rules.MissingXContentTypeOptionsRule,
+  Rules.MissingReferrerPolicyRule,
+  Rules.PermissionsPolicyHygieneRule,
+  Rules.CrossOriginIsolationHygieneRule,
+  Rules.SlowResponseRule,
+  Rules.HttpServiceUnreachableRule,
+  Rules.InsecureCorsPolicyRule,
+  Rules.DangerousMethodsExposedRule,
+  Rules.CleartextUpgradeMissingRule,
+  Rules.AuthCookieHttpOnlyRule,
+  Rules.AuthCookieSecureRule,
+  Rules.AuthCookieSameSiteRule,
+  Rules.DebugHeaderExposureRule,
+  Rules.InternalTopologyLeakageRule,
+  Rules.StackTraceDisclosureRule,
+  Rules.EnvFileExposureRule,
+  Rules.GitRepositoryExposureRule,
+  Rules.ManagementEndpointExposureRule,
+  Rules.TechnologyVersionExposureRule,
+  Rules.DeprecatedGatewayVersionRule,
+  Rules.MissingSecureIngressRule,
+  Rules.EdgeOriginExposureRule,
+  Rules.OriginIpBypassLeakageRule,
+  Rules.InsecureIngressTransitRule,
+  Rules.ClientIntegrationExposureRule,
+  Rules.RuntimeDebugTraceExposureRule,
+  Rules.ArchitectureDriftRiskRule,
+];
+
+const ALL_ANALYZERS = [
+  HttpTransitAnalyzerService,
+  ContentSecurityAnalyzerService,
+  CookieSecurityAnalyzerService,
+  DataLeakageAnalyzerService,
+  DnsSecurityAnalyzerService,
+  PerimeterExposureAnalyzerService,
+  TlsHygieneAnalyzerService,
+  AdvancedDnsRoutingAnalyzerService,
+];
 
 @Module({
   providers: [
     FindingRuleRegistryService,
     FindingRuleEngineService,
     FindingFactory,
-    CertificateExpiryRule,
-    SslUnsupportedRule,
-    WeakTlsVersionRule,
-    SelfSignedCertificateRule,
-    SslEndpointUnreachableRule,
-    MissingSpfRule,
-    MissingDmarcRule,
-    MissingMxRule,
-    SingleNameserverRule,
-    MissingIpv6Rule,
-    MissingHstsRule,
-    MissingContentSecurityPolicyRule,
-    MissingXFrameOptionsRule,
-    MissingXContentTypeOptionsRule,
-    MissingReferrerPolicyRule,
-    SlowResponseRule,
-    HttpServiceUnreachableRule,
+    ...ALL_ANALYZERS,
+    ...ALL_RULES,
   ],
   exports: [
     FindingRuleRegistryService,
     FindingRuleEngineService,
     FindingFactory,
+    ...ALL_ANALYZERS,
+    ...ALL_RULES,
   ],
 })
 export class FindingsModule {}

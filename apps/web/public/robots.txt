@@ -1,3 +1,25 @@
+# robots.txt for https://argonion.com
+# Canonical Search Engine Directives (SEO-002)
+
 User-agent: *
-Allow: /
+Allow: /$
+Allow: /docs
+Allow: /docs/
+Allow: /privacy
+Allow: /terms
+
+# Disallow authenticated, administrative, and ephemeral guest sessions
+Disallow: /workspace
+Disallow: /workspace/
+Disallow: /guest
+Disallow: /guest/
+Disallow: /settings
+Disallow: /settings/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+Disallow: /api/
+
 Sitemap: https://argonion.com/sitemap.xml

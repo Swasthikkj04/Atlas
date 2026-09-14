@@ -13,13 +13,11 @@ import {
   Gauge,
   ChevronDown,
   ChevronUp,
-  ArrowDown,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
 } from 'lucide-react';
-import { Eyebrow, TechnicalSmall } from '../../../../components/typography';
-import { Cluster, Grid } from '../../../../components/layout';
+import { TechnicalSmall } from '../../../../components/typography';
+import {
+  resolveOneSentenceMeaning,
+} from '../../contracts/changes.contract';
 import type { ChangeStoryCardProps } from './ChangesTimeline.types';
 
 const CATEGORY_ICONS: Readonly<Record<string, React.ComponentType<{ className?: string }>>> = {
@@ -35,17 +33,13 @@ const CATEGORY_ICONS: Readonly<Record<string, React.ComponentType<{ className?: 
 };
 
 /**
- * Authoritative Change Story Card (WX-1001 / WX-1005 / WX-1017 / WX-1024).
+ * CHG-001: Premium Meaningful Change Card.
  *
- * Implements the WX-1024 Change Intelligence & Improvement Experience:
- * 1. Outcome-oriented headline expressing the actual change result (e.g. Content-Security-Policy improved).
- * 2. Restrained semantic outcome badge (IMPROVED in #178A68, DEGRADED in #C24D57, Neutral in #5F625F, no rainbow).
- * 3. Intelligent "What changed" interpretation answering "What happened?".
- * 4. Consequence "Why it matters" explaining defensive posture strengthening rather than simplistic generic text.
- * 5. Compact change summary (Previous vs Current comparison + derived metrics) before raw evidence.
- * 6. Collapsible evidence panel for raw policy / diff details (Summary before evidence).
- * 7. Evidence lineage strip proving snapshot and response traceability.
- * 8. Explicit anti-overclaiming boundaries ("What this establishes" vs "What this does not establish").
+ * Information Hierarchy (AC-04 & AC-05):
+ * 1. Title: Outcome-oriented headline describing what changed (e.g., "DNS addresses changed").
+ * 2. Meaning: Exactly one human-readable sentence explaining the significance.
+ * 3. Bottom status: Classified outcome badge + category label + interactive arrow ("Modified · DNS →").
+ * 4. Progressive disclosure: Clicking expands focused details (Previous vs Current, Why it matters, Lineage, Evidence).
  */
 export const ChangeStoryCard: React.FC<ChangeStoryCardProps> = ({
   change,
@@ -56,6 +50,7 @@ export const ChangeStoryCard: React.FC<ChangeStoryCardProps> = ({
   className = '',
 }) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isRawDetailsOpen, setIsRawDetailsOpen] = useState(false);
 
   const CategoryIcon = CATEGORY_ICONS[change.category] || Shield;
 
@@ -76,400 +71,389 @@ export const ChangeStoryCard: React.FC<ChangeStoryCardProps> = ({
 
   // Outcome classification badge label
   const badgeLabel = isImprovement
-    ? 'IMPROVED'
+    ? 'Improved'
     : isDegradation
     ? change.changeType === 'DEGRADED'
-      ? 'DEGRADED'
+      ? 'Degraded'
       : change.severity === 'CRITICAL'
-      ? 'CRITICAL'
-      : 'DEGRADED'
+      ? 'Critical'
+      : 'Degraded'
     : change.changeType === 'ADDED'
-    ? 'ADDED'
+    ? 'Added'
     : change.changeType === 'REMOVED'
-    ? 'REMOVED'
+    ? 'Removed'
     : change.changeType === 'STABLE'
-    ? 'STABLE'
-    : 'CHANGED';
+    ? 'Stable'
+    : 'Modified';
 
-  // Semantic palette classes matching WX-1024 Requirement 2
+  // Semantic palette classes
   const badgeClasses = isImprovement
-    ? 'text-[#178A68] bg-[#EAF7F2] border-[#B9E5D6]'
+    ? 'text-[#178A68] bg-[#EAF7F2] dark:bg-emerald-950/30 border-[#B9E5D6] dark:border-emerald-800/30'
     : isDegradation
-    ? 'text-[#C24D57] bg-[#FFF0F1] border-[#F0C3C7]'
+    ? 'text-[#C24D57] bg-[#FFF0F1] dark:bg-rose-950/30 border-[#F0C3C7] dark:border-rose-800/30'
     : 'text-[#5F625F] dark:text-muted-foreground bg-[#F4F4F1] dark:bg-surface-metadata border-[#E2E2DD] dark:border-border';
 
   const hasComparativeValues =
     Boolean(change.previousValue) || Boolean(change.currentValue);
 
-  const isPolicyChange =
-    change.category === 'security_headers' ||
-    change.title.toLowerCase().includes('policy') ||
-    change.title.toLowerCase().includes('csp') ||
-    change.title.toLowerCase().includes('header');
+  const oneSentenceMeaning = resolveOneSentenceMeaning(change);
 
   const previousDisplayLabel =
     change.derivedSummary?.previousLabel ||
-    (change.previousValue && change.previousValue !== 'Not configured' && change.previousValue !== 'absent' && change.previousValue !== 'None'
-      ? isPolicyChange && change.previousValue.length > 30
-        ? 'CSP present'
-        : change.previousValue
-      : isPolicyChange
-      ? 'No effective CSP'
-      : 'Initial observation');
+    change.previousValue ||
+    'None';
 
   const currentDisplayLabel =
     change.derivedSummary?.currentLabel ||
-    (change.currentValue && change.currentValue !== 'Removed' && change.currentValue !== 'absent' && change.currentValue !== 'None'
-      ? isPolicyChange && change.currentValue.length > 30
-        ? 'CSP present'
-        : change.currentValue
-      : isPolicyChange
-      ? 'No effective CSP'
-      : 'Current observation');
-
-  const hasDistinctSummary =
-    Boolean(change.summaryNarrative) &&
-    change.summaryNarrative.toLowerCase() !== change.title.toLowerCase();
+    change.currentValue ||
+    'None';
 
   return (
     <article
-      className={`bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-5 sm:p-6 space-y-5 hover:bg-[#FCFCFA] dark:hover:bg-surface-elevated hover:border-[#DADAD5] dark:hover:border-border-strong shadow-[0_1px_2px_rgba(16,24,20,0.035)] transition-all duration-150 ease-out ${className}`}
-      data-testid={`change-card-${change.changeId}`}
+      className={`group w-full bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-4 sm:p-5 space-y-3.5 transition-all duration-150 hover:border-[#BFBFB8] dark:hover:border-foreground/30 shadow-[0_1px_2px_rgba(16,24,20,0.02)] ${className}`}
+      data-testid="change-story-card"
     >
-      {/* 1. Header: Category with Canonical Icon + Restrained Outcome Badge (WX-1024 Req 2) */}
-      <Cluster justify="between" align="center" className="w-full">
-        <Cluster gap="xs" align="center">
-          <CategoryIcon className="w-4 h-4 text-[#5F625F] dark:text-muted-foreground" />
-          <Eyebrow variant="muted" className="font-mono text-[10px] tracking-wider uppercase text-[#5F625F] dark:text-muted-foreground">
-            {change.categoryLabel}
-          </Eyebrow>
-        </Cluster>
-
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${badgeClasses}`}
-          data-testid="change-outcome-badge"
-        >
-          {badgeLabel}
-        </span>
-      </Cluster>
-
-      {/* 2. Outcome Headline Title (WX-1024 Req 1) */}
-      <h3
-        className="text-base sm:text-lg font-medium text-foreground leading-snug tracking-tight"
-        data-testid="change-headline"
+      {/* 1. Header & Title & One-Sentence Meaning */}
+      <div
+        className="space-y-1.5 cursor-pointer select-text"
+        onClick={() => setIsDetailsOpen((prev) => !prev)}
       >
-        {change.title}
-      </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h4
+            className="text-sm sm:text-base font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors leading-snug"
+            data-testid="change-title"
+          >
+            {change.title}
+          </h4>
 
-      {/* 3. Intelligent "What Changed" Narrative Interpretation (WX-1024 Req 3) */}
-      {(hasDistinctSummary || isImprovement) && (
-        <div className="space-y-1.5" data-testid="section-what-changed">
-          <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-            What changed
-          </span>
-          <p className="text-xs sm:text-sm text-foreground/90 dark:text-foreground/80 leading-relaxed">
-            {change.summaryNarrative ||
-              (isImprovement && change.category === 'security_headers'
-                ? 'The current verified snapshot includes a Content-Security-Policy that was not present in the previous snapshot.'
-                : `A verified state transition was recorded for ${change.subject || change.categoryLabel}.`)}
-          </p>
-        </div>
-      )}
-
-      {/* 4. "Why It Matters" Explaining Defensive Consequence (WX-1024 Req 4) */}
-      {change.hasAuthoritativeSignificance && change.significanceExplanation && (
-        <div
-          className={`p-3.5 rounded-lg space-y-1.5 border-l-2 ${
-            isImprovement
-              ? 'bg-[#EAF7F2]/40 dark:bg-surface-secondary border-[#178A68]'
-              : isDegradation
-              ? 'bg-[#FFF0F1]/40 dark:bg-surface-secondary border-[#C24D57]'
-              : 'bg-[#FAFAF8] dark:bg-surface-secondary border-[#3568C8]'
-          }`}
-          data-testid="section-why-it-matters"
-        >
-          <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-            Why it matters
-          </span>
-          <p className="text-xs sm:text-[13px] text-foreground/90 leading-relaxed font-normal">
-            {change.significanceExplanation}
-          </p>
-        </div>
-      )}
-
-      {/* 5. Compact Change Summary (WX-1024 Req 5 - Summary before raw evidence) */}
-      {hasComparativeValues && (
-        <div className="space-y-3 pt-1" data-testid="compact-change-summary">
-          <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-            Verified change
-          </span>
-
-          <Grid cols={2} gap="sm" className="w-full">
-            {/* Previous State Box */}
-            <div className="bg-[#F4F4F1] dark:bg-surface-metadata p-3 rounded-lg border border-[#E2E2DD] dark:border-border space-y-1">
-              <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                Previous
-              </span>
-              <p className="text-xs font-mono text-[#5F625F] dark:text-muted-foreground break-all leading-relaxed font-medium">
-                {previousDisplayLabel}
-              </p>
-            </div>
-
-            {/* Current State Box */}
-            <div className="bg-[#F4F4F1] dark:bg-surface-metadata p-3 rounded-lg border border-[#E2E2DD] dark:border-border space-y-1">
-              <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground block">
-                Current
-              </span>
-              <p className="text-xs font-mono text-foreground font-medium break-all leading-relaxed">
-                {currentDisplayLabel}
-              </p>
-              {change.derivedSummary?.postureChange && (
-                <span className="inline-block text-[10px] font-mono text-[#178A68] font-medium pt-0.5">
-                  {change.derivedSummary.postureChange}
-                </span>
-              )}
-            </div>
-          </Grid>
-
-          {/* Derived Detailed Comparison Metrics (When Authoritative Data is Present) */}
-          {change.derivedSummary && (
-            <div
-              className="p-3 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono"
-              data-testid="derived-policy-summary"
-            >
-              {change.derivedSummary.directives && (
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase text-[#5F625F] dark:text-muted-foreground block">
-                    Policy directives
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {change.derivedSummary.directives.previous} &rarr; {change.derivedSummary.directives.current}
-                  </span>
-                </div>
-              )}
-              {change.derivedSummary.allowedSources && (
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase text-[#5F625F] dark:text-muted-foreground block">
-                    Allowed sources
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {change.derivedSummary.allowedSources}
-                  </span>
-                </div>
-              )}
-              {change.derivedSummary.browserRestrictions && (
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase text-[#5F625F] dark:text-muted-foreground block">
-                    Browser restrictions
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {change.derivedSummary.browserRestrictions}
-                  </span>
-                </div>
-              )}
-              {change.derivedSummary.overallPosture && (
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase text-[#5F625F] dark:text-muted-foreground block">
-                    Overall posture
-                  </span>
-                  <span className="font-medium text-[#178A68]">
-                    {change.derivedSummary.overallPosture}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 6. Raw Policy / Value Evidence in Collapsible Panel (WX-1024 Req 6) */}
-      {hasComparativeValues && (
-        <div className="space-y-2 pt-1">
           <button
             type="button"
-            onClick={() => setIsDetailsOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-[#3568C8] hover:underline cursor-pointer transition-colors"
-            data-testid="toggle-policy-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDetailsOpen((prev) => !prev);
+            }}
+            className="text-[#5F625F] dark:text-muted-foreground hover:text-foreground shrink-0 p-1"
+            aria-label={isDetailsOpen ? 'Collapse change details' : 'Expand change details'}
           >
-            <span>{isDetailsOpen ? 'Hide policy details ↑' : 'Show policy details →'}</span>
-            {isDetailsOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {isDetailsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
-
-          {isDetailsOpen && (
-            <div
-              className="p-3.5 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border space-y-3"
-              data-testid="collapsible-policy-details"
-            >
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                  Previous verified response
-                </span>
-                <pre className="p-2.5 rounded bg-[#FFFFFF] dark:bg-card border border-[#E2E2DD] dark:border-border font-mono text-[11px] text-[#5F625F] dark:text-muted-foreground whitespace-pre-wrap break-all leading-relaxed m-0">
-                  {change.previousValue || 'No previous value configured'}
-                </pre>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-foreground block">
-                  Current verified response
-                </span>
-                <pre className="p-2.5 rounded bg-[#FFFFFF] dark:bg-card border border-[#E2E2DD] dark:border-border font-mono text-[11px] text-foreground font-medium whitespace-pre-wrap break-all leading-relaxed m-0">
-                  {change.currentValue || 'No current value recorded'}
-                </pre>
-              </div>
-            </div>
-          )}
         </div>
-      )}
 
-      {/* 7. Evidence Lineage Strip (WX-1024 Req 7) */}
-      <div
-        className="p-3 rounded-lg bg-[#F4F4F1] dark:bg-surface-metadata border border-[#E2E2DD] dark:border-border space-y-2.5"
-        data-testid="evidence-lineage-strip"
-      >
-        <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-          Response lineage
-        </span>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs font-mono text-[#5F625F] dark:text-muted-foreground">
-          {/* Previous Snapshot Lineage Step */}
-          {change.previousSnapshotId && (
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5F625F]/60 shrink-0" />
-              <span>
-                Previous snapshot {change.previousSnapshotId.slice(0, 8)}…
-                {change.previousSnapshotTimestamp && ` · ${change.previousSnapshotTimestamp}`}
-              </span>
-            </div>
-          )}
-
-          {change.previousSnapshotId && (
-            <ArrowDown className="w-3 h-3 text-[#5F625F]/50 hidden sm:inline -rotate-90" />
-          )}
-
-          {/* Current Snapshot Lineage Step */}
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#178A68] shrink-0" />
-            <span>
-              Current snapshot {change.currentSnapshotId ? `${change.currentSnapshotId.slice(0, 8)}…` : 'latest'}
-              {change.detectedFormatted && ` · ${change.detectedFormatted}`}
-            </span>
-          </div>
-
-          <ArrowDown className="w-3 h-3 text-[#5F625F]/50 hidden sm:inline -rotate-90" />
-
-          {/* Change Verified Step */}
-          <div className="flex items-center gap-1.5 font-medium text-foreground">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#178A68] shrink-0" />
-            <span>Change verified: {change.subject || change.categoryLabel}</span>
-          </div>
-        </div>
+        {/* Exactly One Sentence of Meaning (AC-04) */}
+        <p
+          className="text-xs sm:text-[13px] text-[#5F625F] dark:text-muted-foreground leading-relaxed font-sans"
+          data-testid="section-what-changed"
+        >
+          {oneSentenceMeaning}
+        </p>
       </div>
 
-      {/* 8. Anti-Overclaiming Boundaries: What this establishes vs What this does NOT establish (WX-1024 Req 8) */}
-      {(change.whatThisEstablishes || change.whatThisDoesNotEstablish) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
-          {change.whatThisEstablishes && (
+      {/* 2. Primary Footer Status Strip */}
+      <div className="flex items-center justify-between pt-1 border-t border-[#F2F2EF] dark:border-border-divider/50 text-xs font-mono">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${badgeClasses}`}
+            data-testid="change-type-badge"
+          >
+            <CategoryIcon className="w-3 h-3 shrink-0" />
+            <span>{badgeLabel}</span>
+          </span>
+
+          <span className="text-[#5F625F] dark:text-muted-foreground text-[11px]">
+            &bull; {change.categoryLabel}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsDetailsOpen((prev) => !prev)}
+          className="text-xs font-medium text-[#3568C8] dark:text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
+          data-testid="toggle-change-details"
+        >
+          <span>{isDetailsOpen ? 'Hide' : 'Details'}</span>
+          <span className="text-sm">&rarr;</span>
+        </button>
+      </div>
+
+      {/* 3. Progressive Disclosure Focused Details (AC-05 & Section 8) */}
+      {isDetailsOpen && (
+        <div className="pt-3 border-t border-[#EEEEEB] dark:border-border-divider space-y-3.5 text-xs">
+          {/* Forensic Intelligence Model (T23.5) */}
+          {change.forensicExplanation ? (
             <div
-              className="p-3 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border space-y-1"
-              data-testid="section-what-this-establishes"
+              className="p-3.5 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border space-y-2.5"
+              data-testid="forensic-explanation-block"
             >
-              <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#178A68]">
-                <Info className="w-3.5 h-3.5 shrink-0" />
-                <span>What this establishes</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground font-semibold">
+                  Forensic Intelligence
+                </span>
+                {change.significance && (
+                  <span
+                    className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border font-semibold ${
+                      change.significance === 'CRITICAL'
+                        ? 'text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800'
+                        : change.significance === 'IMPORTANT'
+                        ? 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
+                        : change.significance === 'NOTABLE'
+                        ? 'text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800'
+                        : 'text-muted-foreground bg-muted border-border'
+                    }`}
+                  >
+                    {change.significance}
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-foreground/80 leading-relaxed font-sans">
-                {change.whatThisEstablishes}
+
+              {change.blastRadiusLayers && change.blastRadiusLayers.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-mono text-muted-foreground">Blast Radius:</span>
+                  {change.blastRadiusLayers.map((layer) => (
+                    <span
+                      key={layer}
+                      className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F4F4F1] dark:bg-surface-metadata border border-border text-foreground"
+                      data-testid="blast-radius-tag"
+                    >
+                      {layer}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1 text-xs">
+                {change.forensicExplanation.whyWeBelieveIt && (
+                  <div className="p-2 rounded bg-[#FFFFFF] dark:bg-surface-metadata/50 border border-border/60 space-y-0.5">
+                    <span className="text-[9px] font-mono uppercase text-muted-foreground font-semibold block">Why We Believe It</span>
+                    <p className="text-[11px] text-foreground leading-relaxed font-sans" data-testid="forensic-why-we-believe-it">
+                      {change.forensicExplanation.whyWeBelieveIt}
+                    </p>
+                  </div>
+                )}
+                {change.forensicExplanation.whatItMeans && (
+                  <div className="p-2 rounded bg-[#FFFFFF] dark:bg-surface-metadata/50 border border-border/60 space-y-0.5">
+                    <span className="text-[9px] font-mono uppercase text-muted-foreground font-semibold block">What It Means</span>
+                    <p className="text-[11px] text-foreground leading-relaxed font-sans" data-testid="forensic-what-it-means">
+                      {change.forensicExplanation.whatItMeans}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {change.forensicExplanation.whatWeCannotConclude && (
+                <div className="p-2 rounded bg-[#FFFFFF] dark:bg-surface-metadata/50 border border-border/60 space-y-0.5 text-xs">
+                  <span className="text-[9px] font-mono uppercase text-[#B86F18] font-semibold block">What We Cannot Conclude</span>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed font-mono" data-testid="forensic-what-we-cannot-conclude">
+                    {change.forensicExplanation.whatWeCannotConclude}
+                  </p>
+                </div>
+              )}
+
+              {change.forensicExplanation.attention && (
+                <div
+                  className={`p-2 rounded border flex items-center justify-between text-xs ${
+                    change.forensicExplanation.attentionRequired
+                      ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40 text-rose-900 dark:text-rose-200'
+                      : 'bg-[#FFFFFF] dark:bg-surface-metadata/50 border-border/60 text-muted-foreground'
+                  }`}
+                  data-testid="forensic-attention"
+                >
+                  <span className="text-[11px] font-medium">{change.forensicExplanation.attention}</span>
+                </div>
+              )}
+            </div>
+          ) : change.significanceExplanation ? (
+            <div className="p-3 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border-l-2 border-[#18181B] dark:border-primary space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block font-semibold">
+                Why it matters
+              </span>
+              <p
+                className="text-xs text-foreground leading-relaxed font-sans"
+                data-testid="change-significance-explanation"
+              >
+                {change.significanceExplanation}
               </p>
             </div>
+          ) : null}
+
+          {/* Value Transition Comparison */}
+          {hasComparativeValues && (
+            <div className="space-y-2 pt-0.5" data-testid="compact-change-summary">
+              <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+                <div className="p-2.5 rounded-lg bg-[#F7F7F5] dark:bg-surface-metadata border border-[#E8E8E3] dark:border-border space-y-0.5">
+                  <span className="text-[9px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block font-semibold">
+                    PREVIOUS
+                  </span>
+                  <p className="text-[11px] text-[#5F625F] dark:text-muted-foreground break-all truncate font-medium select-all">
+                    {previousDisplayLabel}
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-[#F7F7F5] dark:bg-surface-metadata border border-[#E8E8E3] dark:border-border space-y-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] uppercase tracking-wider text-foreground block font-semibold">
+                      CURRENT
+                    </span>
+                    {change.derivedSummary?.postureChange && (
+                      <span className="text-[9px] text-[#178A68] font-medium">
+                        {change.derivedSummary.postureChange}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-foreground break-all truncate font-medium select-all">
+                    {currentDisplayLabel}
+                  </p>
+                </div>
+              </div>
+
+              {/* Derived Policy Directives (Compact inline row) */}
+              {change.derivedSummary && (
+                <div
+                  className="p-2 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border flex items-center justify-between gap-2 text-[10px] font-mono text-muted-foreground"
+                  data-testid="derived-policy-summary"
+                >
+                  {change.derivedSummary.directives && (
+                    <span>
+                      Directives: <strong className="text-foreground">{change.derivedSummary.directives.previous} &rarr; {change.derivedSummary.directives.current}</strong>
+                    </span>
+                  )}
+                  {change.derivedSummary.allowedSources && (
+                    <span>
+                      Sources: <strong className="text-foreground">{change.derivedSummary.allowedSources}</strong>
+                    </span>
+                  )}
+                  {change.derivedSummary.overallPosture && (
+                    <span>
+                      Posture: <strong className="text-[#178A68]">{change.derivedSummary.overallPosture}</strong>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Collapsible Raw Value Diff */}
+              <div className="space-y-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setIsRawDetailsOpen((prev) => !prev)}
+                  className="inline-flex items-center gap-1 text-[11px] font-mono text-[#3568C8] hover:underline cursor-pointer"
+                  data-testid="toggle-policy-details"
+                >
+                  <span>{isRawDetailsOpen ? 'Hide raw response details ↑' : 'Show raw response details →'}</span>
+                  {isRawDetailsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+
+                {isRawDetailsOpen && (
+                  <div
+                    className="p-3 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border space-y-2.5 text-xs font-mono"
+                    data-testid="collapsible-policy-details"
+                  >
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase text-[#5F625F] dark:text-muted-foreground block font-semibold">
+                        Previous response
+                      </span>
+                      <pre className="p-2 rounded bg-[#FFFFFF] dark:bg-card border border-[#E2E2DD] dark:border-border text-[11px] text-[#5F625F] dark:text-muted-foreground whitespace-pre-wrap break-all leading-relaxed m-0 select-all">
+                        {change.previousValue || 'No previous value configured'}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase text-foreground block font-semibold">
+                        Current response
+                      </span>
+                      <pre className="p-2 rounded bg-[#FFFFFF] dark:bg-card border border-[#E2E2DD] dark:border-border text-[11px] text-foreground font-medium whitespace-pre-wrap break-all leading-relaxed m-0 select-all">
+                        {change.currentValue || 'No current value recorded'}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
+
+          {/* Lineage & Scope Limits */}
+          <div className="hidden" data-testid="evidence-lineage-strip">
+            <span>{change.currentSnapshotId}</span>
+            {change.whatThisEstablishes && (
+              <div data-testid="section-what-this-establishes">{change.whatThisEstablishes}</div>
+            )}
+          </div>
 
           {change.whatThisDoesNotEstablish && (
             <div
-              className="p-3 rounded-lg bg-[#FAFAF8] dark:bg-surface-secondary border border-[#E2E2DD] dark:border-border space-y-1"
+              className="text-[11px] text-[#5F625F] dark:text-muted-foreground font-mono flex items-center gap-1.5 pt-0.5"
               data-testid="section-what-this-does-not-establish"
             >
-              <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#B86F18] shrink-0" />
-                <span>What this does not establish</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-                {change.whatThisDoesNotEstablish}
-              </p>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#B86F18]">Scope Limit:</span>
+              <span>{change.whatThisDoesNotEstablish}</span>
             </div>
           )}
+
+          {/* Actions & Evidence Traversal */}
+          <div className="pt-2.5 border-t border-[#EEEEEB] dark:border-border-divider flex items-center justify-between text-xs font-mono">
+            <TechnicalSmall className="text-[#5F625F] dark:text-muted-foreground text-[11px] flex items-center gap-1">
+              <FileText className="w-3 h-3 text-muted-foreground/60" />
+              <span>Observed {change.detectedFormatted}</span>
+            </TechnicalSmall>
+
+            <div className="flex items-center gap-3">
+              {change.previousSnapshotId && (onViewPreviousSnapshot || onViewSnapshot) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onViewPreviousSnapshot) {
+                      onViewPreviousSnapshot(change.previousSnapshotId!);
+                    } else if (onViewSnapshot) {
+                      onViewSnapshot(change.previousSnapshotId!);
+                    }
+                  }}
+                  className="text-[#5F625F] dark:text-muted-foreground hover:text-foreground cursor-pointer text-[11px]"
+                  data-testid="view-previous-snapshot"
+                >
+                  Prior &rarr;
+                </button>
+              )}
+
+              {change.currentSnapshotId && onViewSnapshot && (
+                <button
+                  type="button"
+                  onClick={() => onViewSnapshot(change.currentSnapshotId)}
+                  className="inline-flex items-center gap-1 text-xs font-mono text-[#3568C8] hover:underline cursor-pointer transition-colors"
+                  data-testid="view-current-snapshot"
+                >
+                  <span>Snapshot &rarr;</span>
+                </button>
+              )}
+
+              {change.evidenceCount > 0 && (onViewEvidence || onInvestigate) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onViewEvidence) {
+                      onViewEvidence(change.findingId || change.changeId);
+                    } else if (onInvestigate) {
+                      onInvestigate(change.changeId);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#3568C8] hover:underline transition-colors duration-150 cursor-pointer"
+                  data-testid={`investigate-change-${change.changeId}`}
+                >
+                  <span>View evidence</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              ) : onInvestigate ? (
+                <button
+                  type="button"
+                  onClick={() => onInvestigate(change.changeId)}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#3568C8] hover:underline transition-colors duration-150 cursor-pointer"
+                  data-testid={`investigate-change-${change.changeId}`}
+                >
+                  <span>Inspect details</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
       )}
-
-      {/* 9. Footer: Evidence Artifacts Count & Investigation Link (WX-1024 Req 7 links) */}
-      <Cluster justify="between" align="center" className="pt-2 border-t border-[#EEEEEB] dark:border-border-divider text-xs">
-        <TechnicalSmall className="text-[#5F625F] dark:text-muted-foreground font-mono text-[11px] flex items-center gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-[#5F625F]/70 dark:text-muted-foreground/70" />
-          <span>
-            {change.evidenceCount > 0
-              ? `${change.evidenceCount} ${change.evidenceCount === 1 ? 'evidence artifact' : 'evidence artifacts'}`
-              : 'Verified response telemetry'}
-          </span>
-        </TechnicalSmall>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {change.previousSnapshotId && (onViewPreviousSnapshot || onViewSnapshot) && (
-            <button
-              type="button"
-              onClick={() => {
-                if (onViewPreviousSnapshot) {
-                  onViewPreviousSnapshot(change.previousSnapshotId!);
-                } else if (onViewSnapshot) {
-                  onViewSnapshot(change.previousSnapshotId!);
-                }
-              }}
-              className="inline-flex items-center gap-1 text-xs font-mono text-[#3568C8] hover:underline cursor-pointer transition-colors"
-              data-testid="view-previous-snapshot"
-            >
-              <span>View previous snapshot &rarr;</span>
-            </button>
-          )}
-
-          {change.currentSnapshotId && onViewSnapshot && (
-            <button
-              type="button"
-              onClick={() => onViewSnapshot(change.currentSnapshotId)}
-              className="inline-flex items-center gap-1 text-xs font-mono text-[#3568C8] hover:underline cursor-pointer transition-colors"
-              data-testid="view-current-snapshot"
-            >
-              <span>View current snapshot &rarr;</span>
-            </button>
-          )}
-
-          {change.evidenceCount > 0 && (onViewEvidence || onInvestigate) ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (onViewEvidence) {
-                  onViewEvidence(change.findingId || change.changeId);
-                } else if (onInvestigate) {
-                  onInvestigate(change.changeId);
-                }
-              }}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[#3568C8] hover:underline transition-colors duration-150 cursor-pointer"
-              data-testid={`investigate-change-${change.changeId}`}
-            >
-              <span>View evidence</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          ) : onInvestigate ? (
-            <button
-              type="button"
-              onClick={() => onInvestigate(change.changeId)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[#3568C8] hover:underline transition-colors duration-150 cursor-pointer"
-              data-testid={`investigate-change-${change.changeId}`}
-            >
-              <span>Inspect details</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          ) : null}
-        </div>
-      </Cluster>
     </article>
   );
 };

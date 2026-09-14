@@ -96,3 +96,6 @@ export const SettingsPage: React.FC = () => {
 };
 
 SettingsPage.displayName = 'SettingsPage';
+
+export default SettingsPage;
+

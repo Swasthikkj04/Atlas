@@ -1,6 +1,8 @@
 export class FindingDto {
   id: string;
 
+  ruleId?: string;
+
   title: string;
 
   description: string;

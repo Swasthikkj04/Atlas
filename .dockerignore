@@ -1,0 +1,47 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+
+# Build artifacts and caches
+dist
+build
+coverage
+.turbo
+.next
+out
+.cache
+*.tsbuildinfo
+
+# Environment and Secrets (CRITICAL: Never bake secrets into images)
+.env
+.env.*
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# Test outputs
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
+# IDE and OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Documentation and temporary files
+docs
+*.tmp
+*.temp
+*.log
+logs
+scratch

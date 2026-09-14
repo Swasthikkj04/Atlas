@@ -111,4 +111,70 @@ export class EvidenceRepository {
       orderBy: { capturedAt: 'desc' },
     });
   }
+
+  async getEvidenceStorageStats(domainId?: string) {
+    const where = domainId ? { domainId } : {};
+    const count = await this.prisma.rawEvidence.count({ where });
+    const aggregate = await this.prisma.rawEvidence.aggregate({
+      where,
+      _sum: {
+        sizeBytes: true,
+        compressedSizeBytes: true,
+      },
+      _min: {
+        capturedAt: true,
+      },
+      _max: {
+        capturedAt: true,
+      },
+    });
+
+    return {
+      totalCount: count,
+      totalSizeBytes: aggregate._sum.sizeBytes || 0,
+      compressedSizeBytes: aggregate._sum.compressedSizeBytes || 0,
+      oldestDate: aggregate._min.capturedAt,
+      newestDate: aggregate._max.capturedAt,
+    };
+  }
+
+  async countExpiredEvidence(cutoffDate: Date, domainId?: string) {
+    const where: any = {
+      capturedAt: {
+        lt: cutoffDate,
+      },
+    };
+    if (domainId) {
+      where.domainId = domainId;
+    }
+    return this.prisma.rawEvidence.count({ where });
+  }
+
+  async findExpiredEvidence(cutoffDate: Date, domainId?: string, limit = 1000) {
+    const where: any = {
+      capturedAt: {
+        lt: cutoffDate,
+      },
+    };
+    if (domainId) {
+      where.domainId = domainId;
+    }
+    return this.prisma.rawEvidence.findMany({
+      where,
+      orderBy: { capturedAt: 'asc' },
+      take: limit,
+    });
+  }
+
+  async deleteEvidenceBatch(ids: string[]) {
+    if (!ids || ids.length === 0) return 0;
+    const result = await this.prisma.rawEvidence.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+    return result.count;
+  }
 }

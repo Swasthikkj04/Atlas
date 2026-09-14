@@ -110,11 +110,11 @@ export class UnderstandingWorker implements OnModuleInit, OnModuleDestroy {
               currentJobId,
               async () => {
                 await this.understandingService.processJob(
-                  currentJobId!,
+                  currentJobId,
                   async () => {
                     // Periodic heartbeat callback invoked during discovery phases
                     await this.workerReliabilityService.updateHeartbeat(
-                      currentJobId!,
+                      currentJobId,
                       this.workerId,
                       this.leaseDurationMs,
                     );

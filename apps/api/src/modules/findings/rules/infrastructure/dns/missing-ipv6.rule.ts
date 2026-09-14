@@ -22,7 +22,11 @@ export class MissingIpv6Rule implements FindingRule {
 
     // P0 Truth Invariant (WX-1020): DNS lookup failure != IPv6 not configured.
     const aaaaStatus = dns.status?.aaaa;
-    if (aaaaStatus === 'FAILED' || aaaaStatus === 'TIMEOUT' || aaaaStatus === 'SERVFAIL') {
+    if (
+      aaaaStatus === 'FAILED' ||
+      aaaaStatus === 'TIMEOUT' ||
+      aaaaStatus === 'SERVFAIL'
+    ) {
       return [];
     }
 

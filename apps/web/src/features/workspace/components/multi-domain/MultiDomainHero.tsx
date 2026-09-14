@@ -1,18 +1,18 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, ArrowRight, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShieldCheck, RefreshCw, ArrowRight } from 'lucide-react';
 import { Icon } from '../../../../components/icons';
 import { Display, Eyebrow } from '../../../../components/typography';
 import { Stack, Cluster } from '../../../../components/layout';
 import type { MultiDomainHeroProps } from './WorkspaceIntelligenceLanding.types';
 
 /**
- * Premium Multi-Domain Briefing Hero (WX-1025).
+ * Authoritative Return Intelligence Hero (WX-O-01 / WX-1025).
  *
- * Implements the authoritative Workspace Intelligence Briefing Hero:
- * - Direct, calm expert tone without chatbot / greeting theater
- * - Prominently features the Primary Intelligence State (Quiet vs Changes vs Attention vs In Progress)
- * - Silence as a premier product feature ("Silence is preferable to manufactured activity")
- * - Strictly derived from authoritative backend snapshots
+ * Implements the return briefing header hierarchy:
+ * 1. Eyebrow: WORKSPACE
+ * 2. Display Title: Infrastructure intelligence
+ * 3. Subtitle: Your infrastructure, since you last looked.
+ * 4. Conditional Attention Strip / Calm Baseline Status
  */
 export const MultiDomainHero: React.FC<MultiDomainHeroProps> = ({
   brief,
@@ -47,7 +47,7 @@ export const MultiDomainHero: React.FC<MultiDomainHeroProps> = ({
       badgeBg: 'bg-[#FFF4E3]',
       badgeBorder: 'border-[#F0D3A5]',
       icon: AlertTriangle,
-      label: 'ATTENTION RECOMMENDED',
+      label: 'ATTENTION',
     },
     UNDERSTANDING_IN_PROGRESS: {
       dot: 'bg-[#3568C8]',
@@ -71,32 +71,40 @@ export const MultiDomainHero: React.FC<MultiDomainHeroProps> = ({
 
   return (
     <Stack gap="lg" className={`w-full ${className}`} data-testid="multi-domain-hero">
-      {/* 1. Briefing Tagline & Category Context */}
+      {/* 1. Return Briefing Header Hierarchy (WX-O-01) */}
       <Stack gap="xs">
         <Cluster justify="between" align="center">
           <Eyebrow
             variant="muted"
             className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#5F625F] dark:text-muted-foreground font-semibold"
           >
-            WORKSPACE INTELLIGENCE
+            WORKSPACE
           </Eyebrow>
 
           <span className="font-mono text-xs text-[#5F625F] dark:text-muted-foreground">
-            {brief.subtitle}
+            {brief.totalDomains} monitored {brief.totalDomains === 1 ? 'domain' : 'domains'}
           </span>
         </Cluster>
 
         <Display className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground leading-[1.2]">
           Infrastructure intelligence
         </Display>
+
+        <p className="text-xs sm:text-sm text-foreground/80 dark:text-muted-foreground font-normal font-sans">
+          Your infrastructure, since you last looked.
+        </p>
       </Stack>
 
-      {/* 2. The Primary Intelligence State (The Most Important Visual Object) */}
+      {/* 2. Attention State or Primary Intelligence Indicator */}
       <div
-        className="p-6 sm:p-7 rounded-xl border border-[#E1E1DC] dark:border-border bg-[#FFFFFF] dark:bg-card shadow-[0_1px_2px_rgba(16,24,20,0.035)] space-y-4"
+        className={`p-5 sm:p-6 rounded-xl border shadow-[0_1px_2px_rgba(16,24,20,0.035)] space-y-3 ${
+          hasAttention
+            ? 'border-[#F0D3A5] bg-[#FFFBF5] dark:bg-amber-950/20 dark:border-amber-900/60'
+            : 'border-[#E1E1DC] dark:border-border bg-[#FFFFFF] dark:bg-card'
+        }`}
         data-testid="primary-intelligence-state"
       >
-        {/* Status Indicator Header */}
+        {/* Status Header */}
         <Cluster justify="between" align="center" gap="sm">
           <div className="flex items-center gap-2">
             <span
@@ -113,21 +121,21 @@ export const MultiDomainHero: React.FC<MultiDomainHeroProps> = ({
             className={`font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${currentTheme.badgeText} ${currentTheme.badgeBg} ${currentTheme.badgeBorder}`}
           >
             {isQuiet
-              ? 'ALL SYSTEMS MONITORED'
+              ? 'ALL BASES MONITORED'
               : hasChanges
               ? `${brief.totalChangesCount} ${brief.totalChangesCount === 1 ? 'CHANGE' : 'CHANGES'}`
               : hasAttention
-              ? 'CONDITIONS OBSERVED'
+              ? `${brief.domainsWithAttentionCount} ${brief.domainsWithAttentionCount === 1 ? 'DOMAIN NEEDS REVIEW' : 'DOMAINS NEED REVIEW'}`
               : isVerifying
               ? 'VERIFYING'
               : 'IDLE'}
           </span>
         </Cluster>
 
-        {/* Primary Statement */}
-        <div className="space-y-1.5 max-w-3xl">
+        {/* Headline & Explanation */}
+        <div className="space-y-1 max-w-3xl">
           <h2
-            className="text-lg sm:text-xl font-medium text-foreground tracking-tight leading-snug"
+            className="text-base sm:text-lg font-medium text-foreground tracking-tight leading-snug"
             data-testid="briefing-headline"
           >
             {brief.headline}
@@ -142,7 +150,7 @@ export const MultiDomainHero: React.FC<MultiDomainHeroProps> = ({
 
         {/* Action Button for Changes */}
         {hasChanges && onReviewChanges && (
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               type="button"
               onClick={onReviewChanges}

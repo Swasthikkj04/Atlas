@@ -1,8 +1,10 @@
-import { apiClient } from '../lib/api-client';
+import { apiClient } from '../lib/api-client.ts';
 import type {
+  DriftAlertDto,
   InfrastructureSnapshotDto,
+  SnapshotDriftForensicsDto,
   SnapshotListResponseDto,
-} from '../types/api';
+} from '../types/api/index.ts';
 
 export const snapshotService = {
   getSnapshotsForDomain: (
@@ -26,4 +28,42 @@ export const snapshotService = {
       `/snapshots/${encodeURIComponent(snapshotId)}`,
       { signal }
     ),
+
+  getSnapshotDiff: (
+    domainId: string,
+    targetSnapshotId: string,
+    baseSnapshotId?: string,
+    signal?: AbortSignal
+  ) => {
+    const qs = baseSnapshotId ? `?baseSnapshotId=${encodeURIComponent(baseSnapshotId)}` : '';
+    return apiClient.get<SnapshotDriftForensicsDto>(
+      `/domains/${encodeURIComponent(domainId)}/snapshots/${encodeURIComponent(targetSnapshotId)}/diff${qs}`,
+      { signal }
+    );
+  },
+
+  getDomainDriftAlerts: (domainId: string, signal?: AbortSignal) =>
+    apiClient.get<DriftAlertDto[]>(
+      `/domains/${encodeURIComponent(domainId)}/drift-alerts`,
+      { signal }
+    ),
+
+  getWorkspaceDriftAlerts: (signal?: AbortSignal) =>
+    apiClient.get<DriftAlertDto[]>(
+      `/workspace/drift-alerts`,
+      { signal }
+    ),
+
+  acknowledgeDriftAlert: (domainId: string, alertId: string) =>
+    apiClient.patch<DriftAlertDto>(
+      `/domains/${encodeURIComponent(domainId)}/drift-alerts/${encodeURIComponent(alertId)}/ack`,
+      {}
+    ),
+
+  resolveDriftAlert: (domainId: string, alertId: string) =>
+    apiClient.patch<DriftAlertDto>(
+      `/domains/${encodeURIComponent(domainId)}/drift-alerts/${encodeURIComponent(alertId)}/resolve`,
+      {}
+    ),
 };
+

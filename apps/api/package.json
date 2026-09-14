@@ -12,12 +12,17 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "start:worker": "node dist/worker",
+    "start:worker:dev": "nest start --entryFile worker --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "provision:admin": "ts-node src/scripts/provision-admin.ts",
+    "token:admin": "ts-node src/scripts/generate-admin-token.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -28,6 +33,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.6",
     "@prisma/client": "6.19.0",
+    "@simplewebauthn/server": "^13.3.3",
     "@types/cookie-parser": "^1.4.10",
     "@types/helmet": "^0.0.48",
     "@types/passport-github2": "^1.2.9",
@@ -44,6 +50,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.27.0",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1"
   },

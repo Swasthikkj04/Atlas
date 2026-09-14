@@ -11,12 +11,12 @@ describe('REFINEMENT-003: Environment Validation & Production Configuration Hard
       'prod_super_secure_access_secret_key_minimum_32_characters_long_12345!',
     JWT_REFRESH_SECRET:
       'prod_super_secure_refresh_secret_key_minimum_32_characters_long_67890!',
-    FRONTEND_URL: 'https://app.nebula-intelligence.com',
-    APP_URL: 'https://app.nebula-intelligence.com',
+    FRONTEND_URL: 'https://app.argonion.com',
+    APP_URL: 'https://app.argonion.com',
     CORS_ALLOWED_ORIGINS:
-      'https://app.nebula-intelligence.com,https://admin.nebula-intelligence.com',
+      'https://app.argonion.com,https://www.argonion.com,https://argonion.com',
     EMAIL_PROVIDER: 'smtp',
-    EMAIL_FROM: 'security@nebula-intelligence.com',
+    EMAIL_FROM: 'security@argonion.com',
     SMTP_HOST: 'smtp.sendgrid.net',
     SMTP_PORT: 587,
     SMTP_USER: 'apikey',
@@ -195,8 +195,7 @@ describe('REFINEMENT-003: Environment Validation & Production Configuration Hard
     it('should reject production startup if CORS_ALLOWED_ORIGINS contains localhost', () => {
       const config = {
         ...validProductionBase,
-        CORS_ALLOWED_ORIGINS:
-          'https://app.nebula-intelligence.com,http://localhost:5173',
+        CORS_ALLOWED_ORIGINS: 'https://app.argonion.com,http://localhost:5173',
       };
 
       expect(() => validateEnvironment(config)).toThrow(
@@ -239,6 +238,91 @@ describe('REFINEMENT-003: Environment Validation & Production Configuration Hard
         /EMAIL_FROM cannot use example\.com or localhost domain in production/,
       );
     });
+
+    it('should succeed in production when EMAIL_PROVIDER=resend and valid RESEND_API_KEY is provided', () => {
+      const config = {
+        ...validProductionBase,
+        EMAIL_PROVIDER: 'resend',
+        RESEND_API_KEY: 're_1234567890abcdef1234567890abcdef',
+      };
+      delete (config as any).SMTP_HOST;
+      delete (config as any).SMTP_PORT;
+      delete (config as any).SMTP_USER;
+      delete (config as any).SMTP_PASS;
+
+      const result = validateEnvironment(config);
+      expect(result.EMAIL_PROVIDER).toBe('resend');
+      expect(result.RESEND_API_KEY).toBe('re_1234567890abcdef1234567890abcdef');
+    });
+
+    it('should reject production startup if EMAIL_PROVIDER=resend and RESEND_API_KEY is missing', () => {
+      const config = {
+        ...validProductionBase,
+        EMAIL_PROVIDER: 'resend',
+      };
+      delete (config as any).SMTP_HOST;
+      delete (config as any).SMTP_PORT;
+      delete (config as any).SMTP_USER;
+      delete (config as any).SMTP_PASS;
+      delete (config as any).RESEND_API_KEY;
+
+      expect(() => validateEnvironment(config)).toThrow(
+        /RESEND_API_KEY is required and must not be a placeholder when EMAIL_PROVIDER=resend in production/,
+      );
+    });
+
+    it('should reject production startup if EMAIL_PROVIDER=resend and RESEND_API_KEY contains placeholder', () => {
+      const config = {
+        ...validProductionBase,
+        EMAIL_PROVIDER: 'resend',
+        RESEND_API_KEY: 're_placeholder_secret_key_1234567890!',
+      };
+      delete (config as any).SMTP_HOST;
+      delete (config as any).SMTP_PORT;
+      delete (config as any).SMTP_USER;
+      delete (config as any).SMTP_PASS;
+
+      expect(() => validateEnvironment(config)).toThrow(
+        /RESEND_API_KEY is required and must not be a placeholder when EMAIL_PROVIDER=resend in production/,
+      );
+    });
+
+    it('should reject production startup if EMAIL_PROVIDER=resend and RESEND_API_KEY is too short (< 32 chars)', () => {
+      const config = {
+        ...validProductionBase,
+        EMAIL_PROVIDER: 'resend',
+        RESEND_API_KEY: 're_short_secret_key_1234',
+      };
+      delete (config as any).SMTP_HOST;
+      delete (config as any).SMTP_PORT;
+      delete (config as any).SMTP_USER;
+      delete (config as any).SMTP_PASS;
+
+      expect(() => validateEnvironment(config)).toThrow(
+        /RESEND_API_KEY is required and must not be a placeholder when EMAIL_PROVIDER=resend in production/,
+      );
+    });
+
+    it('should not require RESEND_API_KEY when another production provider (e.g. smtp) is active', () => {
+      const config = {
+        ...validProductionBase,
+        EMAIL_PROVIDER: 'smtp',
+      };
+      delete (config as any).RESEND_API_KEY;
+
+      const result = validateEnvironment(config);
+      expect(result.EMAIL_PROVIDER).toBe('smtp');
+      expect(result.RESEND_API_KEY).toBeUndefined();
+    });
+
+    it('should allow development mode without RESEND_API_KEY when EMAIL_PROVIDER=development', () => {
+      const result = validateEnvironment({
+        NODE_ENV: 'development',
+        EMAIL_PROVIDER: 'development',
+      });
+      expect(result.EMAIL_PROVIDER).toBe('development');
+      expect(result.RESEND_API_KEY).toBeUndefined();
+    });
   });
 
   describe('8. Production OAuth Invariants', () => {
@@ -261,7 +345,7 @@ describe('REFINEMENT-003: Environment Validation & Production Configuration Hard
         GOOGLE_CLIENT_ID: '123456789.apps.googleusercontent.com',
         GOOGLE_CLIENT_SECRET: 'google-client-secret-placeholder',
         GOOGLE_CALLBACK_URL:
-          'https://api.nebula-intelligence.com/api/v1/auth/google/callback',
+          'https://api.argonion.com/api/v1/auth/google/callback',
       };
 
       expect(() => validateEnvironment(config)).toThrow(

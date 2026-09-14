@@ -20,10 +20,11 @@ export default registerAs('auth', () => {
 
     frontendUrl:
       process.env.FRONTEND_URL ||
-      (isProduction ? undefined : 'http://localhost:5173'),
+      (isProduction ? 'https://nebula.argonion.com' : 'http://localhost:5173'),
 
     appUrl:
       process.env.APP_URL ||
-      (isProduction ? undefined : 'http://localhost:5173'),
+      process.env.FRONTEND_URL ||
+      (isProduction ? 'https://nebula.argonion.com' : 'http://localhost:5173'),
   };
 });

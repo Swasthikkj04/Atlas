@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { authService } from '../../../services/auth';
+import { telemetry } from '../../../services';
 import { Field } from './Field';
 import { OAuthButtons } from './OAuthButtons';
 import {
@@ -64,6 +65,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
 
     setSubmitting(true);
 
+    telemetry.track('SIGN_UP_CTA', {
+      path: typeof window !== 'undefined' ? window.location.pathname : '/create-workspace',
+      surface: 'auth',
+      ctaLocation: 'registration_form',
+    });
+
     try {
       await authService.register({
         fullName: name.trim(),
@@ -77,6 +84,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         err instanceof Error
           ? err.message
           : 'Registration failed. Please try again.';
+
+      telemetry.track('AUTH_FAILURE', {
+        path: typeof window !== 'undefined' ? window.location.pathname : '/create-workspace',
+        surface: 'auth',
+        status: 'FAILURE',
+        errorCode: msg.slice(0, 50),
+      });
 
       if (
         msg.toLowerCase().includes('already registered') ||
@@ -264,6 +278,23 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         onInitiateOAuth={onInitiateOAuth}
         disabled={submitting}
       />
+
+      <p className="mt-4 text-[11px] text-muted-foreground text-center leading-relaxed">
+        By creating a workspace, you agree to our{' '}
+        <a
+          href="/terms"
+          className="text-foreground underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:ring-2 focus-visible:ring-ring rounded font-medium"
+        >
+          Terms &amp; Conditions
+        </a>{' '}
+        and{' '}
+        <a
+          href="/privacy"
+          className="text-foreground underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:ring-2 focus-visible:ring-ring rounded font-medium"
+        >
+          Privacy Policy
+        </a>.
+      </p>
 
       <p className="mt-5 text-[11.5px] text-muted-foreground text-center">
         Already have an account?{' '}

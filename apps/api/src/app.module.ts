@@ -29,6 +29,9 @@ import { ActivityModule } from './modules/activity/activity.module';
 import { SearchModule } from './modules/search/search.module';
 import { ExplorerModule } from './modules/explorer/explorer.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { AdminConsoleModule } from './modules/admin-console/admin-console.module';
+import { AdminWebAuthnModule } from './modules/admin-webauthn/admin-webauthn.module';
+import { DriftAlertsModule } from './modules/drift-alerts/drift-alerts.module';
 
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -36,6 +39,7 @@ import { SecurityHeadersMiddleware } from './common/middleware/security-headers.
 import { CsrfGuard } from './common/guards/csrf.guard';
 
 import { RateLimitingModule } from './infrastructure/rate-limiting/rate-limiting.module';
+import { RateLimiterGuard } from './infrastructure/rate-limiting/rate-limiter.guard';
 
 import { validateEnvironment } from './config/env.validation';
 
@@ -75,6 +79,9 @@ import { validateEnvironment } from './config/env.validation';
     SearchModule,
     ExplorerModule,
     QueueModule,
+    DriftAlertsModule,
+    AdminConsoleModule,
+    AdminWebAuthnModule,
   ],
   providers: [
     {
@@ -84,6 +91,10 @@ import { validateEnvironment } from './config/env.validation';
     {
       provide: APP_GUARD,
       useClass: CsrfGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimiterGuard,
     },
   ],
 })

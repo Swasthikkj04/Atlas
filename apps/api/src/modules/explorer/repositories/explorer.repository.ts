@@ -218,13 +218,13 @@ export class ExplorerRepository {
 
     if (query.category) {
       filtered = filtered.filter(
-        (a) => a.category.toLowerCase() === query.category!.toLowerCase(),
+        (a) => a.category.toLowerCase() === query.category.toLowerCase(),
       );
     }
 
     if (query.confidence) {
       filtered = filtered.filter(
-        (a) => a.confidence.toLowerCase() === query.confidence!.toLowerCase(),
+        (a) => a.confidence.toLowerCase() === query.confidence.toLowerCase(),
       );
     }
 

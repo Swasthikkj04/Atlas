@@ -299,3 +299,12 @@ Nebula's Guest Experience enables users to understand their infrastructure witho
 It delivers immediate value through secure, temporary guest sessions while providing a seamless path toward permanent workspace creation.
 
 The experience demonstrates Nebula's infrastructure intelligence before requesting user commitment.
+
+---
+
+# 20. Redesign Foundation Contract (GX-R001)
+
+The complete product and experience contract for the Nebula Guest Experience Redesign is formalized in:
+- **[GX-R001 — Guest Experience Product & Experience Contract](file:///home/swasthik-k-j/Desktop/Atlas/docs/gx-r001-guest-experience-product-and-experience-contract.md)**
+- **TypeScript Contract:** [`gx-r001-product-experience.contract.ts`](file:///home/swasthik-k-j/Desktop/Atlas/apps/web/src/features/guest/contracts/gx-r001-product-experience.contract.ts)
+- **Certification Gate:** *"A temporary Guest Workspace that exposes Nebula's canonical infrastructure intelligence without requiring an account or providing persistent Workspace memory."*

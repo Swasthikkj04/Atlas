@@ -2,6 +2,7 @@ import React, { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../../../services/auth';
+import { telemetry } from '../../../services';
 import { useTheme } from '../../guest/hooks/useTheme';
 import { NetworkBg } from '../components/NetworkBg';
 import { NebulaAuthHeader } from '../components/NebulaAuthHeader';
@@ -24,8 +25,11 @@ export const LoginPage: React.FC = () => {
       if (domain) {
         return {
           domain,
-          understandingType: 'Infrastructure Understanding',
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          stats: {
+            subdomains: Number(params.get('subdomains') || '0'),
+            services: Number(params.get('services') || '0'),
+            risks: Number(params.get('risks') || '0'),
+          },
         };
       }
       try {
@@ -35,8 +39,7 @@ export const LoginPage: React.FC = () => {
           if (parsed.domain) {
             return {
               domain: parsed.domain,
-              understandingType: 'Infrastructure Understanding',
-              expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : new Date(Date.now() + 24 * 60 * 60 * 1000),
+              stats: parsed.stats || { subdomains: 0, services: 0, risks: 0 },
             };
           }
         }
@@ -63,6 +66,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
     setIsPendingVerification(false);
     setIsDeactivated(false);
+    setResendSent(false);
 
     if (!email.trim()) {
       setError('Please enter your email address.');
@@ -77,10 +81,21 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login({ email: email.trim(), password });
+      telemetry.track('SIGN_IN', {
+        path: '/login',
+        surface: 'auth',
+        status: 'SUCCESS',
+      });
       try {
         await checkAndClaimGuestSession();
-      } catch {
-        // non-blocking claim fallback
+      } catch (claimErr: unknown) {
+        const claimMsg =
+          claimErr instanceof Error
+            ? claimErr.message
+            : 'Sorry, your domain limit has been reached.';
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('nebula_claim_error', claimMsg);
+        }
       }
       window.location.href = '/workspace';
     } catch (err: unknown) {
@@ -89,6 +104,12 @@ export const LoginPage: React.FC = () => {
           ? err.message
           : 'Authentication failed. Please check your credentials.';
       setError(message);
+      telemetry.track('AUTH_FAILURE', {
+        path: '/login',
+        surface: 'auth',
+        status: 'FAILURE',
+        errorCode: message.slice(0, 50),
+      });
       if (
         message.toLowerCase().includes('verify your email') ||
         message.toLowerCase().includes('verification required')
@@ -287,6 +308,23 @@ export const LoginPage: React.FC = () => {
               aria-label="Create a new workspace account"
             >
               Create workspace →
+            </a>
+          </p>
+
+          <p className="mt-4 text-[11px] text-muted-foreground/80 text-center">
+            Protected by Argonion session security &bull;{' '}
+            <a
+              href="/terms"
+              className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors focus-visible:ring-2 focus-visible:ring-ring rounded"
+            >
+              Terms
+            </a>
+            {' '}&bull;{' '}
+            <a
+              href="/privacy"
+              className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors focus-visible:ring-2 focus-visible:ring-ring rounded"
+            >
+              Privacy
             </a>
           </p>
         </div>

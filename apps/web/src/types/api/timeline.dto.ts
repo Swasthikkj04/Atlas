@@ -63,6 +63,17 @@ export interface TimelineEventDto {
   readonly currentValue?: string | null;
   readonly detectedAt?: string;
   readonly timestamp?: string | Date;
+  readonly forensicExplanation?: {
+    readonly whatChanged?: string;
+    readonly whyWeBelieveIt?: string;
+    readonly whatItMeans?: string;
+    readonly whatWeCannotConclude?: string;
+    readonly impact?: string;
+    readonly attention?: string;
+    readonly attentionRequired?: boolean;
+  };
+  readonly significance?: 'INFORMATIONAL' | 'NOTABLE' | 'IMPORTANT' | 'CRITICAL' | string;
+  readonly blastRadiusLayers?: readonly string[];
 }
 
 export interface TimelineQueryDto {

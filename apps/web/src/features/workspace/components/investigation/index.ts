@@ -6,3 +6,7 @@ export * from './ObservationEvidenceSurface';
 export * from './ObservationEvidenceSurface.types';
 export * from './SnapshotLineageSurface';
 export * from './SnapshotLineageSurface.types';
+export * from './InvestigationReturnAnchor';
+export * from './InvestigationReturnAnchor.types';
+export * from './EvidenceDrawer';
+export * from './EvidenceDrawer.types';

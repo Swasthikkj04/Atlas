@@ -1,0 +1,147 @@
+/**
+ * S-09 Security Event Types & Vocabulary
+ *
+ * Implements S09 Canonical Security Event Taxonomy across:
+ * - Authentication & Session
+ * - Authorization & Tenant Boundary
+ * - GX / WX Boundary
+ * - Input Integrity & Abuse
+ * - Data Protection & Privacy
+ * - Cryptographic Security
+ */
+
+export type AuthenticationSecurityEventType =
+  | 'LOGIN_SUCCESS'
+  | 'LOGIN_FAILURE'
+  | 'OAUTH_AUTHENTICATION'
+  | 'SESSION_CREATED'
+  | 'SESSION_EXPIRED'
+  | 'SESSION_REVOKED'
+  | 'LOGOUT'
+  | 'GLOBAL_LOGOUT'
+  | 'REFRESH_SUCCESS'
+  | 'REFRESH_FAILURE'
+  | 'REFRESH_REUSE_DETECTED';
+
+export type AuthorizationSecurityEventType =
+  | 'AUTHORIZATION_ALLOWED'
+  | 'AUTHORIZATION_DENIED'
+  | 'OWNERSHIP_DENIED'
+  | 'TENANT_BOUNDARY_VIOLATION'
+  | 'PLANE_BOUNDARY_VIOLATION'
+  | 'ADMIN_BOUNDARY_VIOLATION';
+
+export type BoundarySecurityEventType =
+  | 'GX_SESSION_CREATED'
+  | 'GX_ACCESS_ALLOWED'
+  | 'GX_ACCESS_DENIED'
+  | 'GX_WX_BOUNDARY_VIOLATION'
+  | 'GUEST_CLAIM_SUCCESS'
+  | 'GUEST_CLAIM_REJECTED'
+  | 'GUEST_CLAIM_REPLAY';
+
+export type AbuseSecurityEventType =
+  | 'VALIDATION_REJECTED'
+  | 'INJECTION_ATTEMPT'
+  | 'REQUEST_SIZE_REJECTED'
+  | 'RATE_LIMIT_TRIGGERED'
+  | 'ABUSE_DETECTED';
+
+export type DataProtectionSecurityEventType =
+  | 'SENSITIVE_DATA_ACCESS'
+  | 'EVIDENCE_ACCESS'
+  | 'DATA_EXPORT'
+  | 'ACCOUNT_DELETION'
+  | 'RETENTION_PURGE'
+  | 'PRIVACY_POLICY_VIOLATION';
+
+export type CryptographicSecurityEventType =
+  | 'CRYPTO_FAILURE'
+  | 'KEY_ROTATION'
+  | 'KEY_REVOCATION'
+  | 'SIGNATURE_VERIFICATION_FAILURE'
+  | 'SECRET_ACCESS_DENIED';
+
+export type WorkspaceSecurityEventType =
+  | 'DOMAIN_CREATED'
+  | 'DOMAIN_DELETED'
+  | 'UNDERSTANDING_TRIGGERED'
+  | 'WORKSPACE_SETTINGS_UPDATED'
+  | 'DRIFT_ALERT_ACKNOWLEDGED'
+  | 'DRIFT_ALERT_RESOLVED';
+
+export type SecurityEventType =
+  | AuthenticationSecurityEventType
+  | AuthorizationSecurityEventType
+  | BoundarySecurityEventType
+  | AbuseSecurityEventType
+  | DataProtectionSecurityEventType
+  | CryptographicSecurityEventType
+  | WorkspaceSecurityEventType;
+
+export type SecuritySeverityLevel = 'INFO' | 'NOTICE' | 'WARNING' | 'CRITICAL';
+
+export const CANONICAL_EVENT_SEVERITIES: Record<
+  SecurityEventType,
+  SecuritySeverityLevel
+> = {
+  // Authentication
+  LOGIN_SUCCESS: 'INFO',
+  LOGIN_FAILURE: 'WARNING',
+  OAUTH_AUTHENTICATION: 'INFO',
+  SESSION_CREATED: 'INFO',
+  SESSION_EXPIRED: 'INFO',
+  SESSION_REVOKED: 'INFO',
+  LOGOUT: 'INFO',
+  GLOBAL_LOGOUT: 'INFO',
+  REFRESH_SUCCESS: 'INFO',
+  REFRESH_FAILURE: 'WARNING',
+  REFRESH_REUSE_DETECTED: 'CRITICAL',
+
+  // Authorization
+  AUTHORIZATION_ALLOWED: 'INFO',
+  AUTHORIZATION_DENIED: 'WARNING',
+  OWNERSHIP_DENIED: 'WARNING',
+  TENANT_BOUNDARY_VIOLATION: 'CRITICAL',
+  PLANE_BOUNDARY_VIOLATION: 'CRITICAL',
+  ADMIN_BOUNDARY_VIOLATION: 'CRITICAL',
+
+  // Workspace Operations
+  DOMAIN_CREATED: 'INFO',
+  DOMAIN_DELETED: 'NOTICE',
+  UNDERSTANDING_TRIGGERED: 'INFO',
+  WORKSPACE_SETTINGS_UPDATED: 'NOTICE',
+  DRIFT_ALERT_ACKNOWLEDGED: 'NOTICE',
+  DRIFT_ALERT_RESOLVED: 'NOTICE',
+
+  // GX / WX Boundary
+  GX_SESSION_CREATED: 'INFO',
+  GX_ACCESS_ALLOWED: 'INFO',
+  GX_ACCESS_DENIED: 'NOTICE',
+  GX_WX_BOUNDARY_VIOLATION: 'CRITICAL',
+  GUEST_CLAIM_SUCCESS: 'INFO',
+  GUEST_CLAIM_REJECTED: 'WARNING',
+  GUEST_CLAIM_REPLAY: 'CRITICAL',
+
+  // Abuse & Input
+  VALIDATION_REJECTED: 'NOTICE',
+  INJECTION_ATTEMPT: 'CRITICAL',
+  REQUEST_SIZE_REJECTED: 'NOTICE',
+  RATE_LIMIT_TRIGGERED: 'WARNING',
+  ABUSE_DETECTED: 'CRITICAL',
+
+  // Data Protection
+  SENSITIVE_DATA_ACCESS: 'NOTICE',
+  EVIDENCE_ACCESS: 'NOTICE',
+  DATA_EXPORT: 'INFO',
+  ACCOUNT_DELETION: 'INFO',
+  RETENTION_PURGE: 'INFO',
+  PRIVACY_POLICY_VIOLATION: 'CRITICAL',
+
+  // Cryptographic Security
+  CRYPTO_FAILURE: 'CRITICAL',
+  KEY_ROTATION: 'INFO',
+  KEY_REVOCATION: 'WARNING',
+  SIGNATURE_VERIFICATION_FAILURE: 'CRITICAL',
+  SECRET_ACCESS_DENIED: 'CRITICAL',
+};

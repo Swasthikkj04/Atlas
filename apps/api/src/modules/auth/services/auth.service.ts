@@ -84,6 +84,11 @@ export class AuthService {
       .sendVerificationEmail(user.email, rawToken, user.fullName)
       .catch(() => null);
 
+    // 4. Dispatch Personal Welcome Email (AUTH-EMAIL-001 / Non-blocking duplicate-protected)
+    void this.emailService
+      ?.sendWelcomeEmail?.(user.id, user.email, user.fullName)
+      ?.catch(() => null);
+
     return {
       message:
         'Registration successful. Please check your email to verify your account.',

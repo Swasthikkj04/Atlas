@@ -17,15 +17,21 @@ export class MissingContentSecurityPolicyRule implements FindingRule {
     const http = context.snapshot.http;
 
     // Invariant: NO_FAILED_LOOKUP_AS_HEADER_ABSENCE
-    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
+    if (
+      !http?.reachable ||
+      (http.queryStatus && http.queryStatus !== 'SUCCESS')
+    ) {
       return [];
     }
 
     // Invariant: HTTP_FINDING_REQUIRES_AUTHORITATIVE_RESPONSE
     const finalResponse = http.finalResponse;
-    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const evaluatedHeaders = finalResponse
+      ? finalResponse.headers
+      : http.headers;
     const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
-    const contentType = finalResponse?.contentType || evaluatedHeaders?.['content-type'] || '';
+    const contentType =
+      finalResponse?.contentType || evaluatedHeaders?.['content-type'] || '';
     const statusCode = finalResponse?.statusCode || http.statusCode || 200;
 
     // Invariant: CSP_OBSERVATION_IS_RESPONSE_AWARE
@@ -33,7 +39,11 @@ export class MissingContentSecurityPolicyRule implements FindingRule {
     if (statusCode >= 300 && statusCode < 400) {
       return [];
     }
-    if (contentType && !contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+    if (
+      contentType &&
+      !contentType.includes('text/html') &&
+      !contentType.includes('application/xhtml+xml')
+    ) {
       return [];
     }
 
@@ -41,7 +51,8 @@ export class MissingContentSecurityPolicyRule implements FindingRule {
       return [];
     }
 
-    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
+    const confidence =
+      http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {

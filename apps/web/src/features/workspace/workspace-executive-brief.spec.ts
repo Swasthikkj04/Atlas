@@ -77,6 +77,26 @@ describe('WX-903: Executive Brief Refinement & Composition Contracts', () => {
       assert.equal(mockBrief.generatedAt, '2026-08-20T00:00:00Z');
       assert.ok(mockBrief.executiveSummary.length > 20);
     });
+
+    it('surfaces TLS certificate expiry (< 30 days) within Key Developments highlights', () => {
+      const expiringTlsBrief: InfrastructureBriefDto = {
+        ...mockBrief,
+        highlights: [
+          {
+            id: 'hl-ssl-cert-expiring',
+            title: 'SSL Certificate Expiring',
+            summary: 'The TLS certificate will expire in 22 day(s). Action is recommended before scheduled expiry.',
+            severity: 'MEDIUM',
+            componentType: 'certificate',
+          },
+        ],
+      };
+
+      assert.equal(expiringTlsBrief.highlights.length, 1);
+      assert.equal(expiringTlsBrief.highlights[0].title, 'SSL Certificate Expiring');
+      assert.ok(expiringTlsBrief.highlights[0].summary.includes('22 day(s)'));
+      assert.equal(expiringTlsBrief.highlights[0].severity, 'MEDIUM');
+    });
   });
 
   describe('4. Forbidden Anti-Patterns', () => {

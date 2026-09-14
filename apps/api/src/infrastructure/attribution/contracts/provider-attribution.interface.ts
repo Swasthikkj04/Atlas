@@ -1,9 +1,5 @@
 export type InfrastructureRole =
-  | 'HOSTING'
-  | 'EDGE_CDN'
-  | 'DNS'
-  | 'WEB_SERVER'
-  | 'APPLICATION';
+  'HOSTING' | 'EDGE_CDN' | 'DNS' | 'WEB_SERVER' | 'APPLICATION';
 
 export type AttributionDecision =
   | 'CONFIRMED'
@@ -13,11 +9,7 @@ export type AttributionDecision =
   | 'UNKNOWN'
   | 'CONFLICTED';
 
-export type AttributionConfidence =
-  | 'HIGH'
-  | 'MEDIUM'
-  | 'LOW'
-  | 'INCONCLUSIVE';
+export type AttributionConfidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'INCONCLUSIVE';
 
 export interface AttributionSignal {
   type: 'DNS' | 'HTTP' | 'IP_ASN' | 'TLS' | 'TECH';

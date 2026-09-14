@@ -114,7 +114,11 @@ export class OAuthCallbackExceptionFilter implements ExceptionFilter {
         ? `&email=${encodeURIComponent(userEmail)}`
         : '';
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      process.env.APP_URL ||
+      (isProduction ? 'https://nebula.argonion.com' : 'http://localhost:5173');
     return response.redirect(
       `${frontendUrl}/auth/callback?error=${errorCode}${emailParam}`,
     );

@@ -150,6 +150,7 @@ export const DomainContextSwitcher: React.FC<DomainContextSwitcherProps> = ({
       <button
         ref={triggerRef}
         type="button"
+        data-testid="domain-context-switcher-trigger"
         onClick={handleToggle}
         aria-haspopup="listbox"
         aria-expanded={isOpen}

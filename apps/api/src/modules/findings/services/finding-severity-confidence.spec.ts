@@ -45,7 +45,9 @@ describe('WX-1023: Finding Severity and Confidence Calibration', () => {
       // Risk classification separates hardening gap from active exploit
       expect(finding.riskClassification).toBe('SECURITY_HARDENING_GAP');
       expect(finding.severityRationale).toBeDefined();
-      expect(finding.whatThisDoesNotProve).toContain('does not establish that the application is currently exploitable');
+      expect(finding.whatThisDoesNotProve).toContain(
+        'does not establish that the application is currently exploitable',
+      );
     });
 
     it('prohibits finding confidence from exceeding observation confidence', async () => {
@@ -125,7 +127,9 @@ describe('WX-1023: Finding Severity and Confidence Calibration', () => {
               subject: 'CN=example.com',
               issuer: 'Let Encrypt',
               validFrom: '2025-01-01',
-              validTo: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days left -> HIGH
+              validTo: new Date(
+                Date.now() + 5 * 24 * 60 * 60 * 1000,
+              ).toISOString(), // 5 days left -> HIGH
             },
           },
         },
@@ -134,8 +138,12 @@ describe('WX-1023: Finding Severity and Confidence Calibration', () => {
       const findings = await expiryRule.evaluate(context);
       expect(findings).toHaveLength(1);
       expect(findings[0].severity).toBe(Severity.HIGH);
-      expect(findings[0].riskClassification).toBe('CONFIRMED_SECURITY_CONDITION');
-      expect(findings[0].severityRationale).toContain('expiration risks service interruption');
+      expect(findings[0].riskClassification).toBe(
+        'CONFIRMED_SECURITY_CONDITION',
+      );
+      expect(findings[0].severityRationale).toContain(
+        'expiration risks service interruption',
+      );
     });
   });
 });

@@ -1,6 +1,12 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { OAuthProvider, User, UserAccountStatus } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { EmailService } from '../../../infrastructure/email/email.service';
 import { OAuthAccountService } from '../services/oauth-account.service';
 import { OAuthAuthenticationException } from '../exceptions/oauth.exception';
 
@@ -25,6 +31,7 @@ export class OAuthIdentityResolver {
   constructor(
     private readonly prisma: PrismaService,
     private readonly oauthAccountService: OAuthAccountService,
+    @Optional() private readonly emailService?: EmailService,
   ) {}
 
   async resolveUser(profile: OAuthProfile): Promise<ResolutionResult> {
@@ -140,6 +147,12 @@ export class OAuthIdentityResolver {
         },
       },
     });
+
+    if (this.emailService) {
+      void this.emailService
+        .sendWelcomeEmail(user.id, user.email, user.fullName)
+        .catch(() => null);
+    }
 
     return { user, event: 'GOOGLE_ACCOUNT_CREATED' };
   }

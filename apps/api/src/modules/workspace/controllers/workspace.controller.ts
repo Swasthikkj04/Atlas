@@ -57,6 +57,32 @@ export class WorkspaceController {
     );
   }
 
+  @Get('security')
+  @ApiOperation({
+    summary:
+      'Get synthesized Workspace Security posture for an authenticated domain',
+    description:
+      'Returns authoritative synthesized domain security intelligence including Security Brief, Posture Score, Grade, and 7 Security Pillars.',
+  })
+  @ApiQuery({
+    name: 'domainId',
+    description: 'Domain ID',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Workspace security posture retrieved successfully.',
+  })
+  async getWorkspaceSecurity(
+    @Req() req: AuthenticatedRequest,
+    @Query('domainId') domainId: string,
+  ) {
+    return this.workspaceExperienceService.getWorkspaceSecurity(
+      req.user.id,
+      domainId,
+    );
+  }
+
   @Get('dashboard')
   @ApiOperation({
     summary: 'Get Workspace Dashboard & Domain Overview Experience',

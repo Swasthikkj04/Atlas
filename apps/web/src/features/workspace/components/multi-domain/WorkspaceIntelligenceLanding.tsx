@@ -1,23 +1,25 @@
-import React from 'react';
-import { Clock, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, ArrowRight, LayoutGrid, List } from 'lucide-react';
 import { Icon } from '../../../../components/icons';
 import { ReadingSurface, Stack } from '../../../../components/layout';
 import { useDomains } from '../../../../hooks/queries/useDomains';
 import { useTimeline } from '../../../../hooks/queries/useTimeline';
 import { resolveMultiDomainBrief } from '../../contracts/multi-domain-brief.contract';
+import { resolveMultiDomainArchitectureMatrix } from '../../contracts/multi-domain-matrix.contract';
 import { MultiDomainHero } from './MultiDomainHero';
 import { MonitoredInfrastructureList } from './MonitoredInfrastructureList';
 import { CrossDomainWhatChanged } from './CrossDomainWhatChanged';
+import { MultiDomainArchitectureMatrix } from './MultiDomainArchitectureMatrix';
 import type { WorkspaceIntelligenceLandingProps } from './WorkspaceIntelligenceLanding.types';
 
 /**
- * Authoritative Workspace Intelligence Landing & Multi-Domain Brief (WX-1025).
+ * Authoritative Workspace Return Intelligence Surface (WX-O-01 / WX-1025 / Move 5).
  *
- * Implements the cross-domain intelligence briefing:
- * - Answers: "What does Nebula know about all of my infrastructure right now?"
- * - Aggregates cross-domain posture without automatically opening a single domain
- * - Gives user clear intelligence to choose where to investigate
- * - Consumes canonical backend snapshots and timeline events
+ * Implements the return briefing & architecture matrix:
+ * - Answers: "What changed across my monitored domains since I was last here?"
+ * - Dominant intelligence surface: WHAT CHANGED ACROSS DOMAINS
+ * - Unmistakable single-domain investigation affordances
+ * - Preserves Move 5 Multi-Domain Architecture Matrix
  */
 export const WorkspaceIntelligenceLanding: React.FC<WorkspaceIntelligenceLandingProps> = ({
   onSelectDomain,
@@ -27,8 +29,11 @@ export const WorkspaceIntelligenceLanding: React.FC<WorkspaceIntelligenceLanding
   onViewInfrastructureMemory,
   initialBrief,
   domains: propDomains,
+  domainOverviews = [],
+  initialMatrixData,
   className = '',
 }) => {
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'MATRIX'>('OVERVIEW');
   const domainsQuery = useDomains();
   const timelineQuery = useTimeline({ limit: 20 });
 
@@ -41,6 +46,10 @@ export const WorkspaceIntelligenceLanding: React.FC<WorkspaceIntelligenceLanding
       domains: activeDomains,
       timelineEvents,
     });
+
+  const matrixData =
+    initialMatrixData ||
+    resolveMultiDomainArchitectureMatrix(activeDomains, domainOverviews);
 
   const handleReviewChangesScroll = () => {
     const el = document.getElementById('cross-domain-changes-anchor');
@@ -59,32 +68,78 @@ export const WorkspaceIntelligenceLanding: React.FC<WorkspaceIntelligenceLanding
     >
       <ReadingSurface>
         <Stack gap="2xl" className="w-full">
-          {/* 1. Briefing Hero with Primary Intelligence State */}
+          {/* 1. Return Briefing Hero with Attention State & Orientation */}
           <MultiDomainHero
             brief={brief}
             onReviewChanges={handleReviewChangesScroll}
             onAddDomain={onAddDomain}
           />
 
-          {/* 2. Cross-Domain "What Changed" Section (When Changes Exist) */}
-          {brief.crossDomainChanges.length > 0 && (
-            <div id="cross-domain-changes-anchor" className="w-full">
-              <CrossDomainWhatChanged
-                brief={brief}
-                onInvestigateChange={onInvestigateChange}
-                onViewDomainChanges={onViewDomainChanges}
-              />
+          {/* View Mode Switcher (When domains exist) */}
+          {brief.totalDomains > 0 && (
+            <div className="w-full flex items-center justify-between border-b border-[#E1E1DC] dark:border-border pb-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('OVERVIEW')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                    activeTab === 'OVERVIEW'
+                      ? 'bg-[#121514] text-white dark:bg-[#FFFFFF] dark:text-[#121514] font-medium shadow-xs'
+                      : 'text-[#5F625F] dark:text-muted-foreground hover:bg-[#FAFAF8] dark:hover:bg-surface-secondary'
+                  }`}
+                  data-testid="landing-tab-overview"
+                >
+                  <Icon icon={List} size="small" />
+                  <span>Return Briefing</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('MATRIX')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                    activeTab === 'MATRIX'
+                      ? 'bg-[#121514] text-white dark:bg-[#FFFFFF] dark:text-[#121514] font-medium shadow-xs'
+                      : 'text-[#5F625F] dark:text-muted-foreground hover:bg-[#FAFAF8] dark:hover:bg-surface-secondary'
+                  }`}
+                  data-testid="landing-tab-matrix"
+                >
+                  <Icon icon={LayoutGrid} size="small" />
+                  <span>Architecture Matrix (Move 5)</span>
+                </button>
+              </div>
+
+              <div className="hidden sm:block text-[11px] font-mono text-[#5F625F] dark:text-muted-foreground">
+                {brief.totalDomains} monitored {brief.totalDomains === 1 ? 'target' : 'targets'}
+              </div>
             </div>
           )}
 
-          {/* 3. Monitored Infrastructure List */}
-          <MonitoredInfrastructureList
-            brief={brief}
-            onSelectDomain={onSelectDomain}
-            onAddDomain={onAddDomain}
-          />
+          {activeTab === 'OVERVIEW' ? (
+            <>
+              {/* 2. Dominant Return Intelligence Surface: What Changed Across Domains */}
+              <div id="cross-domain-changes-anchor" className="w-full">
+                <CrossDomainWhatChanged
+                  brief={brief}
+                  onInvestigateChange={onInvestigateChange}
+                  onViewDomainChanges={onViewDomainChanges}
+                />
+              </div>
 
-          {/* 4. Infrastructure Memory Evolution Anchor */}
+              {/* 3. Domain Investigation Selection: Monitored Perimeters */}
+              <MonitoredInfrastructureList
+                brief={brief}
+                onSelectDomain={onSelectDomain}
+                onAddDomain={onAddDomain}
+              />
+            </>
+          ) : (
+            /* 4. Move 5 Multi-Domain Architecture Matrix & Ingress Comparison */
+            <MultiDomainArchitectureMatrix
+              matrixData={matrixData}
+              onSelectDomain={onSelectDomain}
+            />
+          )}
+
+          {/* 5. Infrastructure Memory Evolution Anchor */}
           {brief.totalDomains > 0 && onViewInfrastructureMemory && (
             <div
               className="p-4 sm:p-5 rounded-xl border border-[#E1E1DC] dark:border-border bg-[#FAFAF8] dark:bg-surface-secondary flex items-center justify-between gap-4 text-xs font-mono text-[#5F625F] dark:text-muted-foreground"

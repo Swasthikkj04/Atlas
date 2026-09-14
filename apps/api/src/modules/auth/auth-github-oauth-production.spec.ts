@@ -165,6 +165,7 @@ describe('AUTH-019: GitHub OAuth Production-Grade Flow & Security Verification',
       sendPasswordResetConfirmationEmail: jest
         .fn()
         .mockResolvedValue(undefined),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ status: 'SENT' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({

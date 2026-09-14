@@ -120,7 +120,7 @@ describe('Forensic Runtime Evidence Collection Suite (google.com)', () => {
     if (discoveryPayload) {
       const context = {
         domainId: domain.id,
-        snapshotId: run1Snapshot!.id,
+        snapshotId: run1Snapshot.id,
         snapshot: discoveryPayload,
       };
       const evaluatedFindings = await ruleEngine.evaluate(context);

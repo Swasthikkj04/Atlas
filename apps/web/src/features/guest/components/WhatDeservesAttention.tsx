@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import type { Observation } from "../types";
 import { ease } from "../types";
+import { CANONICAL_INVESTIGATION_CTA, QUIET_STATE_CONTRACT } from "../contracts/gx-r010-meaningful-intelligence.contract";
 
 interface WhatDeservesAttentionProps {
   observations: Observation[];
@@ -65,15 +66,22 @@ export function WhatDeservesAttention({
       aria-label="What deserves attention"
       className="max-w-[720px] mx-auto px-5 sm:px-10 mb-12 sm:mb-16"
     >
-      <div className="mb-6">
+      <div className="mb-4 space-y-1">
         <h2 className="font-mono text-[11px] font-bold tracking-[0.22em] text-muted-foreground uppercase">
-          What Deserves Attention
+          WHAT MATTERS NOW
         </h2>
+        <p className="font-display font-medium text-[1.125rem] text-foreground">
+          {sorted.length === 0
+            ? QUIET_STATE_CONTRACT.primaryHeadline
+            : sorted.length === 1
+              ? "One thing deserves attention."
+              : `${sorted.length} observations deserve attention.`}
+        </p>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="p-5 rounded-lg border border-border bg-card/40 text-[13.5px] text-muted-foreground">
-          No immediate critical or high-priority findings require attention in this snapshot.
+        <div className="p-5 rounded-lg border border-border bg-card/40 text-[13.5px] text-muted-foreground leading-relaxed">
+          {QUIET_STATE_CONTRACT.subtext}
         </div>
       ) : (
         <div className="space-y-4">
@@ -112,10 +120,10 @@ export function WhatDeservesAttention({
                 <div className="flex items-center">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-[12.5px] font-medium text-foreground/70 hover:text-foreground transition-colors group cursor-default"
+                    onClick={onExplore}
+                    className="inline-flex items-center gap-1 text-[12.5px] font-medium text-foreground/80 hover:text-foreground transition-colors group cursor-pointer focus-ring rounded"
                   >
-                    <span>Why this matters</span>
-                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span>{CANONICAL_INVESTIGATION_CTA}</span>
                   </button>
                 </div>
               </motion.div>
@@ -124,12 +132,12 @@ export function WhatDeservesAttention({
         </div>
       )}
 
-      {showExploreButton && onExplore && (
+      {showExploreButton && onExplore && sorted.length > 0 && (
         <div className="mt-8 pt-4 flex justify-center">
           <button
             type="button"
             onClick={onExplore}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-background hover:bg-accent text-[13.5px] font-medium text-foreground transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-background hover:bg-accent text-[13.5px] font-medium text-foreground transition-colors shadow-sm cursor-pointer focus-ring"
           >
             <span>Explore infrastructure</span>
             <span>→</span>

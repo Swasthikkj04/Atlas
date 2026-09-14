@@ -150,7 +150,7 @@ export class AccountService {
         );
       }
       const isPasswordValid = await this.passwordService.verify(
-        user.passwordHash!,
+        user.passwordHash,
         dto.currentPassword,
       );
       if (!isPasswordValid) {
@@ -221,7 +221,7 @@ export class AccountService {
         );
       }
       const isPasswordValid = await this.passwordService.verify(
-        user.passwordHash!,
+        user.passwordHash,
         dto.currentPassword,
       );
       if (!isPasswordValid) {

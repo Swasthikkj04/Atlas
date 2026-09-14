@@ -31,6 +31,20 @@ export class ChangeDetectionEngine {
     previous: DiscoverySnapshot,
     current: DiscoverySnapshot,
   ): Promise<number> {
+    const existing =
+      typeof this.prisma?.changeHistory?.count === 'function'
+        ? await this.prisma.changeHistory.count({
+            where: {
+              previousSnapshotId,
+              currentSnapshotId,
+            },
+          })
+        : 0;
+
+    if (existing > 0) {
+      return existing;
+    }
+
     const diffs = this.computeDifferences(previous, current);
 
     if (diffs.length === 0) {

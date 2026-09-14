@@ -3,8 +3,8 @@ import logoMark from '/argonion-mark.svg';
 import type { NavbarProps, NavLinkItem } from './Navbar.types';
 
 const DEFAULT_LINKS: NavLinkItem[] = [
-  { label: 'Why Argonion', href: '#why-argonion' },
-  { label: 'Nebula', href: '#nebula' },
+  { label: 'Architecture', href: '#nebula' },
+  { label: 'Why Nebula', href: '#why-nebula' },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -35,9 +35,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="w-full max-w-6xl mx-auto h-[56px] py-3 px-6 flex items-center justify-between">
         {/* Brand Logo & Name */}
         <a href="/" className="flex items-center gap-3 text-decoration-none">
-          <img src={logoMark} alt="Argonion Logo" className="w-6 h-6 block" />
+          <img src={logoMark} alt="Nebula Logo" className="w-6 h-6 block" />
           <span className="font-bold text-lg tracking-wider text-foreground uppercase">
-            ARGONION
+            NEBULA
           </span>
         </a>
 

@@ -10,7 +10,7 @@
   color-scheme: light;
 
   --font-size: 16px;
-  --background: #F7F7F5;
+  --background: #EFEFED;
   --foreground: #111110;
   --card: #FFFFFF;
   --card-foreground: #111110;
@@ -18,18 +18,18 @@
   --popover-foreground: #111110;
   --primary: #3568C8;
   --primary-foreground: #FFFFFF;
-  --secondary: #FAFAF8;
+  --secondary: #F6F6F2;
   --secondary-foreground: #111110;
-  --muted: #FAFAF8;
-  --muted-foreground: #6C6C72;
-  --accent: #FCFCFA;
+  --muted: #E6E6E0;
+  --muted-foreground: #5C5C62;
+  --accent: #FFFFFF;
   --accent-foreground: #111110;
   --destructive: #A93442;
   --destructive-foreground: #FFFFFF;
-  --border: #E7E7E3;
-  --border-strong: #DCDCD7;
+  --border: #DCDCD6;
+  --border-strong: #CECECE;
   --input: transparent;
-  --input-background: #F4F4F1;
+  --input-background: #E6E6E0;
   --switch-background: #CBCED4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -44,41 +44,41 @@
   --radius: 0.75rem;
 
   /* ── Sidebar Tokens ────────────────────────────────────────────────────── */
-  --sidebar: #F7F7F5;
+  --sidebar: #EFEFED;
   --sidebar-foreground: #0F0F10;
   --sidebar-primary: #3568C8;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FCFCFA;
+  --sidebar-accent: #FFFFFF;
   --sidebar-accent-foreground: #0F0F10;
-  --sidebar-border: #E7E7E3;
+  --sidebar-border: #DCDCD6;
   --sidebar-ring: rgba(53, 104, 200, 0.45);
 
   /* ── Approved Surface Tokens (FE-GX-003 / Workspace Hierarchy) ─────────── */
-  --surface-app: #F7F7F5;
+  --surface-app: #EFEFED;
   --surface-understanding: #FFFFFF;
   --surface-matters: #FFFFFF;
-  --surface-evidence: #F4F4F1;
+  --surface-evidence: #E6E6E0;
   --surface-infrastructure: #FFFFFF;
-  --surface-preserve: #FAFAF8;
+  --surface-preserve: #F6F6F2;
 
   /* ── WX-1017 Premium Surface Shading System ────────────────────────────── */
-  --surface-canvas: #F7F7F5;
+  --surface-canvas: #EFEFED;
   --surface-primary: #FFFFFF;
-  --surface-secondary: #FAFAF8;
-  --surface-elevated: #FCFCFA;
-  --surface-metadata: #F4F4F1;
-  --surface-row-hover: #F7F8F6;
-  --surface-row-active: #F1F6F3;
+  --surface-secondary: #F6F6F2;
+  --surface-elevated: #FFFFFF;
+  --surface-metadata: #E6E6E0;
+  --surface-row-hover: #E8E8E2;
+  --surface-row-active: #E4EFEA;
 
-  --border-neutral: #E7E7E3;
-  --border-neutral-strong: #DCDCD7;
-  --border-divider: #EEEEEB;
-  --border-card: #E1E1DC;
-  --border-brief: #E2E2DE;
-  --border-metadata: #E2E2DD;
-  --border-card-hover: #DADAD5;
+  --border-neutral: #DCDCD6;
+  --border-neutral-strong: #CECECE;
+  --border-divider: #E4E4DF;
+  --border-card: #DCDCD6;
+  --border-brief: #DCDCD6;
+  --border-metadata: #D8D8D2;
+  --border-card-hover: #CECECE;
 
-  --text-metadata: #5F625F;
+  --text-metadata: #555555;
   --link-primary: #3568C8;
 
   /* ── WX-1017 Frozen Semantic Palette (Light Mode) ──────────────────────── */

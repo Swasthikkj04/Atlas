@@ -155,7 +155,8 @@ export class TimelineEventDto {
   @ApiProperty({
     example:
       'Nebula verified that the current authoritative response contains a Content-Security-Policy that differs from the previous verified response.',
-    description: 'Authoritative factual boundary establishing what this change proves.',
+    description:
+      'Authoritative factual boundary establishing what this change proves.',
     required: false,
   })
   whatThisEstablishes?: string;
@@ -163,13 +164,15 @@ export class TimelineEventDto {
   @ApiProperty({
     example:
       'This change does not guarantee that all content-injection or XSS scenarios are prevented.',
-    description: 'Explicit anti-overclaiming boundary stating what this change does not establish.',
+    description:
+      'Explicit anti-overclaiming boundary stating what this change does not establish.',
     required: false,
   })
   whatThisDoesNotEstablish?: string;
 
   @ApiProperty({
-    description: 'Authoritative derived comparison summary for complex policies.',
+    description:
+      'Authoritative derived comparison summary for complex policies.',
     required: false,
   })
   derivedSummary?: {

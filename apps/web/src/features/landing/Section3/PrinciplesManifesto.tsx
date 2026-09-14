@@ -48,7 +48,7 @@ export const PrinciplesManifesto: React.FC = () => {
 
   return (
     <section
-      id="why-argonion"
+      id="why-nebula"
       style={{
         backgroundColor: '#08090c',
         color: '#f8fafc',

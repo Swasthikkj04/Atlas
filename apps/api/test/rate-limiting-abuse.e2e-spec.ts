@@ -50,4 +50,17 @@ describe('Rate Limiting & Abuse Protection Suite (E2E)', () => {
       expect(Number(response.headers['x-ratelimit-limit'])).toBe(10);
     });
   });
+
+  describe('3. Guest Understand Rate Limit Protection (POST /api/v1/guest/understand)', () => {
+    it('POST /api/v1/guest/understand - should attach IP-based rate limit headers for guest ingress', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/guest/understand')
+        .send({ domain: 'stripe.com' });
+
+      expect(response.headers).toHaveProperty('x-ratelimit-limit');
+      expect(Number(response.headers['x-ratelimit-limit'])).toBe(5);
+      expect(response.headers).toHaveProperty('x-ratelimit-remaining');
+      expect(response.headers).toHaveProperty('x-ratelimit-reset');
+    });
+  });
 });

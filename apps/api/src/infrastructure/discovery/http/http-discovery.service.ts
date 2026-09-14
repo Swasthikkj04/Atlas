@@ -25,11 +25,7 @@ export type HttpAuthorityType =
   | 'NONE';
 
 export type HttpObservationConfidence =
-  | 'AUTHORITATIVE'
-  | 'SUPPORTED'
-  | 'CONTEXTUAL'
-  | 'INCONCLUSIVE'
-  | 'FAILED';
+  'AUTHORITATIVE' | 'SUPPORTED' | 'CONTEXTUAL' | 'INCONCLUSIVE' | 'FAILED';
 
 export interface HttpRedirectHop {
   url: string;
@@ -112,8 +108,14 @@ export class HttpDiscoveryService
       redirectHops: raw.redirectHops || [],
       redirectCount: raw.redirectCount || 0,
       finalResponse: raw.finalResponse || null,
-      queryStatus: raw.queryStatus || (evidenceResult.metadata.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED'),
-      confidence: raw.confidence || (evidenceResult.metadata.status === 'SUCCESS' ? 'AUTHORITATIVE' : 'FAILED'),
+      queryStatus:
+        raw.queryStatus ||
+        (evidenceResult.metadata.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED'),
+      confidence:
+        raw.confidence ||
+        (evidenceResult.metadata.status === 'SUCCESS'
+          ? 'AUTHORITATIVE'
+          : 'FAILED'),
       error: raw.error || null,
       evidenceResult,
     };
@@ -132,7 +134,8 @@ export class HttpDiscoveryService
     const evidenceId = `ev-http-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     try {
-      const { hops, finalHop, totalDurationMs } = await this.traceRedirectChain(initialUrl);
+      const { hops, finalHop, totalDurationMs } =
+        await this.traceRedirectChain(initialUrl);
       const completedAt = new Date();
 
       const finalUrl = finalHop.url;
@@ -143,7 +146,11 @@ export class HttpDiscoveryService
       let authority: HttpAuthorityType = 'INCONCLUSIVE';
       if (isHttps && finalHop.statusCode >= 200 && finalHop.statusCode < 400) {
         authority = 'FINAL_HTTPS_RESPONSE';
-      } else if (!isHttps && finalHop.statusCode >= 200 && finalHop.statusCode < 400) {
+      } else if (
+        !isHttps &&
+        finalHop.statusCode >= 200 &&
+        finalHop.statusCode < 400
+      ) {
         authority = 'FINAL_HTTP_RESPONSE';
       } else if (finalHop.statusCode >= 300 && finalHop.statusCode < 400) {
         authority = 'REDIRECT_TERMINATED';
@@ -219,9 +226,15 @@ export class HttpDiscoveryService
       let queryStatus: HttpQueryStatus = 'FAILED';
       let errorMessage = axiosError.message || 'Unknown HTTP error';
 
-      if (axiosError.code === 'ECONNABORTED' || errorMessage.includes('timeout')) {
+      if (
+        axiosError.code === 'ECONNABORTED' ||
+        errorMessage.includes('timeout')
+      ) {
         queryStatus = 'TIMEOUT';
-      } else if (axiosError.code === 'ENOTFOUND' || axiosError.code === 'EAI_AGAIN') {
+      } else if (
+        axiosError.code === 'ENOTFOUND' ||
+        axiosError.code === 'EAI_AGAIN'
+      ) {
         queryStatus = 'DNS_ERROR';
       } else if (
         axiosError.code === 'ERR_TLS_CERT_ALTNAME_INVALID' ||
@@ -229,7 +242,10 @@ export class HttpDiscoveryService
         axiosError.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
       ) {
         queryStatus = 'SSL_ERROR';
-      } else if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ECONNRESET') {
+      } else if (
+        axiosError.code === 'ECONNREFUSED' ||
+        axiosError.code === 'ECONNRESET'
+      ) {
         queryStatus = 'NETWORK_ERROR';
       }
 
@@ -282,7 +298,11 @@ export class HttpDiscoveryService
   private async traceRedirectChain(
     startUrl: string,
     maxHops = 10,
-  ): Promise<{ hops: HttpRedirectHop[]; finalHop: HttpRedirectHop; totalDurationMs: number }> {
+  ): Promise<{
+    hops: HttpRedirectHop[];
+    finalHop: HttpRedirectHop;
+    totalDurationMs: number;
+  }> {
     const hops: HttpRedirectHop[] = [];
     let currentUrl = startUrl;
     const chainStartTime = Date.now();
@@ -324,7 +344,8 @@ export class HttpDiscoveryService
       hops.push(hop);
 
       // Check if this hop is a redirect
-      const isRedirect = response.status >= 300 && response.status < 400 && hop.location;
+      const isRedirect =
+        response.status >= 300 && response.status < 400 && hop.location;
       if (!isRedirect) {
         return {
           hops,
@@ -335,7 +356,7 @@ export class HttpDiscoveryService
 
       // Resolve relative or absolute redirect location
       try {
-        currentUrl = new URL(hop.location!, currentUrl).toString();
+        currentUrl = new URL(hop.location, currentUrl).toString();
       } catch {
         // If location is invalid, terminate redirect chain on this hop
         return {

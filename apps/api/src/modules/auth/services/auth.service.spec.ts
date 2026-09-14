@@ -96,6 +96,7 @@ describe('AuthService', () => {
       sendPasswordResetConfirmationEmail: jest
         .fn()
         .mockResolvedValue(undefined),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ status: 'SENT' }),
     };
 
     const mockPrisma = {
@@ -184,6 +185,11 @@ describe('AuthService', () => {
       passwordHash: 'hashed_pw',
     });
     expect(tokenService.issueVerificationToken).toHaveBeenCalledWith('usr-123');
+    expect(emailService.sendWelcomeEmail).toHaveBeenCalledWith(
+      'usr-123',
+      'test@example.com',
+      'Test User',
+    );
     expect(result.message).toContain('Please check your email');
   });
 

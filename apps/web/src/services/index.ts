@@ -1,4 +1,4 @@
-export * from './auth.service';
+export * from './auth';
 export * from './domain.service';
 export * from './understanding.service';
 export * from './snapshot.service';
@@ -7,3 +7,4 @@ export * from './brief.service';
 export * from './timeline.service';
 export * from './workspace.service';
 export * from './search.service';
+export * from './telemetry.service';

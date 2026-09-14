@@ -21,7 +21,7 @@ describe('WX-1022: Authoritative HTTP Response & Redirect Chain Truth Audit', ()
           location: 'https://google.com/',
           server: 'gws',
         },
-      } as any);
+      });
 
       // Hop 2: https://google.com/ -> 301 Moved Permanently to https://www.google.com/
       mockedAxios.get.mockResolvedValueOnce({
@@ -30,7 +30,7 @@ describe('WX-1022: Authoritative HTTP Response & Redirect Chain Truth Audit', ()
           location: 'https://www.google.com/',
           server: 'gws',
         },
-      } as any);
+      });
 
       // Hop 3: https://www.google.com/ -> 200 OK with HSTS
       mockedAxios.get.mockResolvedValueOnce({
@@ -40,7 +40,7 @@ describe('WX-1022: Authoritative HTTP Response & Redirect Chain Truth Audit', ()
           'content-type': 'text/html; charset=ISO-8859-1',
           server: 'gws',
         },
-      } as any);
+      });
 
       const result = await service.discover('google.com');
 
@@ -64,20 +64,24 @@ describe('WX-1022: Authoritative HTTP Response & Redirect Chain Truth Audit', ()
       expect(result.finalUrl).toBe('https://www.google.com/');
       expect(result.statusCode).toBe(200);
       expect(result.finalResponse?.authority).toBe('FINAL_HTTPS_RESPONSE');
-      expect(result.finalResponse?.headers['strict-transport-security']).toBe('max-age=31536000');
-      expect(result.headers['strict-transport-security']).toBe('max-age=31536000');
+      expect(result.finalResponse?.headers['strict-transport-security']).toBe(
+        'max-age=31536000',
+      );
+      expect(result.headers['strict-transport-security']).toBe(
+        'max-age=31536000',
+      );
     });
 
     it('accurately resolves relative redirect paths', async () => {
       mockedAxios.get.mockResolvedValueOnce({
         status: 302,
         headers: { location: '/login' },
-      } as any);
+      });
 
       mockedAxios.get.mockResolvedValueOnce({
         status: 200,
         headers: { 'content-type': 'text/html' },
-      } as any);
+      });
 
       const result = await service.discover('app.example.com');
 

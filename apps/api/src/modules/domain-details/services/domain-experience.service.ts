@@ -61,19 +61,22 @@ export class DomainExperienceService {
     userId: string,
     domainId: string,
   ): Promise<DomainOverviewResponseDto> {
+    const domain = await this.domainDetailsService.getDomain(userId, domainId);
+    const latestSnapshot =
+      await this.domainDetailsService.getLatestSnapshot(domainId);
+
     const [
-      domain,
-      latestSnapshot,
       totalSnapshots,
       findingsSummary,
       latestBrief,
       latestVerification,
       totalVerifications,
     ] = await Promise.all([
-      this.domainDetailsService.getDomain(userId, domainId),
-      this.domainDetailsService.getLatestSnapshot(domainId),
       this.domainDetailsService.countSnapshots(domainId),
-      this.domainDetailsService.getFindingsSummary(domainId),
+      this.domainDetailsService.getFindingsSummary(
+        domainId,
+        latestSnapshot?.id,
+      ),
       this.domainDetailsService.getLatestBrief(domainId),
       this.domainDetailsService.getLatestVerification(domainId),
       this.domainDetailsService.countVerifications(domainId),

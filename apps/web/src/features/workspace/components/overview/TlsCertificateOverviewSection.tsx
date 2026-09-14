@@ -44,9 +44,9 @@ export const TlsCertificateOverviewSection: React.FC<TlsCertificateOverviewSecti
               ? 'text-[#178A68] bg-[#EAF7F2] border-[#B9E5D6]'
               : 'text-[#5F625F] dark:text-muted-foreground border-[#E2E2DD] dark:border-border bg-[#F4F4F1] dark:bg-surface-metadata'
           }`}
-          aria-label={`Certificate status: ${sslValid ? 'Valid' : 'Unverified'}`}
+          aria-label={`Certificate status: ${sslValid ? 'Active' : 'Unconfigured'}`}
         >
-          {sslValid ? 'VALID' : 'UNVERIFIED'}
+          {sslValid ? 'ACTIVE' : 'UNCONFIGURED'}
         </span>
       </Cluster>
 

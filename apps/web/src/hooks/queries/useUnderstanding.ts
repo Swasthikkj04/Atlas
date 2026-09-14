@@ -120,7 +120,7 @@ export function useUnderstandingJob(jobId: string | null | undefined) {
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       if (status === 'RUNNING' || status === 'PENDING') {
-        return 2500; // Poll every 2.5s while active
+        return 800; // Poll every 800ms while active for live engine responsiveness
       }
       return false;
     },
@@ -142,7 +142,7 @@ export function useDomainUnderstandingJobs(domainId: string | null | undefined) 
         (j) => j.status === 'RUNNING' || j.status === 'PENDING'
       );
       if (hasActive) {
-        return 1500; // Poll every 1.5s while an active job exists
+        return 800; // Poll every 800ms while an active job exists
       }
       return 6000; // Poll every 6s otherwise so background worker completions are picked up
     },

@@ -1,9 +1,16 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Globe, RotateCcw, AlertCircle } from "lucide-react";
+import { RotateCcw, AlertCircle, Sparkles, ArrowRight } from "lucide-react";
+import { DomainFavicon } from "../../workspace/components/identity/DomainFavicon";
 import type { GuestPhase } from "../types";
-import { isValidDomain, normalizeDomain, ease } from "../types";
-import { LivingSignature } from "./LivingSignature";
+import {
+  ease,
+} from "../types";
+import {
+  normalizeDomainInput,
+  isValidDomainInput,
+} from "../contracts/gx-r006-domain-input-intent.contract";
+import { CANONICAL_SAMPLE_DOMAINS } from "../contracts/gx-r005-idle-canvas.contract";
 import { BackgroundConstellation } from "./BackgroundConstellation";
 
 interface HeroSectionProps {
@@ -29,10 +36,10 @@ export function HeroSection({
   const [searchQuery, setSearchQuery] = useState("");
   const [domainError, setDomainError]  = useState<string | null>(null);
 
-  const isActive        = phase === "IDLE"    || phase === "ERROR";
+  const isActive        = phase === "IDLE" || phase === "ERROR";
   const isUnderstanding = phase === "UNDERSTANDING" || phase === "PAUSING" || phase === "VALIDATING";
   const isUnderstood    = phase === "UNDERSTOOD" || phase === "CONVERTED";
-  const heroExpanded    = phase === "IDLE";
+  const isIdle          = phase === "IDLE";
 
   const inputValue = isUnderstanding
     ? displayDomain
@@ -53,19 +60,18 @@ export function HeroSection({
     }
   };
 
-  const handleSubmit = useCallback(() => {
-    const normalized = normalizeDomain(localDomain);
+  const handleDomainSubmit = useCallback((targetDomain?: string) => {
+    const rawInput = targetDomain ?? localDomain;
+    const normalized = normalizeDomainInput(rawInput);
 
     if (!normalized) {
-      const msg = "Enter a domain to understand, for example stripe.com";
-      setDomainError(msg);
+      setDomainError("Enter a valid domain.");
       inputRef.current?.focus();
       return;
     }
 
-    if (!isValidDomain(normalized)) {
-      const msg = "Enter a valid public domain, for example stripe.com";
-      setDomainError(msg);
+    if (!isValidDomainInput(normalized)) {
+      setDomainError("Enter a valid domain.");
       inputRef.current?.focus();
       return;
     }
@@ -76,13 +82,19 @@ export function HeroSection({
   }, [localDomain, onSubmit, inputRef]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && isActive) {
-      handleSubmit();
+    if (e.key === "Enter" && isActive && !isUnderstanding) {
+      handleDomainSubmit();
     }
     if (e.key === "Escape" && domainError) {
       e.preventDefault();
       setDomainError(null);
     }
+  };
+
+  const handleSampleSelect = (domain: string) => {
+    setLocalDomain(domain);
+    setDomainError(null);
+    inputRef.current?.focus();
   };
 
   const handleReset = useCallback(() => {
@@ -92,55 +104,55 @@ export function HeroSection({
     onReset();
   }, [onReset]);
 
+  const isValidCandidate = isValidDomainInput(normalizeDomainInput(localDomain));
+
   return (
     <section
       aria-label="Understand your infrastructure"
       className={`relative transition-all duration-[760ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        heroExpanded
-          ? "pt-[156px] sm:pt-[176px] md:pt-[192px] pb-[96px] sm:pb-[112px]"
-          : "pt-[84px]  sm:pt-[90px]  pb-12  sm:pb-14"
+        isIdle
+          ? "pt-[120px] sm:pt-[140px] md:pt-[160px] pb-[80px] sm:pb-[100px]"
+          : "pt-[80px]  sm:pt-[90px]  pb-10  sm:pb-12"
       }`}
     >
       <BackgroundConstellation phase={phase} sections={sections} />
 
-      <div className="relative max-w-[640px] mx-auto px-5 sm:px-8 text-center">
+      <div className="relative max-w-[880px] mx-auto px-5 sm:px-8 text-center">
         <AnimatePresence>
-          {phase === "IDLE" && (
+          {isIdle && (
             <motion.div
               key="hero-copy"
-              initial={reduced ? false : { opacity: 0, y: 18 }}
+              initial={reduced ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.5, ease }}
+              className="mb-8 sm:mb-10"
             >
-              <p className="text-[10.5px] font-semibold tracking-[0.28em] text-muted-foreground/75 uppercase mb-8">
-                Nebula · Infrastructure Intelligence
-              </p>
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 text-[#3568C8] dark:text-primary font-mono text-xs tracking-[0.2em] uppercase font-semibold mb-4">
+                <Sparkles className="size-3.5" />
+                <span>Passive Autonomous Reconnaissance</span>
+              </div>
 
-              <h1 className="font-display font-normal text-[3.125rem] sm:text-[4rem] md:text-[4.375rem] leading-[1.04] tracking-[-0.035em] text-foreground mb-6">
-                Understand your
+              {/* Zone B: Intelligence Statement */}
+              <h1 className="font-sans font-bold text-[2.25rem] sm:text-[3.25rem] md:text-[3.75rem] leading-[1.12] tracking-tight text-foreground mb-4">
+                Infrastructure intelligence
                 <br />
-                <em className="italic font-normal text-foreground/75">infrastructure.</em>
+                begins with understanding.
               </h1>
 
-              <p className="text-[0.9375rem] sm:text-[1.0625rem] text-muted-foreground/90 leading-[1.8] max-w-[430px] mx-auto mb-12 sm:mb-14 font-normal">
-                Enter a domain. Within minutes, Nebula returns a clear engineering
-                assessment — written for humans, not dashboards.
+              {/* Subtitle */}
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-[560px] mx-auto font-normal">
+                Enter a domain. Nebula will build its current understanding.
               </p>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Zone C: Domain Intent (Input & Action) */}
         <motion.div layout="position" className="max-w-[560px] mx-auto">
-          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
             <div className="relative flex-1">
-              <Globe
-                className={`absolute left-4 top-1/2 -translate-y-1/2 size-[15px] pointer-events-none transition-colors duration-300 ${
-                  isUnderstanding ? "text-muted-foreground/35" : "text-muted-foreground/60"
-                }`}
-                strokeWidth={1.5}
-                aria-hidden="true"
-              />
               <input
                 ref={inputRef}
                 type="text"
@@ -157,22 +169,22 @@ export function HeroSection({
                 aria-label={
                   isUnderstood
                     ? "Ask Nebula about this infrastructure"
-                    : "Domain name to understand"
+                    : "Enter a domain"
                 }
                 aria-describedby={domainError ? "domain-error" : undefined}
                 aria-invalid={domainError ? "true" : undefined}
                 aria-busy={isUnderstanding}
                 className={`
-                  w-full pl-11 pr-4 py-3.5 sm:py-4 rounded-xl border text-[14px] text-foreground
-                  placeholder:text-muted-foreground/45 bg-card
+                  w-full px-4 py-3.5 sm:py-3.5 rounded-xl border text-[14px] sm:text-[15px] text-foreground font-mono
+                  placeholder:text-muted-foreground/50 placeholder:font-mono bg-card
                   focus:outline-none focus:ring-2
-                  transition-all duration-300
-                  shadow-[0_1px_3px_rgba(0,0,0,0.04)]
+                  transition-all duration-150 ease-out
+                  shadow-[0_2px_8px_rgba(16,24,20,0.045)] dark:shadow-none
                   ${isUnderstanding
-                    ? "opacity-45 cursor-default border-border focus:ring-0"
+                    ? "opacity-50 cursor-default border-border focus:ring-0"
                     : domainError
-                      ? "border-red-300/80 focus:ring-red-200/50 focus:border-red-300"
-                      : "border-border focus:ring-primary/12 focus:border-primary/25"
+                      ? "border-red-400 focus:ring-red-300/40 focus:border-red-400"
+                      : "border-border/80 focus:ring-primary/20 focus:border-primary/40"
                   }
                 `}
               />
@@ -183,25 +195,26 @@ export function HeroSection({
                 <motion.button
                   key="understand-btn"
                   initial={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.22 }}
-                  onClick={handleSubmit}
-                  disabled={isUnderstanding}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.16, ease: "easeOut" }}
+                  onClick={() => handleDomainSubmit()}
+                  disabled={isUnderstanding || (!isActive || !localDomain.trim())}
                   aria-busy={isUnderstanding}
                   aria-label={
                     isUnderstanding
                       ? "Understanding in progress"
-                      : "Understand this domain"
+                      : "Understand domain"
                   }
-                  className="
+                  className={`
                     sm:shrink-0 bg-primary text-primary-foreground
-                    text-[14px] font-medium px-6.5 py-3.5 sm:py-4 rounded-xl
-                    hover:opacity-90 active:opacity-70
-                    disabled:opacity-35 disabled:cursor-default
-                    transition-all focus-ring
-                    shadow-[0_2px_8px_rgba(26,86,219,0.25)]
-                    hover:shadow-[0_4px_12px_rgba(26,86,219,0.3)]
-                  "
+                    text-sm font-semibold px-5 py-3.5 rounded-xl
+                    hover:opacity-95 active:scale-[0.99]
+                    disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
+                    transition-all duration-150 ease-out focus-ring
+                    shadow-[0_2px_10px_rgba(26,86,219,0.22)]
+                    flex items-center justify-center gap-2 cursor-pointer
+                    ${!isValidCandidate && !isUnderstanding ? "opacity-75" : ""}
+                  `}
                 >
                   {isUnderstanding ? (
                     <span className="flex items-center justify-center gap-1.5">
@@ -210,7 +223,7 @@ export function HeroSection({
                         {[0, 1, 2].map((i) => (
                           <span
                             key={i}
-                            className="size-[3px] rounded-full bg-white/55"
+                            className="size-[3px] rounded-full bg-white/70"
                             style={{
                               animation: `breathe 1.6s ease-in-out ${i * 0.22}s infinite`,
                             }}
@@ -219,13 +232,48 @@ export function HeroSection({
                       </span>
                     </span>
                   ) : (
-                    "Understand Infrastructure"
+                    <>
+                      <span>Understand</span>
+                      <ArrowRight className="size-3.5" />
+                    </>
                   )}
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
 
+          {/* Quick-Try Sample Domain Shortcuts */}
+          <AnimatePresence>
+            {isIdle && (
+              <motion.div
+                initial={reduced ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, delay: 0.08 }}
+                className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground/80"
+              >
+                <span className="font-medium">Try an example:</span>
+                {CANONICAL_SAMPLE_DOMAINS.map((sample, idx) => (
+                  <React.Fragment key={sample.domain}>
+                    <button
+                      type="button"
+                      onClick={() => handleSampleSelect(sample.domain)}
+                      className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground/85 hover:text-foreground px-2 py-1 rounded-md bg-card/70 hover:bg-card border border-border/70 hover:border-border transition-all cursor-pointer focus-ring shadow-2xs"
+                      title={`${sample.category}: ${sample.purpose}`}
+                    >
+                      <DomainFavicon domain={sample.domain} size="compact" className="w-3.5 h-3.5 rounded-xs" />
+                      <span>{sample.domain}</span>
+                    </button>
+                    {idx < CANONICAL_SAMPLE_DOMAINS.length - 1 && (
+                      <span className="text-muted-foreground/40 select-none">&bull;</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Calm Inline Error Display */}
           <AnimatePresence>
             {domainError && (
               <motion.p
@@ -234,15 +282,16 @@ export function HeroSection({
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.22 }}
-                className="mt-2.5 text-[12px] text-red-500 flex items-center gap-1.5 text-left"
+                transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }}
+                className="mt-3 text-xs text-red-500 font-mono flex items-center justify-center gap-1.5"
               >
                 <AlertCircle className="size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                {domainError}
+                <span>{domainError}</span>
               </motion.p>
             )}
           </AnimatePresence>
 
+          {/* Reset under understood state */}
           <AnimatePresence>
             {isUnderstood && (
               <motion.div
@@ -254,16 +303,34 @@ export function HeroSection({
               >
                 <button
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground/45 hover:text-muted-foreground transition-colors focus-ring rounded mx-auto"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors focus-ring rounded px-2 py-1 mx-auto cursor-pointer"
                 >
                   <RotateCcw className="size-3" strokeWidth={2} aria-hidden="true" />
-                  Understand a different domain
+                  <span>Understand a different domain</span>
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <LivingSignature phase={phase} />
+          {/* Zone D: Quiet Context & Zone E: Product Signature (Visible in IDLE) */}
+          {isIdle && (
+            <motion.div
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="mt-10 sm:mt-12 space-y-3"
+            >
+              {/* Zone D: Quiet Context */}
+              <p className="text-xs font-mono text-[#5F625F] dark:text-muted-foreground">
+                Current intelligence &bull; No account required
+              </p>
+
+              {/* Zone E: Product Signature */}
+              <p className="text-xs font-mono text-muted-foreground/60 tracking-wide">
+                Intelligence before data &bull; Context before details &bull; Summary before evidence
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </section>

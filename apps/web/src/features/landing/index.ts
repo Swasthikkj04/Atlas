@@ -4,6 +4,5 @@ export { Hero } from './Hero';
 export { CausalCanvas } from './CausalCanvas';
 export { ReasoningSection } from './ReasoningSection';
 export { PrinciplesManifesto } from './PrinciplesManifesto';
-export { WhyArgonion } from './WhyArgonion';
 export { FinalManifestoAndFooter } from './FinalManifestoAndFooter';
 export { Footer } from './Footer';

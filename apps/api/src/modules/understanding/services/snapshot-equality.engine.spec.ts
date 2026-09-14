@@ -62,7 +62,7 @@ describe('SnapshotEqualityEngine', () => {
     const reordered: DiscoverySnapshot = {
       ...baseSnapshot,
       dns: {
-        ...baseSnapshot.dns!,
+        ...baseSnapshot.dns,
         a: ['1.0.0.1', '1.1.1.1'],
       },
     };
@@ -73,14 +73,14 @@ describe('SnapshotEqualityEngine', () => {
     const modifiedMeta: DiscoverySnapshot = {
       ...baseSnapshot,
       ssl: {
-        ...baseSnapshot.ssl!,
+        ...baseSnapshot.ssl,
         responseTimeMs: 9999,
       },
       http: {
-        ...baseSnapshot.http!,
+        ...baseSnapshot.http,
         responseTimeMs: 8888,
         headers: {
-          ...baseSnapshot.http!.headers,
+          ...baseSnapshot.http.headers,
           'x-request-id': 'unique-id-12345',
         },
       },
@@ -92,7 +92,7 @@ describe('SnapshotEqualityEngine', () => {
     const changedDns: DiscoverySnapshot = {
       ...baseSnapshot,
       dns: {
-        ...baseSnapshot.dns!,
+        ...baseSnapshot.dns,
         a: ['9.9.9.9'],
       },
     };
@@ -103,9 +103,9 @@ describe('SnapshotEqualityEngine', () => {
     const changedSsl: DiscoverySnapshot = {
       ...baseSnapshot,
       ssl: {
-        ...baseSnapshot.ssl!,
+        ...baseSnapshot.ssl,
         certificate: {
-          ...baseSnapshot.ssl!.certificate!,
+          ...baseSnapshot.ssl.certificate,
           validTo: '2026-07-01T00:00:00Z',
         },
       },
@@ -117,7 +117,7 @@ describe('SnapshotEqualityEngine', () => {
     const changedHttp: DiscoverySnapshot = {
       ...baseSnapshot,
       http: {
-        ...baseSnapshot.http!,
+        ...baseSnapshot.http,
         statusCode: 500,
       },
     };
@@ -128,9 +128,9 @@ describe('SnapshotEqualityEngine', () => {
     const changedHeader: DiscoverySnapshot = {
       ...baseSnapshot,
       http: {
-        ...baseSnapshot.http!,
+        ...baseSnapshot.http,
         headers: {
-          ...baseSnapshot.http!.headers,
+          ...baseSnapshot.http.headers,
           'x-frame-options': 'SAMEORIGIN',
         },
       },

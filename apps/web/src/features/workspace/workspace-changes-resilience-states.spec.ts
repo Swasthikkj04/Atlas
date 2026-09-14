@@ -138,6 +138,7 @@ describe('WX-1009: Changes State Resolution & Snapshot Visibility Correction', (
         timelineEvents: [mockChangeEvent],
         isLoading: false,
         isError: false,
+        referenceTime: new Date('2026-08-23T12:00:05Z'),
       });
 
       assert.equal(integration.state, 'READY');
@@ -179,6 +180,7 @@ describe('WX-1009: Changes State Resolution & Snapshot Visibility Correction', (
         isLoading: false,
         isError: false,
         isUnderstanding: true, // Active understanding executing
+        referenceTime: new Date('2026-08-23T12:00:05Z'),
       });
 
       // State remains READY with verified changes visible

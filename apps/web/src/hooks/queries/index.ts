@@ -9,3 +9,7 @@ export * from './useTimeline';
 export * from './useWorkspace';
 export * from './useOverview';
 export * from './useSearch';
+export * from './useSecurity';
+export * from './useDriftAlerts';
+export * from './useSnapshotDiff';
+

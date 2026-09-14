@@ -4,11 +4,13 @@ import {
   ShieldAlert,
   History,
   Server,
+  ShieldCheck,
   Calendar,
   Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { Icon } from '../../../../components/icons';
+import { ArgonionMark } from '../../../../components/branding/ArgonionMark';
 import type { WorkspaceNavProps, WorkspaceNavigationTab } from './WorkspaceNav.types';
 
 interface NavItemConfig {
@@ -44,6 +46,12 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
     path: '/workspace/infrastructure',
   },
   {
+    id: 'security',
+    label: 'Security',
+    icon: ShieldCheck,
+    path: '/workspace/security',
+  },
+  {
     id: 'memory',
     label: 'Memory',
     icon: Calendar,
@@ -65,6 +73,7 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
 export const WorkspaceNav: React.FC<WorkspaceNavProps> = ({
   activeView = 'overview',
   onSelectView,
+  activeDomainId,
   onItemClick,
   className = '',
   ...rest
@@ -81,15 +90,18 @@ export const WorkspaceNav: React.FC<WorkspaceNavProps> = ({
             href="/workspace"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               onSelectView?.('overview');
               onItemClick?.();
             }}
             className="font-mono text-xs tracking-[0.22em] uppercase font-semibold text-foreground hover:opacity-80 transition-opacity flex items-center gap-2.5 focus-ring select-none"
           >
-            <div className="w-2 h-2 rounded-full bg-severity-success animate-pulse" />
+            <div className="size-7 rounded-lg bg-foreground/[0.06] dark:bg-foreground/[0.08] border border-border/80 flex items-center justify-center text-foreground shrink-0">
+              <ArgonionMark size={16} className="text-foreground" />
+            </div>
             <span>ARGONION</span>
             <span className="opacity-30">/</span>
-            <span>NEBULA</span>
+            <span className="font-bold">NEBULA</span>
           </a>
         </div>
 
@@ -105,13 +117,19 @@ export const WorkspaceNav: React.FC<WorkspaceNavProps> = ({
             {NAV_ITEMS.map((item) => {
               const isActive = activeView === item.id;
               const IconComp = item.icon;
+              const itemHref = activeDomainId && item.id !== 'overview'
+                ? `${item.path}?domainId=${encodeURIComponent(activeDomainId)}`
+                : activeDomainId
+                ? `/workspace?domainId=${encodeURIComponent(activeDomainId)}`
+                : item.path;
 
               return (
                 <div key={item.id} role="listitem">
                   <a
-                    href={item.path}
+                    href={itemHref}
                     onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       onSelectView?.(item.id);
                       onItemClick?.();
                     }}

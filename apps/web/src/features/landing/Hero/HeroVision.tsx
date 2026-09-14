@@ -14,7 +14,7 @@ export const HeroVision: React.FC = () => {
         letterSpacing: '-0.01em',
       }}
     >
-      We build AI systems that understand complex infrastructure so engineering teams can focus on what matters.
+      We build systems that understand complex infrastructure so engineering teams can focus on what matters.
     </p>
   );
 };

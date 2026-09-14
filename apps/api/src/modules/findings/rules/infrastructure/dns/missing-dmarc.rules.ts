@@ -22,7 +22,11 @@ export class MissingDmarcRule implements FindingRule {
 
     // P0 Truth Invariant (WX-1020): DMARC lookup failed != DMARC record absent.
     const dmarcStatus = dns.status?.dmarc;
-    if (dmarcStatus === 'FAILED' || dmarcStatus === 'TIMEOUT' || dmarcStatus === 'SERVFAIL') {
+    if (
+      dmarcStatus === 'FAILED' ||
+      dmarcStatus === 'TIMEOUT' ||
+      dmarcStatus === 'SERVFAIL'
+    ) {
       return [];
     }
 

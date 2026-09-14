@@ -2,6 +2,7 @@ import type { GuestClaimContext } from './entry-state.contract';
 import type { ClaimGuestSessionResponse } from '../../../services/api/guest';
 
 export const GUEST_CLAIM_STORAGE_KEY = 'nebula_guest_claim';
+export const GUEST_CLAIM_ERROR_STORAGE_KEY = 'nebula_claim_error';
 
 /**
  * Raw structure stored in sessionStorage during Guest exploration.
@@ -52,6 +53,33 @@ export function clearStoredGuestClaimContext(): void {
   if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
     try {
       window.sessionStorage.removeItem(GUEST_CLAIM_STORAGE_KEY);
+    } catch {
+      // Ignore storage clearance failures
+    }
+  }
+}
+
+/**
+ * Retrieves any pending guest claim error message from session storage.
+ */
+export function getStoredGuestClaimError(): string | null {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') {
+    return null;
+  }
+  try {
+    return window.sessionStorage.getItem(GUEST_CLAIM_ERROR_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clears any pending guest claim error from session storage.
+ */
+export function clearStoredGuestClaimError(): void {
+  if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+    try {
+      window.sessionStorage.removeItem(GUEST_CLAIM_ERROR_STORAGE_KEY);
     } catch {
       // Ignore storage clearance failures
     }

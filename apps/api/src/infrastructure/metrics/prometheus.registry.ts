@@ -43,7 +43,7 @@ export class PrometheusRegistry {
     if (!this.counters.has(name)) {
       this.counters.set(name, { help, values: new Map() });
     }
-    const metric = this.counters.get(name)!;
+    const metric = this.counters.get(name);
     const labelKey = this.serializeLabels(labels);
     const current = metric.values.get(labelKey) || 0;
     metric.values.set(labelKey, current + value);
@@ -58,7 +58,7 @@ export class PrometheusRegistry {
     if (!this.gauges.has(name)) {
       this.gauges.set(name, { help, values: new Map() });
     }
-    const metric = this.gauges.get(name)!;
+    const metric = this.gauges.get(name);
     const labelKey = this.serializeLabels(labels);
     metric.values.set(labelKey, value);
   }
@@ -75,7 +75,7 @@ export class PrometheusRegistry {
     if (!this.histograms.has(name)) {
       this.histograms.set(name, { help, buckets, values: new Map() });
     }
-    const metric = this.histograms.get(name)!;
+    const metric = this.histograms.get(name);
     const labelKey = this.serializeLabels(labels);
 
     if (!metric.values.has(labelKey)) {
@@ -86,7 +86,7 @@ export class PrometheusRegistry {
       });
     }
 
-    const data = metric.values.get(labelKey)!;
+    const data = metric.values.get(labelKey);
     data.count += 1;
     data.sum += valSec;
 

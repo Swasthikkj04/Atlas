@@ -1,1 +1,2 @@
-export type DiscoveryModuleName = 'dns' | 'http' | 'ssl' | 'technology';
+export type DiscoveryModuleName =
+  'dns' | 'http' | 'ssl' | 'technology' | 'routing';

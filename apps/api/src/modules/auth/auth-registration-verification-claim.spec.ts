@@ -165,6 +165,7 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
       sendPasswordResetConfirmationEmail: jest
         .fn()
         .mockResolvedValue(undefined),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ status: 'SENT' }),
     };
 
     const mockEngine = {
@@ -273,7 +274,7 @@ describe('AUTH-004: Registration -> Verification -> Authenticated Session -> Gue
       });
 
       const claimResult = await guestService.claimGuestSession(
-        verifyResult.user!.id,
+        verifyResult.user.id,
         'ses_1723456789_xyz999',
       );
 

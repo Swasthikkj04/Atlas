@@ -22,7 +22,11 @@ export class MissingMxRule implements FindingRule {
 
     // P0 Truth Invariant (WX-1020): DNS lookup failure != MX record absent.
     const mxStatus = dns.status?.mx;
-    if (mxStatus === 'FAILED' || mxStatus === 'TIMEOUT' || mxStatus === 'SERVFAIL') {
+    if (
+      mxStatus === 'FAILED' ||
+      mxStatus === 'TIMEOUT' ||
+      mxStatus === 'SERVFAIL'
+    ) {
       return [];
     }
 

@@ -4,6 +4,8 @@ export type CompactInfrastructureCategory =
   | 'edge'
   | 'web_server'
   | 'application'
+  | 'platform'
+  | 'runtime'
   | 'hosting'
   | 'dns'
   | 'tls'
@@ -25,19 +27,17 @@ export interface CompactInfrastructureResult {
   readonly domainId: string;
   readonly domainName: string;
   readonly items: readonly CompactInfrastructureItem[];
+  readonly detectedItems: readonly CompactInfrastructureItem[];
   readonly hasAnyDetected: boolean;
 }
 
 /**
- * Pure resolver to map authoritative backend infrastructure DTO to the 8 canonical compact overview rows (WX-909 / WX-1022).
+ * Pure resolver to map authoritative backend infrastructure DTO to dynamic, curated overview rows.
  *
- * Invariants (WX-1022 Authoritative Provider Attribution):
- * - PROVIDER_ATTRIBUTION_IS_EVIDENCE_BACKED: Never guesses hosting from single weak fingerprints.
- * - NO_TECHNOLOGY_TO_HOSTING_INFERENCE: Technology (e.g. Next.js) never implies hosting (e.g. Vercel).
- * - NO_EDGE_TO_HOSTING_INFERENCE: Edge/CDN (e.g. Cloudflare) never implies hosting.
- * - NO_DNS_TO_HOSTING_INFERENCE: DNS provider never implies hosting.
- * - PROVIDER_CONFLICT_MUST_BE_EXPOSED: Conflicting signals produce honest "Inconclusive / Conflicted".
- * - UNKNOWN_PROVIDER_IS_VALID: Missing signals honestly display "Not established".
+ * Invariants:
+ * - Dynamic, domain-adaptive presentation for the Overview tab.
+ * - Shows only observed and relevant infrastructure for that specific domain.
+ * - Preserves authoritative attribution and anti-overreach rules (WX-1022).
  */
 export function resolveCompactInfrastructure(
   domainId: string,
@@ -50,29 +50,38 @@ export function resolveCompactInfrastructure(
       : (data as InfrastructureOverviewDto | null);
 
   if (!infra) {
+    const fallbackItems: CompactInfrastructureItem[] = [
+      { id: 'edge', label: 'Edge', value: 'Not detected', isDetected: false },
+      { id: 'web_server', label: 'Web Server', value: 'Not detected', isDetected: false },
+      { id: 'application', label: 'Application', value: 'Not detected', isDetected: false },
+      { id: 'hosting', label: 'Hosting', value: 'Not established', isDetected: false },
+      { id: 'dns', label: 'DNS', value: 'Not detected', isDetected: false },
+      { id: 'tls', label: 'TLS / SSL', value: 'Not detected', isDetected: false },
+      { id: 'ip_address', label: 'IP Address', value: 'Not detected', isDetected: false },
+      { id: 'open_ports', label: 'Open Ports', value: 'Not detected', isDetected: false },
+    ];
     return {
       domainId,
       domainName,
-      items: [
-        { id: 'edge', label: 'Edge', value: 'Not detected', isDetected: false },
-        { id: 'web_server', label: 'Web Server', value: 'Not detected', isDetected: false },
-        { id: 'application', label: 'Application', value: 'Not detected', isDetected: false },
-        { id: 'hosting', label: 'Hosting', value: 'Not established', isDetected: false },
-        { id: 'dns', label: 'DNS', value: 'Not detected', isDetected: false },
-        { id: 'tls', label: 'TLS / SSL', value: 'Not detected', isDetected: false },
-        { id: 'ip_address', label: 'IP Address', value: 'Not detected', isDetected: false },
-        { id: 'open_ports', label: 'Open Ports', value: 'Not detected', isDetected: false },
-      ],
+      items: fallbackItems,
+      detectedItems: [],
       hasAnyDetected: false,
     };
   }
 
-  // 1. Edge / CDN (Edge Proxy, NOT Hosting)
+  const keyTechs = infra?.technologyArchitecture?.keyTechnologies || [];
+
+  // 1. Edge / CDN
   let edgeValue = 'Not detected';
   let isEdgeDetected = false;
   let edgeDetails: string | undefined;
 
-  if (infra.edgeProvider) {
+  const edgeTech = keyTechs.find((t) => t.layer === 'EDGE' || t.category === 'CDN / Edge');
+  if (edgeTech) {
+    edgeValue = edgeTech.name;
+    isEdgeDetected = true;
+    edgeDetails = edgeTech.confidenceLevel ? `${edgeTech.confidenceLevel.toLowerCase()} confidence` : undefined;
+  } else if (infra.edgeProvider) {
     edgeValue = infra.edgeProvider;
     isEdgeDetected = true;
     edgeDetails = infra.edgeConfidence ? `${infra.edgeConfidence.toLowerCase()} confidence` : undefined;
@@ -81,27 +90,52 @@ export function resolveCompactInfrastructure(
     isEdgeDetected = true;
   }
 
-  // 2. Web Server (HTTP Server Banner)
+  // 2. Web Server / Gateway
   let webServerValue = 'Not detected';
   let isWebServerDetected = false;
-  if (infra.webServer) {
+  const gwTech = keyTechs.find((t) => t.layer === 'GATEWAY' || t.category === 'Web / Server');
+  if (gwTech) {
+    webServerValue = gwTech.version ? `${gwTech.name} ${gwTech.version}` : gwTech.name;
+    isWebServerDetected = true;
+  } else if (infra.webServer) {
     webServerValue = infra.webServer;
     isWebServerDetected = true;
   }
 
-  // 3. Application (Framework / Language Runtime)
+  // 3. Platform / CMS (e.g. WordPress)
+  let platformValue = 'Not detected';
+  let isPlatformDetected = false;
+  const platformTech = keyTechs.find((t) => t.layer === 'PLATFORM' || t.category === 'CMS / Platforms');
+  if (platformTech) {
+    platformValue = platformTech.version ? `${platformTech.name} ${platformTech.version}` : platformTech.name;
+    isPlatformDetected = true;
+  }
+
+  // 4. Application Framework (e.g. Next.js, React, Django)
   let applicationValue = 'Not detected';
   let isAppDetected = false;
+  const appTechs = keyTechs.filter((t) => t.layer === 'APPLICATION' || (t.category && (t.category.includes('Application') || t.category.includes('UI'))));
   if (infra.technologies && infra.technologies.length > 0) {
     const appFramework = infra.technologies.find((t) =>
       /next\.js|react|vue|nuxt|angular|node|express|django|rails|laravel|wordpress|svelte|remix|gatsby/i.test(t)
     ) || infra.technologies[0];
-
     applicationValue = appFramework;
+    isAppDetected = true;
+  } else if (appTechs.length > 0) {
+    applicationValue = appTechs[0].version ? `${appTechs[0].name} ${appTechs[0].version}` : appTechs[0].name;
     isAppDetected = true;
   }
 
-  // 4. Hosting (Origin Deployment / Compute - WX-1022 Multi-Signal Attributed)
+  // 5. Runtime (e.g. PHP, Docker, Python, Node.js)
+  let runtimeValue = 'Not detected';
+  let isRuntimeDetected = false;
+  const runtimeTechs = keyTechs.filter((t) => t.layer === 'RUNTIME' || (t.category && t.category.includes('Runtime')));
+  if (runtimeTechs.length > 0) {
+    runtimeValue = runtimeTechs[0].version ? `${runtimeTechs[0].name} ${runtimeTechs[0].version}` : runtimeTechs[0].name;
+    isRuntimeDetected = true;
+  }
+
+  // 6. Hosting (Origin Deployment / Compute - WX-1022 Multi-Signal Attributed)
   let hostingValue = 'Not established';
   let isHostingDetected = false;
   let hostingDetails: string | undefined;
@@ -130,7 +164,7 @@ export function resolveCompactInfrastructure(
     hostingDetails = 'Insufficient evidence';
   }
 
-  // 5. DNS (Authoritative Nameserver - WX-1022)
+  // 7. DNS (Authoritative Nameserver - WX-1022)
   let dnsValue = 'Not detected';
   let isDnsDetected = false;
   let dnsDetails: string | undefined;
@@ -144,15 +178,28 @@ export function resolveCompactInfrastructure(
     isDnsDetected = true;
   }
 
-  // 6. TLS / SSL
+  // 8. TLS / SSL
   let tlsValue = 'Not detected';
   let isTlsDetected = false;
+  let tlsDetails: string | undefined;
   if (infra.sslValid) {
     tlsValue = 'TLS 1.3';
     isTlsDetected = true;
+    if (infra.sslExpiresAt) {
+      try {
+        const days = Math.ceil(
+          (new Date(infra.sslExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+        );
+        if (days > 0) {
+          tlsDetails = `${days}d remaining`;
+        }
+      } catch {
+        // Ignore date parsing error
+      }
+    }
   }
 
-  // 7. IP Address
+  // 9. IP Address
   let ipValue = 'Not detected';
   let isIpDetected = false;
   if (infra.ipv4Addresses && infra.ipv4Addresses.length > 0) {
@@ -163,7 +210,7 @@ export function resolveCompactInfrastructure(
     isIpDetected = true;
   }
 
-  // 8. Open Ports
+  // 10. Open Ports
   let portsValue = 'Not detected';
   let isPortsDetected = false;
   if (infra.httpStatus > 0 || isIpDetected || isTlsDetected) {
@@ -171,10 +218,12 @@ export function resolveCompactInfrastructure(
     isPortsDetected = true;
   }
 
-  const items: CompactInfrastructureItem[] = [
+  const allItems: CompactInfrastructureItem[] = [
     { id: 'edge', label: 'Edge', value: edgeValue, isDetected: isEdgeDetected, details: edgeDetails },
     { id: 'web_server', label: 'Web Server', value: webServerValue, isDetected: isWebServerDetected },
+    ...(isPlatformDetected ? [{ id: 'platform' as CompactInfrastructureCategory, label: 'Platform', value: platformValue, isDetected: true }] : []),
     { id: 'application', label: 'Application', value: applicationValue, isDetected: isAppDetected },
+    ...(isRuntimeDetected ? [{ id: 'runtime' as CompactInfrastructureCategory, label: 'Runtime', value: runtimeValue, isDetected: true }] : []),
     {
       id: 'hosting',
       label: 'Hosting',
@@ -186,17 +235,19 @@ export function resolveCompactInfrastructure(
       explanation: infra.hostingExplanation || undefined,
     },
     { id: 'dns', label: 'DNS', value: dnsValue, isDetected: isDnsDetected, details: dnsDetails },
-    { id: 'tls', label: 'TLS / SSL', value: tlsValue, isDetected: isTlsDetected },
+    { id: 'tls', label: 'TLS / SSL', value: tlsValue, isDetected: isTlsDetected, details: tlsDetails },
     { id: 'ip_address', label: 'IP Address', value: ipValue, isDetected: isIpDetected },
     { id: 'open_ports', label: 'Open Ports', value: portsValue, isDetected: isPortsDetected },
   ];
 
-  const hasAnyDetected = items.some((i) => i.isDetected);
+  const detectedItems = allItems.filter((item) => item.isDetected);
+  const hasAnyDetected = detectedItems.length > 0;
 
   return {
     domainId,
     domainName,
-    items,
+    items: allItems,
+    detectedItems,
     hasAnyDetected,
   };
 }

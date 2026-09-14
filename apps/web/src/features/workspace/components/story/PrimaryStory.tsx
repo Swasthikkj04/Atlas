@@ -218,7 +218,7 @@ export const PrimaryStory: React.FC<PrimaryStoryProps> = ({
             onClick={() => onInvestigate(story.id)}
             className="inline-flex items-center gap-1.5 text-xs text-[#3568C8] hover:underline font-mono font-medium cursor-pointer focus-ring transition-colors duration-150"
           >
-            <span>Investigate finding</span>
+            <span>Understand why &rarr;</span>
             <Icon icon={ArrowRight} size="small" />
           </button>
         )}

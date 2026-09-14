@@ -299,7 +299,7 @@ export class SearchRepository {
 
     // Map Infrastructure Entities from Snapshot Payloads
     for (const s of snapshots) {
-      const payload = s.payload as any;
+      const payload = s.payload;
       if (!payload) continue;
 
       const domainName = s.domain.domainName;

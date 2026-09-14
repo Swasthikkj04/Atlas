@@ -84,7 +84,11 @@ describe('UnderstandingEngine', () => {
         hosting: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
         edgeCdn: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
         dns: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
-        webServer: { provider: 'nginx', decision: 'CONFIRMED', confidence: 'HIGH' },
+        webServer: {
+          provider: 'nginx',
+          decision: 'CONFIRMED',
+          confidence: 'HIGH',
+        },
         application: { provider: null, decision: 'UNKNOWN', confidence: 'LOW' },
       }),
     };
@@ -111,7 +115,7 @@ describe('UnderstandingEngine', () => {
       jobId: 'job-1',
       responseTimeMs: 100,
       httpStatus: 200,
-      payload: mockSnapshot as any,
+      payload: mockSnapshot,
       createdAt: new Date(),
     });
 
@@ -184,7 +188,7 @@ describe('UnderstandingEngine', () => {
       jobId: 'job-2',
       responseTimeMs: 100,
       httpStatus: 200,
-      payload: mockSnapshot as any,
+      payload: mockSnapshot,
       createdAt: new Date(),
     });
 
@@ -230,7 +234,7 @@ describe('UnderstandingEngine', () => {
       jobId: 'job-3',
       responseTimeMs: 120,
       httpStatus: 200,
-      payload: mockSnapshot as any,
+      payload: mockSnapshot,
       createdAt: new Date(),
     });
 

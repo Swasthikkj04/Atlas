@@ -1,6 +1,15 @@
 import React from 'react';
+import { telemetry } from '../../../services';
 
 export const HeroSignature: React.FC = () => {
+  const handleEnterNebula = () => {
+    telemetry.track('SCAN_DOMAIN_CTA', {
+      path: '/',
+      surface: 'landing',
+      ctaLocation: 'hero',
+    });
+  };
+
   return (
     <div
       style={{
@@ -8,19 +17,45 @@ export const HeroSignature: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: '7rem',
+        marginTop: '2.5rem',
         paddingBottom: '3rem',
         position: 'relative',
         zIndex: 2,
       }}
     >
+      {/* Anchored Primary CTA (Placed Above) */}
+      <div style={{ marginBottom: '3.5rem' }}>
+        <a
+          href="/guest"
+          onClick={handleEnterNebula}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#0b0c10',
+            color: '#ffffff',
+            padding: '0.85rem 1.85rem',
+            borderRadius: '9999px',
+            fontSize: '0.9375rem',
+            fontWeight: 600,
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+            boxShadow: '0 10px 25px -5px rgba(11, 12, 16, 0.25)',
+            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <span>Enter Nebula</span>
+          <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>↗</span>
+        </a>
+      </div>
+
       {/* Structural Hairline Accent */}
       <div
         style={{
           width: '36px',
           height: '1px',
           backgroundColor: 'rgba(11, 12, 16, 0.12)',
-          marginBottom: '3.5rem',
+          marginBottom: '3rem',
         }}
       />
 
@@ -34,7 +69,7 @@ export const HeroSignature: React.FC = () => {
         }}
       >
         {/* =========================================================================
-            NEBULA SYMBOL: Restrained, Subdued Amber Mark (25% Smaller)
+            NEBULA SYMBOL: Restrained, Subdued Amber Mark
             ========================================================================= */}
         <div
           style={{
@@ -121,9 +156,11 @@ export const HeroSignature: React.FC = () => {
         </div>
 
         {/* =========================================================================
-            PRIMARY WORDMARK: Scaled Up ~7% for Hero Dominance
+            PRIMARY WORDMARK: Restored Full Dominance
             ========================================================================= */}
-        <h1
+        <span
+          role="heading"
+          aria-level={2}
           style={{
             fontSize: 'clamp(3.75rem, 7.2vw, 6.75rem)',
             fontWeight: 850,
@@ -132,13 +169,14 @@ export const HeroSignature: React.FC = () => {
             margin: 0,
             lineHeight: 1,
             fontFeatureSettings: '"cv02", "cv03", "cv04", "cv11"',
+            display: 'inline-block',
           }}
         >
           Nebula
-        </h1>
+        </span>
       </div>
 
-      {/* Subtitle Descriptor (2.25rem spacing above) */}
+      {/* Subtitle Descriptor */}
       <span
         style={{
           fontSize: '0.8125rem',
@@ -146,37 +184,12 @@ export const HeroSignature: React.FC = () => {
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: '#475467',
-          marginTop: '2.25rem',
+          marginTop: '2rem',
           fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
         }}
       >
         Infrastructure Intelligence Platform
       </span>
-
-      {/* Anchored Primary CTA (5rem spacing above) */}
-      <div style={{ marginTop: '5rem' }}>
-        <a
-          href="/guest"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: '#0b0c10',
-            color: '#ffffff',
-            padding: '0.85rem 1.85rem',
-            borderRadius: '9999px',
-            fontSize: '0.9375rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-            boxShadow: '0 10px 25px -5px rgba(11, 12, 16, 0.25)',
-            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          <span>Enter Nebula</span>
-          <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>↗</span>
-        </a>
-      </div>
     </div>
   );
 };

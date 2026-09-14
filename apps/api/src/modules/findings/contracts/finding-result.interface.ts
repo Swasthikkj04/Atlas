@@ -4,10 +4,7 @@ import { Severity } from '../enums/severity.enum';
 import { Recommendation } from './recommendation.interface';
 
 export type FindingConfidence =
-  | 'AUTHORITATIVE'
-  | 'SUPPORTED'
-  | 'CONTEXTUAL'
-  | 'INCONCLUSIVE';
+  'AUTHORITATIVE' | 'SUPPORTED' | 'CONTEXTUAL' | 'INCONCLUSIVE';
 
 export type RiskClassification =
   | 'CONFIRMED_SECURITY_CONDITION'

@@ -1,187 +1,267 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ArrowRight, Globe, Shield, CheckCircle2, Zap } from 'lucide-react';
+import { telemetry, type TelemetryEvent } from '../../../services';
 
-interface Principle {
-  id: string;
-  title: string;
-  statement: string;
-}
-
-const PRINCIPLES: Principle[] = [
-  {
-    id: 'memory',
-    title: 'Infrastructure Memory',
-    statement:
-      'Systems must be understood continuously across time. Nebula maintains deep temporal baselines so state drift is evaluated against months of architectural evolution, not point-in-time noise.',
-  },
-  {
-    id: 'evidence',
-    title: 'Evidence Over Assertion',
-    statement:
-      'Unverifiable conclusions are indistinguishable from noise. Every relationship, dependency link, and causal candidate in Nebula is explicitly auditable back to raw telemetry.',
-  },
-  {
-    id: 'judgment',
-    title: 'Preservation of Human Judgment',
-    statement:
-      'Intelligence illuminates context; engineers retain ultimate authority. Nebula synthesizes complex state graphs so teams act with speed and absolute clarity.',
-  },
-  {
-    id: 'comprehension',
-    title: 'Systemic Comprehension',
-    statement:
-      'Alert fatigue is a symptom of fragmented understanding. By structuring raw telemetry into a unified causal graph, Nebula transforms thousands of alerts into a single cohesive narrative.',
-  },
-];
-
-const FOOTER_LINKS = [
-  { label: 'Documentation', href: '#docs' },
-  { label: 'API Reference', href: '#api' },
-  { label: 'System Status', href: '#status' },
-  { label: 'Contact', href: '#contact' },
-  { label: 'GitHub', href: 'https://github.com', external: true },
+const FOOTER_LINKS: Array<{ label: string; href: string; action?: TelemetryEvent; external?: boolean }> = [
+  { label: 'Documentation', href: '/docs', action: 'EXPLORE_DOCS_CTA' },
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Terms & Conditions', href: '/terms' },
 ];
 
 export const FinalManifestoAndFooter: React.FC = () => {
+  const [domainInput, setDomainInput] = useState('');
+
+  const handleEnterNebula = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    telemetry.track('SCAN_DOMAIN_CTA', {
+      path: '/',
+      surface: 'landing',
+      ctaLocation: 'footer',
+      submittedDomain: domainInput.trim() || undefined,
+    });
+
+    const cleanDomain = domainInput.trim();
+    const targetPath = cleanDomain
+      ? `/guest?domain=${encodeURIComponent(cleanDomain)}`
+      : '/guest';
+
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', targetPath);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const handleFooterLinkClick = (action?: TelemetryEvent) => {
+    if (action) {
+      telemetry.track(action, {
+        path: '/',
+        surface: 'landing',
+        ctaLocation: 'footer',
+      });
+    }
+  };
+
   return (
-    <div style={{ backgroundColor: '#050608', color: '#f8fafc' }}>
+    <div style={{ backgroundColor: '#050608', color: '#f8fafc', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
       {/* =========================================================================
-          1. PRINCIPLES: Editorial Manifesto Section
+          1. HIGH-IMPACT FINAL CTA SECTION
           ========================================================================= */}
       <section
         style={{
-          padding: '10rem 2rem 6rem 2rem',
-          maxWidth: '1100px',
+          padding: '8rem 2rem 6rem 2rem',
+          maxWidth: '1000px',
           margin: '0 auto',
+          textAlign: 'center',
           fontFamily: 'Inter, -apple-system, sans-serif',
+          position: 'relative',
         }}
       >
-        {/* Section Lead-in */}
-        <div style={{ marginBottom: '6rem' }}>
-          <span
+        {/* Subtle Ambient Radial Glow */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '600px',
+            height: '350px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.06) 0%, transparent 70%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div
             style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              color: '#94a3b8',
-              fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(56, 189, 248, 0.08)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              marginBottom: '1.5rem',
             }}
           >
-            [ Engineering Discipline ]
-          </span>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#38bdf8',
+                boxShadow: '0 0 8px #38bdf8',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#38bdf8',
+                fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+              }}
+            >
+              Perimeter Exploration
+            </span>
+          </div>
 
           <h2
             style={{
-              fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
-              fontWeight: 800,
+              fontSize: 'clamp(2.5rem, 4.8vw, 4rem)',
+              fontWeight: 850,
               letterSpacing: '-0.035em',
               lineHeight: 1.1,
-              marginTop: '1.25rem',
+              marginTop: 0,
+              marginBottom: '1.25rem',
               color: '#ffffff',
-              maxWidth: '780px',
             }}
           >
-            Principles that govern every conclusion.
+            Ready to inspect your infrastructure?
           </h2>
-        </div>
 
-        {/* Timeless Principles (No Numbers, Generous Vertical Rhythm) */}
-        <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          {PRINCIPLES.map((p) => (
-            <div
-              key={p.id}
-              style={{
-                padding: '4.5rem 0',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1.25fr',
-                gap: '4rem',
-                alignItems: 'baseline',
-              }}
-            >
-              {/* Prominent Principle Title */}
-              <h3
-                style={{
-                  fontSize: 'clamp(1.75rem, 2.8vw, 2.25rem)',
-                  fontWeight: 750,
-                  letterSpacing: '-0.03em',
-                  color: '#ffffff',
-                  margin: 0,
-                  lineHeight: 1.15,
-                }}
-              >
-                {p.title}
-              </h3>
-
-              {/* Concise Supporting Statement */}
-              <p
-                style={{
-                  fontSize: '1.0625rem',
-                  lineHeight: 1.65,
-                  color: '#A8B4CC',
-                  margin: 0,
-                  fontWeight: 400,
-                }}
-              >
-                {p.statement}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* =========================================================================
-            2. CLOSING STATEMENT: Timeless Narrative Conclusion
-            ========================================================================= */}
-        <div
-          style={{
-            marginTop: '10rem',
-            marginBottom: '6rem',
-            textAlign: 'center',
-          }}
-        >
           <p
             style={{
-              fontSize: 'clamp(1.5rem, 3.2vw, 2.5rem)',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: '#f8fafc',
-              lineHeight: 1.25,
-              maxWidth: '820px',
-              margin: '0 auto',
+              fontSize: '1.125rem',
+              lineHeight: 1.6,
+              color: '#94a3b8',
+              maxWidth: '620px',
+              margin: '0 auto 3rem auto',
             }}
           >
-            Complex infrastructure deserves clear understanding.
+            Experience how Nebula reconstructs ingress topologies, validates cryptographic hygiene, and uncovers causal state drift in seconds.
           </p>
 
-          {/* Final CTA Bridge */}
-          <div style={{ marginTop: '3.5rem' }}>
-            <a
-              href="/guest"
+          {/* Interactive Quick-Launch Bar */}
+          <form
+            onSubmit={handleEnterNebula}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              maxWidth: '560px',
+              margin: '0 auto',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                flex: '1 1 300px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Globe
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  width: '18px',
+                  height: '18px',
+                  color: '#64748b',
+                  pointerEvents: 'none',
+                }}
+              />
+              <input
+                type="text"
+                value={domainInput}
+                onChange={(e) => setDomainInput(e.target.value)}
+                placeholder="Enter domain (e.g. stripe.com or company.io)"
+                style={{
+                  width: '100%',
+                  padding: '0.95rem 1rem 0.95rem 2.75rem',
+                  backgroundColor: '#0d1017',
+                  border: '1px solid #222938',
+                  borderRadius: '9999px',
+                  color: '#ffffff',
+                  fontSize: '0.9375rem',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#38bdf8';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#222938';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.4)';
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.6rem',
+                justifyContent: 'center',
+                gap: '0.5rem',
                 backgroundColor: '#ffffff',
                 color: '#050608',
-                padding: '0.95rem 2.25rem',
+                padding: '0.95rem 2rem',
                 borderRadius: '9999px',
                 fontSize: '0.9375rem',
-                fontWeight: 650,
-                textDecoration: 'none',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
                 letterSpacing: '-0.01em',
-                boxShadow: '0 12px 30px -8px rgba(255, 255, 255, 0.15)',
-                transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 10px 25px -5px rgba(255, 255, 255, 0.2)',
+                transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease',
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <span>Enter Nebula</span>
-              <span style={{ fontSize: '0.85rem' }}>↗</span>
-            </a>
+              <span>Inspect Perimeter</span>
+              <ArrowRight style={{ width: '16px', height: '16px' }} />
+            </button>
+          </form>
+
+          {/* Value Badges */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2rem',
+              marginTop: '3.5rem',
+              flexWrap: 'wrap',
+              fontSize: '0.8125rem',
+              color: '#64748b',
+              fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <CheckCircle2 style={{ width: '14px', height: '14px', color: '#10b981' }} />
+              <span>Zero Agent Installation</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Shield style={{ width: '14px', height: '14px', color: '#38bdf8' }} />
+              <span>Cryptographically Auditable</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Zap style={{ width: '14px', height: '14px', color: '#f59e0b' }} />
+              <span>Instant Ingress Discovery</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          3. FOOTER: Minimal & Utility-First for Engineers
+          2. FOOTER: Minimal & Utility-First for Engineers
           ========================================================================= */}
       <footer
         style={{
@@ -236,6 +316,7 @@ export const FinalManifestoAndFooter: React.FC = () => {
               <a
                 key={link.label}
                 href={link.href}
+                onClick={() => handleFooterLinkClick(link.action)}
                 target={link.external ? '_blank' : undefined}
                 rel={link.external ? 'noopener noreferrer' : undefined}
                 style={{
@@ -266,7 +347,7 @@ export const FinalManifestoAndFooter: React.FC = () => {
             color: '#64748b',
           }}
         >
-          <span>© {new Date().getFullYear()} Nebula Systems Inc. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Argonion. All rights reserved.</span>
           <span>AUTONOMY THROUGH COMPREHENSION</span>
         </div>
       </footer>

@@ -375,6 +375,20 @@ export interface MeaningfulChangeStory {
   readonly previousSnapshotTimestamp?: string | null;
   /** Current snapshot timestamp for lineage strip */
   readonly currentSnapshotTimestamp?: string | null;
+  /** T23.5 Structured Forensic Explanation */
+  readonly forensicExplanation?: {
+    readonly whatChanged?: string;
+    readonly whyWeBelieveIt?: string;
+    readonly whatItMeans?: string;
+    readonly whatWeCannotConclude?: string;
+    readonly impact?: string;
+    readonly attention?: string;
+    readonly attentionRequired?: boolean;
+  };
+  /** T23.4 Significance Classification (INFORMATIONAL, NOTABLE, IMPORTANT, CRITICAL) */
+  readonly significance?: 'INFORMATIONAL' | 'NOTABLE' | 'IMPORTANT' | 'CRITICAL' | string;
+  /** T23.6 Multi-Layer Blast Radius layers */
+  readonly blastRadiusLayers?: readonly string[];
 }
 
 /**
@@ -714,6 +728,9 @@ export function resolveMeaningfulChangeStory(
     derivedSummary,
     previousSnapshotTimestamp: previousSnapshotId ? detectedFormatted : null,
     currentSnapshotTimestamp: detectedFormatted,
+    forensicExplanation: event.forensicExplanation,
+    significance: event.significance,
+    blastRadiusLayers: event.blastRadiusLayers,
   };
 }
 
@@ -745,6 +762,152 @@ export function resolveChangeEvidenceNavigation(
     targetSourceId: change.changeId,
     evidenceLabel: 'No supporting evidence attached',
   };
+}
+
+/**
+ * CHG-001 (AC-02 & AC-03): Pure function to determine if a change is authoritatively meaningful.
+ *
+ * Filters out trivial wire/telemetry noise:
+ * - Header ordering changes
+ * - Date / timestamp header changes
+ * - Server timing / latency jitter
+ * - Content-length micro-variations
+ * - Pure DNS TTL fluctuations without record value changes
+ *
+ * Preserves true infrastructure posture and state changes:
+ * - DNS endpoint / IP / nameserver changes
+ * - TLS / SSL certificate mutations, renewals, expirations
+ * - HTTP security headers (CSP, HSTS, X-Frame-Options, etc.)
+ * - Technology additions, upgrades, removals
+ * - Edge / CDN additions or routing shifts
+ * - Hosting provider / ASN / network perimeter changes
+ */
+export function isMeaningfulChange(
+  change: MeaningfulChangeStory | TimelineEventDto
+): boolean {
+  const title = (change.title || '').toLowerCase();
+  const changeType = (typeof change.changeType === 'string' ? change.changeType : '').toLowerCase();
+  const category = (change.category || '').toLowerCase();
+  const desc = ('description' in change && typeof change.description === 'string' ? change.description : '').toLowerCase();
+
+  // 1. Filter out trivial wire & telemetry noise
+  if (
+    title.includes('header order') ||
+    title.includes('header_order') ||
+    desc.includes('header order') ||
+    changeType.includes('header_order') ||
+    title.includes('date header') ||
+    title.includes('http_date') ||
+    title.includes('date_header') ||
+    desc.includes('date header') ||
+    changeType.includes('date_header') ||
+    title.includes('server timing') ||
+    title.includes('server_timing') ||
+    desc.includes('server timing') ||
+    changeType.includes('server_timing') ||
+    title.includes('content length') ||
+    title.includes('content-length') ||
+    desc.includes('content length') ||
+    changeType.includes('content_length') ||
+    (title.includes('ttl') && !title.includes('dns record') && !title.includes('ip') && !title.includes('address')) ||
+    changeType.includes('ttl_jitter') ||
+    title.includes('latency jitter') ||
+    title.includes('ping fluctuation')
+  ) {
+    return false;
+  }
+
+  // 2. Reject unclassified noise with no category or impact
+  if (category === 'telemetry_noise' || changeType === 'NOISE' || changeType === 'IGNORE') {
+    return false;
+  }
+
+  // 3. Meaningful change verified
+  return true;
+}
+
+/**
+ * CHG-001 (AC-02): Filters a list of change stories down strictly to intelligence-approved meaningful changes.
+ */
+export function filterMeaningfulChanges(
+  changes: readonly MeaningfulChangeStory[]
+): readonly MeaningfulChangeStory[] {
+  return changes.filter(isMeaningfulChange);
+}
+
+/**
+ * CHG-001 (AC-07): Filters meaningful changes that occurred since the user's last visit.
+ * If lastVisitedAt is absent or invalid, returns all meaningful changes from the current understanding.
+ */
+export function filterChangesSinceLastVisit(
+  changes: readonly MeaningfulChangeStory[],
+  lastVisitedAt?: string | null
+): readonly MeaningfulChangeStory[] {
+  const meaningful = filterMeaningfulChanges(changes);
+  if (!lastVisitedAt) {
+    return meaningful;
+  }
+
+  const visitTime = new Date(lastVisitedAt).getTime();
+  if (isNaN(visitTime)) {
+    return meaningful;
+  }
+
+  const filtered = meaningful.filter((change) => {
+    const changeTime = new Date(change.detectedAt).getTime();
+    if (isNaN(changeTime)) return true;
+    return changeTime >= visitTime;
+  });
+
+  return filtered;
+}
+
+/**
+ * CHG-001 (AC-04): Resolves a concise, human-readable 1-sentence meaning for a change story.
+ *
+ * "Every change gets one sentence of meaning."
+ * Example:
+ * - DNS addresses changed -> "Your observed IPv4 endpoints changed."
+ * - Content-Security-Policy changed -> "The domain's browser security policy changed."
+ */
+export function resolveOneSentenceMeaning(story: MeaningfulChangeStory): string {
+  if (story.summaryNarrative && story.summaryNarrative.trim().length > 0 && story.summaryNarrative !== story.title) {
+    // If summary narrative ends with multiple sentences, take first clean sentence
+    const firstSentence = story.summaryNarrative.split(/(?<=[.!?])\s+/)[0];
+    if (firstSentence && firstSentence.length > 5) {
+      return firstSentence;
+    }
+  }
+
+  if (story.significanceExplanation && story.significanceExplanation.trim().length > 0) {
+    const firstSentence = story.significanceExplanation.split(/(?<=[.!?])\s+/)[0];
+    if (firstSentence && firstSentence.length > 5) {
+      return firstSentence;
+    }
+  }
+
+  // Fallbacks by category
+  const lowerTitle = story.title.toLowerCase();
+  if (lowerTitle.includes('dns') || lowerTitle.includes('ip') || lowerTitle.includes('address')) {
+    return 'Your observed DNS destination and endpoint routing changed.';
+  }
+  if (lowerTitle.includes('content-security-policy') || lowerTitle.includes('csp')) {
+    return "The domain's browser security policy changed.";
+  }
+  if (lowerTitle.includes('hsts') || lowerTitle.includes('strict-transport')) {
+    return 'Strict HTTPS transport encryption policy was updated.';
+  }
+  if (lowerTitle.includes('certificate') || lowerTitle.includes('tls') || lowerTitle.includes('ssl')) {
+    return 'Domain TLS certificate and encryption parameters changed.';
+  }
+  if (lowerTitle.includes('cloudflare') || lowerTitle.includes('cdn') || lowerTitle.includes('edge')) {
+    return 'Edge proxy and CDN distribution routing changed.';
+  }
+  if (lowerTitle.includes('nginx') || lowerTitle.includes('server') || lowerTitle.includes('apache')) {
+    return 'Gateway and web server configuration changed.';
+  }
+
+  return `Observed ${story.categoryLabel.toLowerCase()} configuration changed since previous understanding.`;
 }
 
 /**
@@ -1005,3 +1168,34 @@ export const CHANGES_CERTIFIED_INVARIANTS = {
   AUTHORITATIVE_BACKEND_CHANGE_CONTRACT:
     'Change conclusions, classifications, and derived summaries are authored by backend comparisons, never manufactured by React.',
 } as const;
+
+/**
+ * CHG-001: Premium Changes Experience Certified Invariants (AC-01 through AC-12).
+ */
+export const CHG_001_CERTIFIED_INVARIANTS = {
+  AC_01_DEFAULT_COMPARISON_BOUNDARY:
+    'Changes defaults strictly to comparing the previous trusted understanding against current trusted understanding.',
+  AC_02_MEANINGFUL_CHANGES_ONLY:
+    'Only intelligence-approved meaningful changes appear on the primary Changes surface; trivial wire mutations (header order, date header, server timing, content-length, raw TTL jitter) are filtered.',
+  AC_03_NO_TELEMETRY_WALL:
+    'No permanent state transition counters, snapshot counters, cycle counters, active drift banners, or wire telemetry walls on the primary surface.',
+  AC_04_ONE_CHANGE_ONE_MEANING:
+    'Every surfaced change provides a concise, human-readable one-sentence explanation of meaning.',
+  AC_05_PROGRESSIVE_DISCLOSURE:
+    'Information hierarchy strictly follows Understanding -> Meaning -> Why It Matters -> Evidence -> Forensics.',
+  AC_06_INTENTIONAL_HISTORICAL_COMPARISON:
+    'Historical snapshot comparison is an intentional on-demand capability accessible via "Compare understandings →".',
+  AC_07_SINCE_LAST_VISIT_SUPPORT:
+    'The experience can distinguish and filter changes that occurred since the user\'s last visit.',
+  AC_08_DOMAIN_ISOLATION:
+    'Every change belongs exclusively to the active domain context with zero cross-domain leakage.',
+  AC_09_CALM_EMPTY_STATE:
+    'Zero meaningful changes produces a reassuring, quiet, confident state with comfortable silence ("Nothing else requires attention.").',
+  AC_10_NO_FRONTEND_INTELLIGENCE:
+    'Frontend does not determine significance, causality, or historical conclusions.',
+  AC_11_OVERVIEW_UNTOUCHED:
+    'The Overview experience remains completely untouched.',
+  AC_12_PREMIUM_VISUAL_STANDARD:
+    'The Changes experience is quiet, editorial, spacious, and authoritative rather than a dense monitoring dashboard.',
+} as const;
+

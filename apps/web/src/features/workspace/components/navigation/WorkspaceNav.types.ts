@@ -6,6 +6,7 @@ export type WorkspaceNavigationTab =
   | 'findings'
   | 'changes'
   | 'infrastructure'
+  | 'security'
   | 'memory';
 
 export interface WorkspaceNavProps extends HTMLAttributes<HTMLDivElement> {

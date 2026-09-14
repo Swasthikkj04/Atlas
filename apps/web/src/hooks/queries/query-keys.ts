@@ -12,6 +12,7 @@ export const queryKeys = {
     all: () => ['domains'] as const,
     detail: (domainId: string) => ['domains', domainId] as const,
     overview: (domainId: string) => ['domains', domainId, 'overview'] as const,
+    security: (domainId: string) => ['domains', domainId, 'security'] as const,
   },
   understanding: {
     job: (jobId: string) => ['understanding', 'jobs', jobId] as const,
@@ -23,6 +24,14 @@ export const queryKeys = {
         ? (['snapshots', 'byDomain', domainId, params] as const)
         : (['snapshots', 'byDomain', domainId] as const),
     detail: (snapshotId: string) => ['snapshots', 'detail', snapshotId] as const,
+    diff: (domainId: string, targetSnapshotId: string, baseSnapshotId?: string) =>
+      baseSnapshotId
+        ? (['snapshots', 'diff', domainId, targetSnapshotId, baseSnapshotId] as const)
+        : (['snapshots', 'diff', domainId, targetSnapshotId] as const),
+  },
+  driftAlerts: {
+    byDomain: (domainId: string) => ['driftAlerts', 'byDomain', domainId] as const,
+    workspace: () => ['driftAlerts', 'workspace'] as const,
   },
   findings: {
     byDomain: (domainId: string, params?: FindingQueryParams) =>
@@ -50,6 +59,7 @@ export const queryKeys = {
   },
   workspace: {
     overview: (domainId: string) => ['workspace', 'overview', domainId] as const,
+    security: (domainId: string) => ['workspace', 'security', domainId] as const,
   },
   evidence: {
     target: (targetId: string) => ['evidence', targetId] as const,
@@ -59,3 +69,4 @@ export const queryKeys = {
       ['search', query, options] as const,
   },
 } as const;
+

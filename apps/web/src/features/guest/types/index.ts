@@ -29,11 +29,14 @@ export interface Technology {
 }
 
 export type ObservationSeverity   = "critical" | "high" | "medium" | "low" | "informational";
+export type Severity = ObservationSeverity;
 export type ObservationConfidence = "high" | "medium" | "low";
 
 export interface Observation {
   label:          string;
   body:           string;
+  title?:         string;
+  description?:   string;
   whyItMatters?:  string;
   severity?:      ObservationSeverity;
   confidence?:    ObservationConfidence;
@@ -60,6 +63,9 @@ export interface EvidenceRow {
   payload:              string;
   hash?:                string;
   collector?:           string;
+  target?:              string;
+  responseStatus?:      string;
+  integrityStatus?:     string;
   relatedTechnologies?: string[];
   relatedObservations?: string[];
 }
@@ -79,13 +85,29 @@ export interface ExecutiveBriefData {
 }
 
 export interface AssessmentData {
-  brief: ExecutiveBriefData;
-  technologies: Technology[];
-  observations: Observation[];
-  timeline: TimelineEntry[];
-  evidence: EvidenceRow[];
+  brief?: ExecutiveBriefData;
+  technologies?: Technology[];
+  observations?: Observation[];
+  timeline?: TimelineEntry[];
+  evidence?: EvidenceRow[];
   jobId?: string;
   sessionId?: string;
+  duration?: number;
+  domain?: string;
+  dns?: {
+    a?: string[];
+    mx?: string[];
+    ns?: string[];
+    txt?: string[];
+  };
+  tls?: {
+    version?: string;
+    cipher?: string;
+    issuer?: string;
+    validTo?: string;
+  };
+  headers?: Record<string, string>;
+  infrastructure?: any;
 }
 
 export interface GuestState {
@@ -135,6 +157,86 @@ export function normalizeDomain(raw: string): string {
   if (hash !== -1) d = d.slice(0, hash);
   return d.replace(/\.$/, "");
 }
+
+export interface TelemetryStage {
+  id: string;
+  label: string;
+  detail: string;
+  category: "DNS" | "TLS" | "HTTP" | "TECH" | "BRIEF";
+}
+
+export const TELEMETRY_STAGES: readonly TelemetryStage[] = [
+  {
+    id: "dns",
+    label: "Resolving DNS & Network Topology",
+    detail: "Authoritative nameservers, Anycast routing, A/AAAA, MX, and TXT verification records",
+    category: "DNS",
+  },
+  {
+    id: "tls",
+    label: "Inspecting Edge TLS & Cryptographic Posture",
+    detail: "TLS 1.3 protocol negotiation, cipher suites, HSTS enforcement, and certificate authority chains",
+    category: "TLS",
+  },
+  {
+    id: "http",
+    label: "Analyzing HTTP Response Policies & Perimeter",
+    detail: "Content-Security-Policy, X-Frame-Options, anti-clickjacking, and security response headers",
+    category: "HTTP",
+  },
+  {
+    id: "tech",
+    label: "Fingerprinting Deployed Technologies & Cloud Ingress",
+    detail: "Reverse proxies, edge CDNs, server-side frameworks, cloud providers, and caching layers",
+    category: "TECH",
+  },
+  {
+    id: "brief",
+    label: "Synthesizing Executive Understanding & Evidence Lineage",
+    detail: "Correlating observations into canonical findings and generating human-readable architectural brief",
+    category: "BRIEF",
+  },
+] as const;
+
+export interface SampleDomainTarget {
+  readonly domain: string;
+  readonly label: string;
+  readonly category: string;
+  readonly highlight: string;
+}
+
+export const SAMPLE_DOMAINS: readonly SampleDomainTarget[] = [
+  {
+    domain: "stripe.com",
+    label: "Stripe",
+    category: "Fintech Infrastructure",
+    highlight: "Cloudflare Edge · AWS Multi-region · Strict HSTS",
+  },
+  {
+    domain: "github.com",
+    label: "GitHub",
+    category: "Developer Platform",
+    highlight: "Global Anycast · Strict SPF · Fastly Edge",
+  },
+  {
+    domain: "cloudflare.com",
+    label: "Cloudflare",
+    category: "Edge & Security",
+    highlight: "Native Anycast · Automated TLS · Zero Origin Exposure",
+  },
+  {
+    domain: "vercel.com",
+    label: "Vercel",
+    category: "Frontend Cloud",
+    highlight: "Serverless Edge · Next.js SSR · Strict TLS 1.3",
+  },
+  {
+    domain: "linear.app",
+    label: "Linear",
+    category: "Modern SaaS",
+    highlight: "Cloudflare CDN · Isolated CSP · React Hydration",
+  },
+] as const;
 
 // ─── Demo / Presentation Assessment Data ──────────────────────────────────────
 

@@ -30,7 +30,7 @@ export class InfrastructureSnapshotService {
       },
       responseTimeMs: snapshot.http?.responseTimeMs ?? 0,
       httpStatus: snapshot.http?.statusCode ?? 0,
-      payload: snapshot as unknown as Prisma.InputJsonValue,
+      payload: snapshot,
     });
   }
 

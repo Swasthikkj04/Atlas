@@ -123,6 +123,13 @@ enum EvidenceCategory {
   COLLECTOR_METADATA
 }
 
+enum EmailDeliveryStatus {
+  PENDING
+  ATTEMPTED
+  SENT
+  FAILED
+}
+
 ///////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////
@@ -148,6 +155,7 @@ model User {
   sessions            UserSession[]
   oauthAccounts       OAuthAccount[]
   preferences         UserPreference?
+  emailDeliveries     EmailDeliveryRecord[]
 
   @@map("users")
 }
@@ -554,8 +562,188 @@ model AccountReactivationToken {
   @@map("account_reactivation_tokens")
 }
 
+///////////////////////////////////////////////////////////
+// EMAIL DELIVERY RECORD (AUTH-EMAIL-001)
+///////////////////////////////////////////////////////////
 
+model EmailDeliveryRecord {
+  id             String              @id @default(uuid())
+  userId         String
+  idempotencyKey String              @unique
+  emailType      String
+  recipientEmail String
+  status         EmailDeliveryStatus @default(PENDING)
+  attemptCount   Int                 @default(0)
+  lastAttemptAt  DateTime?
+  sentAt         DateTime?
+  errorMessage   String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([emailType])
+  @@index([status])
+  @@map("email_delivery_records")
+}
 
+///////////////////////////////////////////////////////////
+// ADMIN IDENTITY & CREDENTIAL ARCHITECTURE (ADMIN-001 & ADMIN-002)
+///////////////////////////////////////////////////////////
 
+enum AdminStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum AdminCredentialType {
+  PRIMARY_PASSWORD
+  WEBAUTHN_PASSKEY
+}
+
+enum AdminCredentialStatus {
+  ACTIVE
+  DISABLED
+  REVOKED
+}
+
+enum AdminSessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model AdminIdentity {
+  id                  String                    @id @default(uuid())
+  identifier          String                    @unique
+  status              AdminStatus               @default(ACTIVE)
+  authMetadata        Json?
+  lastAuthenticatedAt DateTime?
+  disabledAt          DateTime?
+  disabledReason      String?
+
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  credentials         AdminCredential[]
+  webauthnCredentials AdminWebAuthnCredential[]
+  webauthnChallenges  AdminWebAuthnChallenge[]
+  sessions            AdminSession[]
+
+  @@map("admin_identities")
+}
+
+model AdminCredential {
+  id             String                @id @default(uuid())
+  adminId        String
+  type           AdminCredentialType   @default(PRIMARY_PASSWORD)
+  verifierHash   String
+  status         AdminCredentialStatus @default(ACTIVE)
+  version        Int                   @default(1)
+  failedAttempts Int                   @default(0)
+  lockedUntil    DateTime?
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  revokedReason  String?
+  metadata       Json?
+
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  admin          AdminIdentity         @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([adminId, type])
+  @@map("admin_credentials")
+}
+
+model AdminWebAuthnCredential {
+  id             String                @id @default(uuid())
+  adminId        String
+  credentialId   String                @unique
+  publicKey      Bytes
+  counter        BigInt                @default(0)
+  transports     String[]              @default([])
+  aaguid         String?
+  deviceLabel    String?
+  status         AdminCredentialStatus @default(ACTIVE)
+  backedUp       Boolean               @default(false)
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  revokedReason  String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  admin          AdminIdentity         @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([adminId, status])
+  @@map("admin_webauthn_credentials")
+}
+
+model AdminWebAuthnChallenge {
+  id          String    @id @default(uuid())
+  adminId     String
+  challenge   String    @unique
+  purpose     String    @default("ENROLLMENT")
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  admin       AdminIdentity @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([challenge])
+  @@map("admin_webauthn_challenges")
+}
+
+model AdminSession {
+  id             String             @id @default(uuid())
+  adminId        String
+  credentialId   String?
+  status         AdminSessionStatus @default(ACTIVE)
+  assuranceLevel String             @default("AAL3")
+  ipAddress      String?
+  userAgent      String?
+  expiresAt      DateTime
+  lastActiveAt   DateTime           @default(now())
+  revokedAt      DateTime?
+  revokedReason  String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  admin          AdminIdentity      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([adminId, status])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+model AdminAuditEvent {
+  id             String    @id @default(uuid())
+  adminId        String?
+  sessionId      String?
+  credentialId   String?
+  action         String
+  category       String    @default("SECURITY")
+  retentionClass String    @default("SECURITY")
+  targetType     String?
+  targetId       String?
+  outcome        String    @default("SUCCESS")
+  ipAddress      String?
+  userAgent      String?
+  metadata       Json?
+  previousHash   String?
+  eventHash      String?
+  createdAt      DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([category])
+  @@index([retentionClass])
+  @@index([createdAt])
+  @@map("admin_audit_events")
+}

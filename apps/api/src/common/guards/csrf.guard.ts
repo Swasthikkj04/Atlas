@@ -19,9 +19,11 @@ export class CsrfGuard implements CanActivate {
     '/api/v1/auth/resend-verification',
     '/api/v1/auth/forgot-password',
     '/api/v1/auth/reset-password',
+    '/api/v1/auth/reactivate',
     '/api/v1/auth/google',
     '/api/v1/auth/github',
     '/api/v1/auth/csrf',
+    '/api/v1/admin/auth',
     '/api/v1/guest',
   ];
 

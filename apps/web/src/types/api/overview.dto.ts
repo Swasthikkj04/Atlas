@@ -1,10 +1,75 @@
 /**
- * Authoritative Public Infrastructure Overview API DTO Contracts (WX-401).
+ * Authoritative Public Infrastructure Overview API DTO Contracts (WX-401 / TECH-008).
  *
  * Invariant: Overview communicates what exists in this infrastructure right now
  * and how it is organized, backed strictly by authoritative backend data.
  * React must never parse raw discovery payloads to invent or infer infrastructure entities.
  */
+
+export interface ArchitecturePathSegmentDto {
+  readonly hop: number;
+  readonly layer: string;
+  readonly technologyId: string;
+  readonly technologyName: string;
+  readonly role: string;
+  readonly relationshipType?: string | null;
+}
+
+export interface TechnologyArchitectureSummaryDto {
+  readonly technologyId: string;
+  readonly name: string;
+  readonly category: string;
+  readonly version?: string | null;
+  readonly layer: string;
+  readonly role: string;
+  readonly infrastructureMeaning: string;
+  readonly whyDetected: string;
+  readonly whatThisDoesNotProve?: string | null;
+  readonly confidence: number;
+  readonly confidenceLevel: string;
+  readonly evidence: readonly unknown[];
+}
+
+export interface ArchitectureLayerSummaryDto {
+  readonly layer: string;
+  readonly state: 'OBSERVED' | 'UNOBSERVED' | 'MASKED' | 'UNKNOWN';
+  readonly confidenceLevel: string;
+  readonly technologies: readonly TechnologyArchitectureSummaryDto[];
+}
+
+export interface ArchitectureUnknownDto {
+  readonly dimension: string;
+  readonly status: 'MASKED' | 'UNOBSERVED' | 'UNKNOWN';
+  readonly explanation: string;
+  readonly whyUnknown: string;
+}
+
+export interface ClaimBoundaryDto {
+  readonly technologyId: string;
+  readonly technologyName: string;
+  readonly boundary: string;
+}
+
+export interface ArchitectureConfidenceSummaryDto {
+  readonly overallLevel: string;
+  readonly overallScore: number;
+  readonly layerConfidence: Record<string, string>;
+  readonly rationale: string;
+  readonly confirmedRelationshipsCount: number;
+  readonly supportedRelationshipsCount: number;
+  readonly inferredRelationshipsCount: number;
+}
+
+export interface TechnologyArchitectureOverviewDto {
+  readonly architectureSummary: string;
+  readonly ingressPath: readonly ArchitecturePathSegmentDto[];
+  readonly layers: readonly ArchitectureLayerSummaryDto[];
+  readonly keyTechnologies: readonly TechnologyArchitectureSummaryDto[];
+  readonly integrations: readonly TechnologyArchitectureSummaryDto[];
+  readonly knownUnknowns: readonly ArchitectureUnknownDto[];
+  readonly claimBoundaries: readonly ClaimBoundaryDto[];
+  readonly confidence: ArchitectureConfidenceSummaryDto;
+}
 
 export interface InfrastructureOverviewItemDto {
   readonly name: string;
@@ -52,6 +117,7 @@ export interface InfrastructureOverviewDto {
   readonly dnsProvider?: string | null;
   readonly dnsConfidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'INCONCLUSIVE' | null;
   readonly attribution?: unknown;
+  readonly technologyArchitecture?: TechnologyArchitectureOverviewDto | null;
 }
 
 export interface DomainOverviewResponseDto {

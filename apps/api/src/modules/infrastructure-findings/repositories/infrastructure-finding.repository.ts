@@ -21,7 +21,7 @@ export type FindingWithSnapshotAndDomain =
 
 @Injectable()
 export class InfrastructureFindingRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(public readonly prisma: PrismaService) {}
 
   async createMany(
     data: Prisma.InfrastructureFindingCreateManyInput[],
@@ -60,11 +60,12 @@ export class InfrastructureFindingRepository {
       // When domainId is requested without an explicit snapshotId, scope to the latest verified snapshot
       // unless historical findings are explicitly requested (e.g. Memory tab).
       if (!query.snapshotId && !query.includeHistorical) {
-        const latestSnapshot = await this.prisma.infrastructureSnapshot.findFirst({
-          where: { domainId: query.domainId },
-          orderBy: { createdAt: 'desc' },
-          select: { id: true },
-        });
+        const latestSnapshot =
+          await this.prisma.infrastructureSnapshot.findFirst({
+            where: { domainId: query.domainId },
+            orderBy: { createdAt: 'desc' },
+            select: { id: true },
+          });
 
         if (latestSnapshot) {
           where.snapshotId = latestSnapshot.id;
@@ -230,7 +231,10 @@ export class InfrastructureFindingRepository {
     });
   }
 
-  async getSummaryByDomain(domainId: string): Promise<{
+  async getSummaryByDomain(
+    domainId: string,
+    snapshotId?: string,
+  ): Promise<{
     total: number;
     critical: number;
     high: number;
@@ -238,21 +242,21 @@ export class InfrastructureFindingRepository {
     low: number;
     informational: number;
   }> {
-    const [total, grouped] = await Promise.all([
-      this.prisma.infrastructureFinding.count({
-        where: {
+    const whereClause: any = snapshotId
+      ? { snapshotId }
+      : {
           snapshot: {
             domainId,
           },
-        },
+        };
+
+    const [total, grouped] = await Promise.all([
+      this.prisma.infrastructureFinding.count({
+        where: whereClause,
       }),
       this.prisma.infrastructureFinding.groupBy({
         by: ['severity'],
-        where: {
-          snapshot: {
-            domainId,
-          },
-        },
+        where: whereClause,
         _count: {
           severity: true,
         },

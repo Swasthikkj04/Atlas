@@ -1,0 +1,20 @@
+# Terraform Variables Example for Nebula Production GCP Deployment
+
+project_id      = "nebula-production"
+region          = "us-central1"
+environment     = "production"
+
+db_instance_name = "nebula-prod-postgres"
+db_tier          = "db-custom-2-7680"
+db_name          = "atlas"
+db_user          = "atlas_admin"
+db_password      = "CHANGE_ME_TO_A_SECURE_RANDOMLY_GENERATED_PASSWORD_64_CHARS"
+
+api_image    = "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-api:v0.2.0"
+worker_image = "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-worker:v0.2.0"
+web_image    = "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-web:v0.2.0"
+
+jwt_access_secret  = "REPLACE_WITH_HIGH_ENTROPY_ACCESS_SECRET_AT_LEAST_32_CHARACTERS_LONG"
+jwt_refresh_secret = "REPLACE_WITH_HIGH_ENTROPY_REFRESH_SECRET_AT_LEAST_32_CHARACTERS_LONG"
+
+frontend_domain = "https://app.argonion.com"

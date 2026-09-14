@@ -44,8 +44,12 @@ describe('WX-1023: Content Security Policy Severity Calibration', () => {
       expect(finding.severity).toBe(Severity.HIGH);
       expect(finding.confidence).toBe('AUTHORITATIVE');
       expect(finding.riskClassification).toBe('SECURITY_HARDENING_GAP');
-      expect(finding.description).toContain('does not advertise a Content-Security-Policy header');
-      expect(finding.whatThisDoesNotProve).toContain('does not establish that the application is currently exploitable to cross-site scripting');
+      expect(finding.description).toContain(
+        'does not advertise a Content-Security-Policy header',
+      );
+      expect(finding.whatThisDoesNotProve).toContain(
+        'does not establish that the application is currently exploitable to cross-site scripting',
+      );
     });
   });
 

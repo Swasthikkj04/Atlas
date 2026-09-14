@@ -173,6 +173,7 @@ describe('AUTH-011: OAuth Session Cookie Parity & Refresh Continuity', () => {
       sendPasswordResetConfirmationEmail: jest
         .fn()
         .mockResolvedValue(undefined),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ status: 'SENT' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({

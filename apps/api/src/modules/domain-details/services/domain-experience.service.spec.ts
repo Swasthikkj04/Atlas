@@ -77,6 +77,7 @@ describe('DomainExperienceService', () => {
     );
     expect(domainDetailsService.getFindingsSummary).toHaveBeenCalledWith(
       'domain-1',
+      'snapshot-1',
     );
     expect(domainDetailsService.getLatestBrief).toHaveBeenCalledWith(
       'domain-1',

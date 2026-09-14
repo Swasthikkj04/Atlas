@@ -9,7 +9,7 @@ import { WorkspaceHeader } from './components/header';
 import { WorkspaceCanvas } from './components/canvas';
 import { FirstRunDomainSetup } from './components/first-run';
 import { ReturningWorkspaceEntry } from './components/returning';
-import { DomainEntryDialog, DeleteDomainDialog, DomainDeletedToast } from './components/domain-dialog';
+import { DomainEntryDialog, DeleteDomainDialog, DomainDeletedToast, DomainNotificationToast } from './components/domain-dialog';
 import { WorkspaceFooter } from './components/footer';
 import { CurrentIntelligence } from './components/intelligence';
 import { PrimaryStory, SecondaryStories } from './components/story';
@@ -19,6 +19,7 @@ import {
   ObservationEvidenceSurface,
 } from './components/investigation';
 import { InfrastructureOverview } from './components/overview';
+import { SecurityOverview } from './components/security';
 import { ChangesTimeline, HistoricalComparisonSurface } from './components/changes';
 import { InfrastructureTimeline } from './components/timeline';
 import { SnapshotHistory } from './components/snapshots';
@@ -28,7 +29,11 @@ import { WorkspaceIntelligenceLanding } from './components/multi-domain';
 import { useDomains, useDeleteDomain } from '../../hooks/queries/useDomains';
 import { useWorkspaceUnderstandingConvergence } from '../../hooks/queries/useUnderstanding';
 import { resolveWorkspaceContext } from './contracts/context-resolution.contract';
-import { getStoredGuestClaimContext } from './contracts/guest-continuity.contract';
+import {
+  getStoredGuestClaimContext,
+  getStoredGuestClaimError,
+  clearStoredGuestClaimError,
+} from './contracts/guest-continuity.contract';
 import {
   resolveInvestigationTarget,
   buildInvestigationLink,
@@ -44,6 +49,7 @@ export type WorkspaceContextView =
   | 'findings'
   | 'changes'
   | 'infrastructure'
+  | 'security'
   | 'memory';
 
 /**
@@ -67,7 +73,21 @@ export const WorkspacePage: React.FC = () => {
   const [isAddDomainOpen, setIsAddDomainOpen] = useState(false);
   const [domainToDelete, setDomainToDelete] = useState<DomainDto | null>(null);
   const [deletedDomainNotification, setDeletedDomainNotification] = useState<string | null>(null);
+  const [quotaNotification, setQuotaNotification] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromUrl = urlParams.get('claimError');
+    if (fromUrl) return fromUrl;
+    return getStoredGuestClaimError();
+  });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Clear stored claim error once surfaced
+  useEffect(() => {
+    if (quotaNotification) {
+      clearStoredGuestClaimError();
+    }
+  }, [quotaNotification]);
 
   // Global Keyboard Shortcut (Cmd+K / Ctrl+K) for Cross-Workspace Search
   useEffect(() => {
@@ -81,7 +101,7 @@ export const WorkspacePage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Active Contextual Surface View ('overview' | 'findings' | 'changes' | 'infrastructure' | 'memory')
+  // Active Contextual Surface View ('overview' | 'findings' | 'changes' | 'infrastructure' | 'security' | 'memory')
   const [activeView, setActiveView] = useState<WorkspaceContextView>(() => {
     if (typeof window === 'undefined') return 'overview';
     const path = window.location.pathname;
@@ -90,6 +110,7 @@ export const WorkspacePage: React.FC = () => {
     if (path === '/workspace/findings' || viewParam === 'findings') return 'findings';
     if (path === '/workspace/changes' || path === '/workspace/changes/compare' || viewParam === 'changes') return 'changes';
     if (path === '/workspace/infrastructure' || viewParam === 'infrastructure' || viewParam === 'overview') return 'infrastructure';
+    if (path === '/workspace/security' || viewParam === 'security') return 'security';
     if (path === '/workspace/memory' || viewParam === 'memory') return 'memory';
     return 'overview';
   });
@@ -169,6 +190,8 @@ export const WorkspacePage: React.FC = () => {
           setActiveView('changes');
         } else if (path === '/workspace/infrastructure' || params.get('view') === 'infrastructure' || params.get('view') === 'overview') {
           setActiveView('infrastructure');
+        } else if (path === '/workspace/security' || params.get('view') === 'security') {
+          setActiveView('security');
         } else {
           setActiveView('overview');
         }
@@ -225,6 +248,7 @@ export const WorkspacePage: React.FC = () => {
       if (activeView === 'findings') path = '/workspace/findings';
       else if (activeView === 'changes') path = '/workspace/changes';
       else if (activeView === 'infrastructure') path = '/workspace/infrastructure';
+      else if (activeView === 'security') path = '/workspace/security';
       else if (activeView === 'memory') path = '/workspace/memory';
 
       const url = `${path}?domainId=${encodeURIComponent(newDomainId)}`;
@@ -245,6 +269,7 @@ export const WorkspacePage: React.FC = () => {
       if (view === 'findings') path = '/workspace/findings';
       else if (view === 'changes') path = '/workspace/changes';
       else if (view === 'infrastructure') path = '/workspace/infrastructure';
+      else if (view === 'security') path = '/workspace/security';
       else if (view === 'memory') path = '/workspace/memory';
 
       window.history.pushState({ view, domainId: resolvedDomainId }, '', `${path}${queryStr}`);
@@ -277,6 +302,7 @@ export const WorkspacePage: React.FC = () => {
         if (activeView === 'findings') path = '/workspace/findings';
         else if (activeView === 'changes') path = '/workspace/changes';
         else if (activeView === 'infrastructure') path = '/workspace/infrastructure';
+        else if (activeView === 'security') path = '/workspace/security';
         else if (activeView === 'memory') path = '/workspace/memory';
 
         window.history.pushState({}, '', `${path}${queryStr}`);
@@ -303,6 +329,11 @@ export const WorkspacePage: React.FC = () => {
       }
       if (returnPath === '/workspace/infrastructure' || returnPath.includes('view=infrastructure') || returnPath.includes('view=overview')) {
         setActiveView('infrastructure');
+        navigateToInvestigation(null);
+        return;
+      }
+      if (returnPath === '/workspace/security' || returnPath.includes('view=security')) {
+        setActiveView('security');
         navigateToInvestigation(null);
         return;
       }
@@ -418,7 +449,9 @@ export const WorkspacePage: React.FC = () => {
           ? 'Changes'
           : activeView === 'infrastructure'
             ? 'Infrastructure'
-            : null;
+            : activeView === 'security'
+              ? 'Security'
+              : null;
 
   return (
     <WorkspaceShell
@@ -429,6 +462,7 @@ export const WorkspacePage: React.FC = () => {
           currentPath={pathname}
           user={user}
           activeView={activeView}
+          activeDomainId={isMultiDomainLanding ? null : (activeDomain?.id || selectedDomainId)}
           onSelectView={navigateToView}
           onItemClick={() => setIsNavOpen(false)}
         />
@@ -784,8 +818,6 @@ export const WorkspacePage: React.FC = () => {
               <ChangesTimeline
                 domainId={activeDomain.id}
                 domainName={activeDomain.domainName}
-                domains={userDomains}
-                onSelectDomain={handleSelectDomain}
                 onInvestigateChange={(changeId, targetDomainId) => {
                   const targetDomain = targetDomainId || activeDomain.id;
                   navigateToInvestigation({
@@ -825,22 +857,7 @@ export const WorkspacePage: React.FC = () => {
             </div>
           ) : activeView === 'infrastructure' ? (
             /* E. Contextual Infrastructure Overview Surface (What exists?) */
-            <div className="w-full space-y-8" data-testid="infrastructure-overview-surface">
-              <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
-                <div>
-                  <h2 className="text-xl font-display font-medium text-foreground">
-                    Infrastructure Overview
-                  </h2>
-                  <p className="text-xs text-muted-foreground pt-0.5">
-                    Observed perimeter topology, DNS, HTTP, and TLS certificates for {activeDomain.domainName}
-                  </p>
-                </div>
-                <DomainIdentity
-                  domain={activeDomain.domainName}
-                  size="compact"
-                />
-              </div>
-
+            <div className="w-full" data-testid="infrastructure-overview-surface">
               <InfrastructureOverview
                 domainId={activeDomain.id}
                 domainName={activeDomain.domainName}
@@ -861,10 +878,42 @@ export const WorkspacePage: React.FC = () => {
                   });
                 }}
                 onViewAllFindings={() => navigateToView('findings')}
+                onNavigateToFindings={() => navigateToView('findings')}
+                onNavigateToChanges={() => navigateToView('changes')}
+              />
+            </div>
+          ) : activeView === 'security' ? (
+            /* F. Contextual Security Posture Surface (S1 - S7 Defense Pillars & Brief) */
+            <div className="w-full space-y-8" data-testid="workspace-security-surface">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
+                <div>
+                  <h2 className="text-xl font-display font-medium text-foreground">
+                    Security Posture & Brief
+                  </h2>
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Defense-in-depth posture, 7-pillar security audit, and actionable remediation for {activeDomain.domainName}
+                  </p>
+                </div>
+                <DomainIdentity
+                  domain={activeDomain.domainName}
+                  size="compact"
+                />
+              </div>
+
+              <SecurityOverview
+                domainId={activeDomain.id}
+                onSelectFinding={(findingId) => {
+                  navigateToInvestigation({
+                    domainId: activeDomain.id,
+                    sourceType: 'finding',
+                    sourceId: findingId,
+                    returnPath: '/workspace/security',
+                  });
+                }}
               />
             </div>
           ) : activeView === 'memory' ? (
-            /* F. Contextual Infrastructure Memory Surface (How has it evolved?) */
+            /* G. Contextual Infrastructure Memory Surface (How has it evolved?) */
             <div className="w-full space-y-8" data-testid="infrastructure-memory-surface">
               <div className="flex items-center justify-between gap-4 pb-4 border-b border-border-hairline">
                 <div>
@@ -1012,6 +1061,13 @@ export const WorkspacePage: React.FC = () => {
           <DomainDeletedToast
             domainName={deletedDomainNotification}
             onClose={() => setDeletedDomainNotification(null)}
+          />
+
+          {/* Bottom Toast Notification on Quota Error or Domain Notice (SEC-GXWX-003) */}
+          <DomainNotificationToast
+            message={quotaNotification}
+            type="error"
+            onClose={() => setQuotaNotification(null)}
           />
 
           {/* F. Frozen Workspace Signature Footer (WX-210-F) */}

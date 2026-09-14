@@ -99,7 +99,7 @@ export class QueueDiagnosticsService {
     // Average processing time calculation
     const completedDurations = recentJobs
       .filter((j) => j.status === JobStatus.COMPLETED && j.durationMs !== null)
-      .map((j) => j.durationMs!);
+      .map((j) => j.durationMs);
 
     const avgProcessingTimeMs =
       completedDurations.length > 0

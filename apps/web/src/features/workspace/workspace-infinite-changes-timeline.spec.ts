@@ -13,6 +13,12 @@ import {
 } from './contracts/workspace-redesign-truth-contract.ts';
 import type { TimelineEventDto, InfrastructureSnapshotDto } from '../../types/api';
 
+const now = new Date();
+const todayIso = now.toISOString();
+const yesterdayIso = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+const fiveDaysAgoIso = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString();
+const twentyDaysAgoIso = new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString();
+
 const mockTimelineEvents: TimelineEventDto[] = [
   // Today
   {
@@ -24,7 +30,7 @@ const mockTimelineEvents: TimelineEventDto[] = [
     title: 'Content-Security-Policy improved',
     summary: 'Protection improved',
     explanation: 'Defensive posture strengthened.',
-    detectedAt: '2026-08-26T09:20:00Z',
+    detectedAt: todayIso,
   },
   // Yesterday (1 day ago)
   {
@@ -36,7 +42,7 @@ const mockTimelineEvents: TimelineEventDto[] = [
     title: 'CDN routing updated',
     summary: 'Edge proxy configuration changed',
     explanation: 'Infrastructure architecture changed.',
-    detectedAt: '2026-08-25T14:30:00Z',
+    detectedAt: yesterdayIso,
   },
   // 5 days ago (Compact density)
   {
@@ -48,7 +54,7 @@ const mockTimelineEvents: TimelineEventDto[] = [
     title: 'TLS Certificate renewed',
     summary: 'Routine renewal completed',
     explanation: 'Encryption continuity guaranteed.',
-    detectedAt: '2026-08-21T10:00:00Z',
+    detectedAt: fiveDaysAgoIso,
   },
   // 20 days ago (Dense ledger density)
   {
@@ -60,7 +66,7 @@ const mockTimelineEvents: TimelineEventDto[] = [
     title: 'DNS TXT Record Added',
     summary: 'SPF verification record added',
     explanation: 'Email authentication configured.',
-    detectedAt: '2026-08-06T08:00:00Z',
+    detectedAt: twentyDaysAgoIso,
   },
 ];
 

@@ -1,42 +1,48 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import React from 'react';
 import {
   WORKSPACE_TRUTH_MATRIX,
   WORKSPACE_CERTIFIED_INVARIANTS,
 } from './contracts/workspace-redesign-truth-contract.ts';
-import { DomainFavicon } from './components/identity/DomainFavicon';
-import { DomainIdentity } from './components/identity/DomainIdentity';
+import {
+  sanitizeDomain,
+  resolveFaviconUrl,
+} from './components/identity/DomainFavicon.types.ts';
 
 describe('WX-1021: Domain Identity & Favicon Surface Audit', () => {
   describe('1. Domain Sanitization and Resolution', () => {
     it('produces valid Google S2 favicon URL for canonical domains', () => {
-      const element = React.createElement(DomainFavicon, {
-        domain: 'pestrust.edu.in',
-        size: 'primary',
-      });
-      assert.ok(element);
-      assert.equal(element.props.domain, 'pestrust.edu.in');
-      assert.equal(element.props.size, 'primary');
+      const url = resolveFaviconUrl('pestrust.edu.in');
+      assert.equal(
+        url,
+        'https://www.google.com/s2/favicons?domain=pestrust.edu.in&sz=64'
+      );
     });
 
     it('handles domains with protocols and trailing paths cleanly', () => {
-      const element = React.createElement(DomainFavicon, {
-        domain: 'https://api.github.com/v1/repos',
-        size: 'secondary',
-      });
-      assert.ok(element);
-      assert.equal(element.props.domain, 'https://api.github.com/v1/repos');
+      const sanitized = sanitizeDomain('https://api.github.com/v1/repos');
+      assert.equal(sanitized, 'api.github.com');
+
+      const url = resolveFaviconUrl('https://api.github.com/v1/repos');
+      assert.equal(
+        url,
+        'https://www.google.com/s2/favicons?domain=api.github.com&sz=64'
+      );
+    });
+
+    it('handles ports and whitespace gracefully', () => {
+      const sanitized = sanitizeDomain('  example.com:8080/foo/bar  ');
+      assert.equal(sanitized, 'example.com');
     });
   });
 
   describe('2. Graceful Fallback & Error Resilience', () => {
-    it('renders calm fallback when domain is null or undefined without throwing', () => {
-      const nullElement = React.createElement(DomainFavicon, { domain: null });
-      const undefinedElement = React.createElement(DomainFavicon, { domain: undefined });
-
-      assert.ok(nullElement);
-      assert.ok(undefinedElement);
+    it('returns null for null, undefined, or empty domain', () => {
+      assert.equal(sanitizeDomain(null), null);
+      assert.equal(sanitizeDomain(undefined), null);
+      assert.equal(sanitizeDomain(''), null);
+      assert.equal(resolveFaviconUrl(null), null);
+      assert.equal(resolveFaviconUrl(undefined), null);
     });
 
     it('enforces presentational nature: favicon is not hosting/ownership evidence', () => {
@@ -48,32 +54,7 @@ describe('WX-1021: Domain Identity & Favicon Surface Audit', () => {
     });
   });
 
-  describe('3. Domain Identity Primitive Composition', () => {
-    it('instantiates DomainIdentity with primary size and custom subtitle/badge', () => {
-      const identityElement = React.createElement(DomainIdentity, {
-        domain: 'pestrust.edu.in',
-        size: 'primary',
-        subtitle: 'Verified 5 minutes ago',
-      });
-
-      assert.ok(identityElement);
-      assert.equal(identityElement.props.domain, 'pestrust.edu.in');
-      assert.equal(identityElement.props.size, 'primary');
-      assert.equal(identityElement.props.subtitle, 'Verified 5 minutes ago');
-    });
-
-    it('supports compact size for navigation and header contexts', () => {
-      const compactIdentity = React.createElement(DomainIdentity, {
-        domain: 'replit.app',
-        size: 'compact',
-      });
-
-      assert.ok(compactIdentity);
-      assert.equal(compactIdentity.props.size, 'compact');
-    });
-  });
-
-  describe('4. Truth Contract Invariants Certification (WX-1021)', () => {
+  describe('3. Truth Contract Invariants Certification (WX-1021)', () => {
     it('contains Domain Identity capability in WORKSPACE_TRUTH_MATRIX', () => {
       const entry = WORKSPACE_TRUTH_MATRIX.find(
         (c) => c.capability.includes('Domain Identity & Favicon Surface')

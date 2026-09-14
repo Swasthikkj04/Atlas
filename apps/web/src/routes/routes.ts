@@ -29,6 +29,7 @@ export const ROUTES = {
     FINDINGS: '/workspace/findings',
     CHANGES: '/workspace/changes',
     INFRASTRUCTURE: '/workspace/infrastructure',
+    SECURITY: '/workspace/security',
     MEMORY: '/workspace/memory',
     DASHBOARD_ALIAS: '/dashboard',
     CREATE: '/workspace/create',
@@ -39,6 +40,30 @@ export const ROUTES = {
     ACCOUNT: '/settings/account',
     SECURITY: '/settings/security',
     APPEARANCE: '/settings/appearance',
+  },
+  ADMIN: {
+    ROOT: '/admin',
+    OVERVIEW: '/admin',
+    LOGIN: '/admin/login',
+    USERS: '/admin/users',
+    VISITORS: '/admin/visitors',
+    TRAFFIC: '/admin/traffic',
+    SESSIONS: '/admin/sessions',
+    SECURITY: '/admin/security',
+    AUDIT: '/admin/audit',
+  },
+  LEGAL: {
+    PRIVACY: '/privacy',
+    PRIVACY_ALIAS: '/privacy-policy',
+    LEGAL_PRIVACY_ALIAS: '/legal/privacy',
+    TERMS: '/terms',
+    TERMS_ALIAS: '/terms-and-conditions',
+    TERMS_OF_SERVICE_ALIAS: '/terms-of-service',
+    LEGAL_TERMS_ALIAS: '/legal/terms',
+  },
+  DOCS: {
+    ROOT: '/docs',
+    UNDERSTANDING: '/docs/understanding-methodology',
   },
 } as const;
 
@@ -53,7 +78,12 @@ export type AppRouteType =
   | 'GUEST'
   | 'SETTINGS'
   | 'WORKSPACE'
+  | 'ADMIN'
+  | 'PRIVACY'
+  | 'TERMS'
+  | 'DOCS'
   | 'LANDING';
+
 
 /**
  * Resolves a URL pathname string to the corresponding canonical application view.
@@ -158,7 +188,15 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'SETTINGS';
   }
 
-  // 8. Authenticated Workspace (Evaluated AFTER specific /workspace/create)
+  // 8. Admin Console Routes (/admin, /admin/users, /admin/sessions, /admin/security, /admin/audit)
+  if (
+    pathname === ROUTES.ADMIN.ROOT ||
+    pathname.startsWith(`${ROUTES.ADMIN.ROOT}/`)
+  ) {
+    return 'ADMIN';
+  }
+
+  // 9. Authenticated Workspace (Evaluated AFTER specific /workspace/create)
   if (
     pathname === ROUTES.WORKSPACE.ROOT ||
     pathname.startsWith(`${ROUTES.WORKSPACE.ROOT}/`) ||
@@ -168,6 +206,40 @@ export function resolveAppRoute(rawPathname: string): AppRouteType {
     return 'WORKSPACE';
   }
 
-  // 9. Public Landing Page Fallback
+  // 10. Legal & Compliance Routes (/privacy, /terms)
+  if (
+    pathname === ROUTES.LEGAL.PRIVACY ||
+    pathname.startsWith(`${ROUTES.LEGAL.PRIVACY}/`) ||
+    pathname === ROUTES.LEGAL.PRIVACY_ALIAS ||
+    pathname.startsWith(`${ROUTES.LEGAL.PRIVACY_ALIAS}/`) ||
+    pathname === ROUTES.LEGAL.LEGAL_PRIVACY_ALIAS ||
+    pathname.startsWith(`${ROUTES.LEGAL.LEGAL_PRIVACY_ALIAS}/`)
+  ) {
+    return 'PRIVACY';
+  }
+
+  if (
+    pathname === ROUTES.LEGAL.TERMS ||
+    pathname.startsWith(`${ROUTES.LEGAL.TERMS}/`) ||
+    pathname === ROUTES.LEGAL.TERMS_ALIAS ||
+    pathname.startsWith(`${ROUTES.LEGAL.TERMS_ALIAS}/`) ||
+    pathname === ROUTES.LEGAL.TERMS_OF_SERVICE_ALIAS ||
+    pathname.startsWith(`${ROUTES.LEGAL.TERMS_OF_SERVICE_ALIAS}/`) ||
+    pathname === ROUTES.LEGAL.LEGAL_TERMS_ALIAS ||
+    pathname.startsWith(`${ROUTES.LEGAL.LEGAL_TERMS_ALIAS}/`)
+  ) {
+    return 'TERMS';
+  }
+
+  // 11. Public Documentation & Guides (/docs, /docs/*)
+  if (
+    pathname === ROUTES.DOCS.ROOT ||
+    pathname.startsWith(`${ROUTES.DOCS.ROOT}/`)
+  ) {
+    return 'DOCS';
+  }
+
+  // 12. Public Landing Page Fallback
   return 'LANDING';
 }
+

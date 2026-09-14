@@ -1,6 +1,6 @@
 import React from 'react';
-import { Globe } from 'lucide-react';
 import { useCountdown } from '../hooks/useCountdown';
+import { DomainFavicon } from '../../workspace/components/identity/DomainFavicon';
 
 export interface GuestUnderstandingContext {
   domain: string;
@@ -33,9 +33,7 @@ export const UnderstandingContextCard: React.FC<UnderstandingContextCardProps> =
     <div className="border border-border rounded-2xl overflow-hidden bg-card/50 mb-8 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
       {/* Domain row */}
       <div className="px-5 pt-5 pb-4 flex items-start gap-3">
-        <div className="w-7 h-7 rounded-lg border border-border flex items-center justify-center flex-shrink-0 mt-0.5 bg-background">
-          <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-        </div>
+        <DomainFavicon domain={context.domain} size="secondary" className="mt-0.5" />
         <div className="min-w-0">
           <p
             className="font-mono text-sm font-medium text-foreground leading-tight truncate"

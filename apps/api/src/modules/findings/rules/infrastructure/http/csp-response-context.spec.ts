@@ -15,7 +15,7 @@ describe('WX-1022: Content Security Policy Response-Aware Authority Audit', () =
     domainName: 'example.com',
     snapshot: {
       http,
-    } as any,
+    },
   });
 
   describe('1. Response-Aware Evaluation', () => {

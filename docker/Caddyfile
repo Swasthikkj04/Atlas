@@ -1,0 +1,71 @@
+# ==============================================================================
+# Nebula Edge Proxy Configuration (Caddy Server)
+# Automatic HTTPS, HTTP/2 & HTTP/3 (QUIC), Reverse Proxy, and Security Headers
+# ==============================================================================
+
+{
+    # Global options
+    email {$ACME_EMAIL:admin@example.com}
+    admin off
+    
+    # Enable HTTP/3
+    servers {
+        protocol {
+            experimental_http3
+        }
+    }
+}
+
+# Production Domain Endpoint (Auto-TLS via Let's Encrypt / ZeroSSL)
+{$DOMAIN_NAME:localhost} {
+    # Encode responses with Zstandard or Gzip
+    encode zstd gzip
+
+    # Robust Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+        -Server
+    }
+
+    # API Routes: Forward to NestJS API Service
+    handle /api/* {
+        reverse_proxy api:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Request-ID {uuid}
+            
+            # Health check passive failover settings
+            fail_duration 10s
+            max_fails 3
+        }
+    }
+
+    # Health Check Endpoint Bypass (Returns 200 directly)
+    handle /edge-health {
+        respond "OK" 200
+    }
+
+    # Frontend SPA Routes: Forward to Nginx Web Service
+    handle {
+        reverse_proxy web:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Logging
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+}

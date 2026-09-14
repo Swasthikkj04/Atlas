@@ -104,10 +104,71 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
     });
   });
 
+  describe('Admin Console Routes (ADMIN-007 & ADMIN-009)', () => {
+    it('resolves /admin and /admin/ to ADMIN', () => {
+      assert.equal(resolveAppRoute('/admin'), 'ADMIN');
+      assert.equal(resolveAppRoute('/admin/'), 'ADMIN');
+    });
+
+    it('resolves /admin/login to ADMIN', () => {
+      assert.equal(resolveAppRoute('/admin/login'), 'ADMIN');
+      assert.equal(resolveAppRoute('/admin/login/'), 'ADMIN');
+    });
+
+    it('resolves /admin subroutes to ADMIN', () => {
+      assert.equal(resolveAppRoute('/admin/users'), 'ADMIN');
+      assert.equal(resolveAppRoute('/admin/sessions'), 'ADMIN');
+      assert.equal(resolveAppRoute('/admin/security'), 'ADMIN');
+      assert.equal(resolveAppRoute('/admin/audit'), 'ADMIN');
+    });
+  });
+
+  describe('Legal & Privacy / Terms Routes', () => {
+    it('resolves /privacy and /privacy/ to PRIVACY', () => {
+      assert.equal(resolveAppRoute('/privacy'), 'PRIVACY');
+      assert.equal(resolveAppRoute('/privacy/'), 'PRIVACY');
+    });
+
+    it('resolves /privacy-policy and /privacy-policy/ to PRIVACY', () => {
+      assert.equal(resolveAppRoute('/privacy-policy'), 'PRIVACY');
+      assert.equal(resolveAppRoute('/privacy-policy/'), 'PRIVACY');
+    });
+
+    it('resolves /legal/privacy to PRIVACY', () => {
+      assert.equal(resolveAppRoute('/legal/privacy'), 'PRIVACY');
+    });
+
+    it('resolves /terms and /terms/ to TERMS', () => {
+      assert.equal(resolveAppRoute('/terms'), 'TERMS');
+      assert.equal(resolveAppRoute('/terms/'), 'TERMS');
+    });
+
+    it('resolves /terms-and-conditions and /terms-of-service to TERMS', () => {
+      assert.equal(resolveAppRoute('/terms-and-conditions'), 'TERMS');
+      assert.equal(resolveAppRoute('/terms-of-service'), 'TERMS');
+      assert.equal(resolveAppRoute('/legal/terms'), 'TERMS');
+    });
+  });
+
+  describe('Public Documentation & Guides Routes', () => {
+    it('resolves /docs and /docs/ to DOCS', () => {
+      assert.equal(resolveAppRoute('/docs'), 'DOCS');
+      assert.equal(resolveAppRoute('/docs/'), 'DOCS');
+    });
+
+    it('resolves /docs subroutes to DOCS', () => {
+      assert.equal(resolveAppRoute('/docs/understanding-methodology'), 'DOCS');
+      assert.equal(resolveAppRoute('/docs/taxonomy'), 'DOCS');
+      assert.equal(resolveAppRoute('/docs/security'), 'DOCS');
+    });
+  });
+
   describe('Route Constants Integrity', () => {
     it('defines canonical constant URIs matching specifications', () => {
       assert.equal(ROUTES.HOME, '/');
       assert.equal(ROUTES.GUEST, '/guest');
+      assert.equal(ROUTES.DOCS.ROOT, '/docs');
+      assert.equal(ROUTES.DOCS.UNDERSTANDING, '/docs/understanding-methodology');
       assert.equal(ROUTES.WORKSPACE.CREATE, '/workspace/create');
       assert.equal(ROUTES.WORKSPACE.ROOT, '/workspace');
       assert.equal(ROUTES.AUTH.LOGIN, '/auth/login');
@@ -120,6 +181,10 @@ describe('ROUTE-001: Canonical Frontend Route Resolution Engine', () => {
       assert.equal(ROUTES.SETTINGS.ACCOUNT, '/settings/account');
       assert.equal(ROUTES.SETTINGS.SECURITY, '/settings/security');
       assert.equal(ROUTES.SETTINGS.APPEARANCE, '/settings/appearance');
+      assert.equal(ROUTES.ADMIN.LOGIN, '/admin/login');
+      assert.equal(ROUTES.LEGAL.PRIVACY, '/privacy');
+      assert.equal(ROUTES.LEGAL.TERMS, '/terms');
     });
   });
 });
+

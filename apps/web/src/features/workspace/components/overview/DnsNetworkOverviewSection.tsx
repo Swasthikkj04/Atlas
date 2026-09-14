@@ -35,14 +35,14 @@ export const DnsNetworkOverviewSection: React.FC<DnsNetworkOverviewSectionProps>
         <Cluster gap="xs" align="center">
           <Icon icon={Network} size="small" className="text-[#3568C8]" />
           <h3 className="font-mono text-xs font-semibold text-foreground tracking-wide m-0">
-            DNS & Network Infrastructure
+            DNS & Endpoints
           </h3>
         </Cluster>
         <span
           className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground border border-[#E2E2DD] dark:border-border px-1.5 py-0.5 rounded bg-[#F4F4F1] dark:bg-surface-metadata select-none"
           aria-label={`Status: ${status}`}
         >
-          {isPresent ? 'RESOLVED' : status}
+          {isPresent ? `${ipv4Addresses.length + ipv6Addresses.length} Records` : status}
         </span>
       </Cluster>
 

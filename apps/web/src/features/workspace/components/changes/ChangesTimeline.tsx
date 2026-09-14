@@ -1,48 +1,74 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Activity, Layers, Filter } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Activity,
+  Layers,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react';
 import { Eyebrow, Display, BodySmall } from '../../../../components/typography';
-import { Stack, Cluster, ReadingSurface, Section } from '../../../../components/layout';
+import { Cluster } from '../../../../components/layout';
 import { LoadingState, UnavailableState, ErrorState } from '../../../../components/states';
-import { useInfiniteTimeline } from '../../../../hooks/queries/useTimeline';
+import { useTimeline } from '../../../../hooks/queries/useTimeline';
 import { useSnapshots } from '../../../../hooks/queries/useSnapshots';
 import { useDomainUnderstandingJobs } from '../../../../hooks/queries/useUnderstanding';
 import { findActiveJob } from '../../contracts/understanding-convergence.contract';
-import { integrateAuthoritativeChanges } from '../../contracts/snapshot-comparison.contract';
+import {
+  integrateAuthoritativeChanges,
+} from '../../contracts/snapshot-comparison.contract';
 import {
   getSnapshotsArray,
   getTimelineEventsArray,
+  resolveMeaningfulChangeStory,
+  filterMeaningfulChanges,
+  filterChangesSinceLastVisit,
+  AUTHORITATIVE_CHANGE_CATEGORIES,
+  CHANGE_CATEGORY_LABELS,
+  type MeaningfulChangeStory,
 } from '../../contracts/changes.contract';
-import {
-  partitionInfiniteTimeline,
-} from '../../contracts/infinite-timeline.contract';
 import { ChangeStoryCard } from './ChangeStoryCard';
-import { CompactChangeRow } from './CompactChangeRow';
-import { DenseChangeRow } from './DenseChangeRow';
-import { StickyEpochSpine } from './StickyEpochSpine';
-import { InfrastructureOriginSeal } from './InfrastructureOriginSeal';
-import { ReturnToPresentButton } from './ReturnToPresentButton';
-import { TimelineSkeletonLoader } from './TimelineSkeletonLoader';
-import { TimelineFailureBanner } from './TimelineFailureBanner';
 import { UnderstandNowButton } from '../understanding';
 import type { ChangesTimelineProps } from './ChangesTimeline.types';
 
+function formatDateTimeShort(iso?: string | null): string {
+  if (!iso) return 'Recently';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return 'Recently';
+    return d.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return 'Recently';
+  }
+}
+
 /**
- * Authoritative Changes Timeline Experience (WX-1026 / WX-1024 / WX-1003).
+ * CHG-001: Premium Meaningful Changes Surface (/workspace/changes).
  *
- * Implements the continuous chronological infrastructure memory:
- * - Answers: "What changed across {domainName}?" through time
- * - Cursor-based infinite scrolling with 400px prefetching buffer
- * - Sticky Chronological Epoch Spine (TODAY, YESTERDAY, EARLIER THIS WEEK, etc.)
- * - Progressive Density: Rich story (≤2d) -> Compact row (2-14d) -> Ultra-dense ledger (>14d)
- * - Infrastructure Origin Seal when timeline genesis is reached
- * - Floating "Return to present" telemetry control
- * - Zero spinner-driven jitter, calm skeleton loader with 520ms pulse
+ * Answers exactly one core question:
+ * "What changed since my last trusted understanding?"
+ *
+ * Core Architecture & Acceptance Criteria:
+ * - AC-01: Default comparison: Previous trusted understanding -> Current trusted understanding.
+ * - AC-02: Meaningful only: Filters trivial wire/telemetry noise (header ordering, timestamps, TTL jitter).
+ * - AC-03: No telemetry wall: No permanent state transition counters, cycle counters, or active drift banners.
+ * - AC-04: One change = one meaning: Clean headline + 1-sentence human-readable explanation.
+ * - AC-05: Progressive disclosure: Understanding -> Meaning -> Why it matters -> Evidence.
+ * - AC-06: Intentional historical comparison: Accessible on-demand via "Compare understandings ->".
+ * - AC-07: Since last visit support: Toggle between "Since last understanding" and "Since last visit".
+ * - AC-08: Domain isolation: Bound exclusively to the active domain context.
+ * - AC-09: Calm empty state: Comfortable with silence ("Nothing else requires attention.").
+ * - AC-10: Backend truth authority: No client-side diff invention or speculative conclusions.
+ * - AC-11: Overview untouched.
+ * - AC-12: Premium visual standard: Quiet, editorial, spacious, and authoritative.
  */
 export const ChangesTimeline: React.FC<ChangesTimelineProps> = ({
   domainId,
   domainName,
-  domains = [],
-  onSelectDomain,
   onInvestigateChange,
   onViewSnapshot,
   onViewEvidence,
@@ -52,34 +78,42 @@ export const ChangesTimeline: React.FC<ChangesTimelineProps> = ({
   initialSnapshots,
   className = '',
 }) => {
-  const [selectedFilterDomainId, setSelectedFilterDomainId] = useState<string | null>(domainId || null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  // Mode selection: 'last_understanding' (default) | 'last_visit'
+  const [comparisonMode, setComparisonMode] = useState<'last_understanding' | 'last_visit'>('last_understanding');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
-  // Synchronize filter when parent domainId changes
+  // Retrieve / track last visit timestamp in local storage
+  const [lastVisitedAt, setLastVisitedAt] = useState<string | null>(null);
+
   useEffect(() => {
-    if (domainId) {
-      setSelectedFilterDomainId(domainId);
+    try {
+      const storageKey = `atlas_last_visit_${domainId}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setLastVisitedAt(stored);
+      }
+      // Record current visit timestamp for subsequent sessions
+      localStorage.setItem(storageKey, new Date().toISOString());
+    } catch {
+      // Graceful fallback if localStorage is disabled
     }
   }, [domainId]);
 
-  const activeQueryDomainId = selectedFilterDomainId || undefined;
-
-  const infiniteTimelineQuery = useInfiniteTimeline(
+  const timelineQuery = useTimeline(
     initialEvents
       ? undefined
       : {
-          domainId: activeQueryDomainId,
-          limit: 20,
+          domainId,
+          limit: 50,
         }
   );
 
-  const snapshotsQuery = useSnapshots(initialSnapshots ? undefined : (activeQueryDomainId || domainId));
-  const domainJobsQuery = useDomainUnderstandingJobs(initialSnapshots ? null : (activeQueryDomainId || domainId));
+  const snapshotsQuery = useSnapshots(initialSnapshots ? undefined : domainId);
+  const domainJobsQuery = useDomainUnderstandingJobs(initialSnapshots ? null : domainId);
 
-  // Flatten cursor pages into an unbroken stream
   const rawEvents = initialEvents
     ? getTimelineEventsArray(initialEvents)
-    : infiniteTimelineQuery.data?.pages?.flatMap((page) => getTimelineEventsArray(page.data || page.events || [])) || [];
+    : getTimelineEventsArray(timelineQuery.data);
 
   const rawSnapshots = getSnapshotsArray(initialSnapshots || snapshotsQuery.data);
 
@@ -87,17 +121,25 @@ export const ChangesTimeline: React.FC<ChangesTimelineProps> = ({
   const isUnderstanding = Boolean(activeJob);
 
   const isLoading =
-    (!initialEvents && infiniteTimelineQuery.isLoading) ||
+    (!initialEvents && timelineQuery.isLoading) ||
     (!initialSnapshots && snapshotsQuery.isLoading);
   const isError =
-    (!initialEvents && Boolean(infiniteTimelineQuery.error)) ||
+    (!initialEvents && Boolean(timelineQuery.error)) ||
     (!initialSnapshots && Boolean(snapshotsQuery.error));
-  const error = infiniteTimelineQuery.error || snapshotsQuery.error;
+  const error = timelineQuery.error || snapshotsQuery.error;
 
+  // Filter valid snapshots strictly for active domain context (AC-08)
+  const validSnapshots = useMemo(() => {
+    return rawSnapshots.filter(
+      (s) => Boolean(s.id) && Boolean(s.capturedAt || s.createdAt) && (!s.domainId || s.domainId === domainId)
+    );
+  }, [rawSnapshots, domainId]);
+
+  // Integration decision
   const integration = integrateAuthoritativeChanges({
-    domainId: activeQueryDomainId || domainId,
+    domainId,
     domainName,
-    snapshots: rawSnapshots,
+    snapshots: validSnapshots,
     timelineEvents: rawEvents,
     isLoading,
     isError,
@@ -106,507 +148,398 @@ export const ChangesTimeline: React.FC<ChangesTimelineProps> = ({
 
   const { state, snapshotPair } = integration;
 
-  // Partition events into sticky epochs with progressive density
-  const partitionResult = partitionInfiniteTimeline({
-    events: rawEvents,
-    domainName,
-    baselineSnapshot: rawSnapshots[rawSnapshots.length - 1] || null,
-    hasNextPage: Boolean(infiniteTimelineQuery.hasNextPage),
-  });
+  // Transform raw events to change stories bound to active domain
+  const allDomainStories = useMemo<readonly MeaningfulChangeStory[]>(() => {
+    const scopedEvents = rawEvents.filter((e) => !e.domainId || e.domainId === domainId);
+    return scopedEvents.map((e) => resolveMeaningfulChangeStory(e, domainName));
+  }, [rawEvents, domainId, domainName]);
 
-  const { epochs, originDetails, isOriginReached, hasEvents } = partitionResult;
+  // Filter strictly to meaningful changes (AC-02 & AC-03: strips raw wire noise)
+  const meaningfulStories = useMemo<readonly MeaningfulChangeStory[]>(() => {
+    return filterMeaningfulChanges(allDomainStories);
+  }, [allDomainStories]);
 
-  // Infinite Scroll Intersection Observer with 400px prefetch margin
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
-      if (
-        target.isIntersecting &&
-        infiniteTimelineQuery.hasNextPage &&
-        !infiniteTimelineQuery.isFetchingNextPage &&
-        !initialEvents
-      ) {
-        infiniteTimelineQuery.fetchNextPage();
-      }
-    },
-    [
-      infiniteTimelineQuery.hasNextPage,
-      infiniteTimelineQuery.isFetchingNextPage,
-      infiniteTimelineQuery.fetchNextPage,
-      initialEvents,
-    ]
-  );
+  // Scope to the Primary Comparison Boundary (AC-01): Previous Understanding -> Current Understanding
+  const primaryPairStories = useMemo<readonly MeaningfulChangeStory[]>(() => {
+    if (!snapshotPair.currentSnapshot) {
+      return meaningfulStories;
+    }
 
-  useEffect(() => {
-    const element = sentinelRef.current;
-    if (!element) return;
+    const currId = snapshotPair.currentSnapshot.id;
+    const prevId = snapshotPair.previousSnapshot?.id;
 
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: '400px',
-      threshold: 0.1,
+    // Filter changes associated with this latest comparison pair
+    const pairFiltered = meaningfulStories.filter((s) => {
+      if (s.currentSnapshotId === currId) return true;
+      if (prevId && s.previousSnapshotId === prevId) return true;
+      // Fallback: if story has no explicit currentSnapshotId, include it if it's recent
+      if (!s.currentSnapshotId) return true;
+      return false;
     });
 
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [handleObserver]);
+    return pairFiltered.length > 0 ? pairFiltered : meaningfulStories;
+  }, [meaningfulStories, snapshotPair]);
+
+  // Apply "Since last visit" filtering if selected (AC-07)
+  const activeStories = useMemo<readonly MeaningfulChangeStory[]>(() => {
+    if (comparisonMode === 'last_visit') {
+      return filterChangesSinceLastVisit(primaryPairStories, lastVisitedAt);
+    }
+    return primaryPairStories;
+  }, [primaryPairStories, comparisonMode, lastVisitedAt]);
+
+  // Category filtering
+  const filteredStories = useMemo<readonly MeaningfulChangeStory[]>(() => {
+    if (selectedCategory === 'ALL') return activeStories;
+    return activeStories.filter((s) => s.category === selectedCategory);
+  }, [activeStories, selectedCategory]);
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: activeStories.length };
+    for (const story of activeStories) {
+      counts[story.category] = (counts[story.category] || 0) + 1;
+    }
+    return counts;
+  }, [activeStories]);
+
+  const hasMeaningfulChanges = activeStories.length > 0;
+  const latestCaptureFormatted = formatDateTimeShort(
+    snapshotPair.currentSnapshot?.capturedAt || snapshotPair.currentSnapshot?.createdAt
+  );
 
   // 1. Loading State
   if (state === 'LOADING') {
     return (
-      <Section className={`w-full py-6 ${className}`} aria-label="Infrastructure Changes">
-        <ReadingSurface>
-          <div className="py-8 flex justify-center">
-            <LoadingState
-              label="Loading infrastructure changes..."
-              description={`Retrieving verified changes and comparative snapshots for ${domainName}`}
-            />
-          </div>
-        </ReadingSurface>
-      </Section>
+      <div className={`w-full py-16 flex justify-center ${className}`} aria-label="Infrastructure Changes">
+        <LoadingState
+          label="Reviewing changes..."
+          description={`Analyzing differences between verified understandings for ${domainName}`}
+        />
+      </div>
     );
   }
 
   // 2. Error State
   if (state === 'ERROR') {
     return (
-      <Section className={`w-full py-6 ${className}`} aria-label="Infrastructure Changes">
-        <ReadingSurface>
-          <ErrorState
-            error={error}
-            title="Failed to Load Infrastructure Changes"
-            description={`Could not retrieve comparative snapshot changes for ${domainName}.`}
-            retryLabel="Retry"
-            onRetry={() => {
-              infiniteTimelineQuery.refetch();
-              snapshotsQuery.refetch();
-            }}
-          />
-        </ReadingSurface>
-      </Section>
+      <div className={`w-full py-16 flex justify-center ${className}`} aria-label="Infrastructure Changes">
+        <ErrorState
+          error={error}
+          title="Failed to Load Changes"
+          description={`Could not retrieve snapshot changes for ${domainName}.`}
+          retryLabel="Retry"
+          onRetry={() => {
+            timelineQuery.refetch();
+            snapshotsQuery.refetch();
+          }}
+        />
+      </div>
     );
   }
 
   // 3. Unavailable State
   if (state === 'UNAVAILABLE') {
     return (
-      <Section className={`w-full py-6 ${className}`} aria-label="Infrastructure Changes">
-        <ReadingSurface>
-          <UnavailableState
-            title="Infrastructure Changes Unavailable"
-            description="Changes cannot be accessed due to tenant boundaries or unavailable telemetry."
-          />
-        </ReadingSurface>
-      </Section>
+      <div className={`w-full py-16 flex justify-center ${className}`} aria-label="Infrastructure Changes">
+        <UnavailableState
+          title="Changes Unavailable"
+          description="Changes cannot be accessed due to tenant boundaries or unavailable telemetry."
+        />
+      </div>
     );
   }
 
-  const formatFullDate = (isoDate?: string | null): string => {
-    if (!isoDate) return 'Timestamp unavailable';
-    const d = new Date(isoDate);
-    if (isNaN(d.getTime())) return 'Timestamp unavailable';
-    return d.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  // 4. Empty State (0 understandings recorded)
+  if (state === 'EMPTY') {
+    return (
+      <div
+        className="w-full max-w-2xl mx-auto py-12 px-6 text-center space-y-4"
+        data-testid="empty-changes-card"
+      >
+        <Cluster gap="xs" align="center" justify="center">
+          <Layers className="w-4 h-4 text-[#5F625F] dark:text-muted-foreground" />
+          <Eyebrow variant="muted" className="text-[11px] font-mono uppercase tracking-wider">
+            CHANGES
+          </Eyebrow>
+        </Cluster>
 
-  const formatDateTimeShort = (isoDate?: string | null): string => {
-    if (!isoDate) return 'Unavailable';
-    const d = new Date(isoDate);
-    if (isNaN(d.getTime())) return 'Unavailable';
-    const monthDay = d.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-    const time = d.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    return `${monthDay} · ${time}`;
-  };
+        <div className="space-y-1.5">
+          <Display className="text-xl font-medium text-foreground tracking-tight">
+            No understandings recorded
+          </Display>
+          <BodySmall variant="muted" className="text-xs text-[#5F625F] dark:text-muted-foreground max-w-md mx-auto leading-relaxed">
+            Run an understanding cycle for {domainName} to establish the initial baseline and track infrastructure evolution.
+          </BodySmall>
+        </div>
+
+        <div className="pt-2 flex justify-center">
+          <UnderstandNowButton domainId={domainId} domainName={domainName} />
+        </div>
+      </div>
+    );
+  }
+
+  // 5. Genesis Baseline (First Understanding)
+  if (state === 'FIRST_UNDERSTANDING') {
+    return (
+      <div className="w-full max-w-3xl mx-auto py-8 px-4 space-y-6" data-testid="first-understanding-root">
+        <div
+          className="w-full bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-6 sm:p-8 space-y-4 shadow-[0_1px_2px_rgba(16,24,20,0.02)]"
+          data-testid="first-understanding-card"
+        >
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#EEEEEB] dark:border-border-divider font-mono text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#178A68]" />
+              <span className="font-semibold text-foreground uppercase tracking-wider text-[11px]">
+                Genesis Baseline Active
+              </span>
+            </div>
+
+            {onViewInfrastructure && (
+              <button
+                type="button"
+                onClick={onViewInfrastructure}
+                className="text-[#3568C8] dark:text-primary hover:underline cursor-pointer text-xs"
+                data-testid="view-infrastructure-link"
+              >
+                <span>View architecture &rarr;</span>
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-medium text-foreground tracking-tight">
+              Initial baseline established for {domainName}
+            </h3>
+            <p className="text-xs sm:text-sm text-[#5F625F] dark:text-muted-foreground leading-relaxed">
+              Nebula established the initial verified understanding. Subsequent cycles will detect meaningful changes, DNS shifts, and defensive posture drift against this genesis state.
+            </p>
+          </div>
+
+          <div className="pt-3 border-t border-[#EEEEEB] dark:border-border-divider font-mono text-xs text-[#5F625F] dark:text-muted-foreground flex items-center justify-between">
+            <span>Last understood · {latestCaptureFormatted}</span>
+            <span className="text-foreground font-medium">Nothing else requires attention.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Section className={`w-full py-6 ${className}`} aria-label="Infrastructure Changes">
-      <ReadingSurface>
-        <Stack gap="xl">
-          {/* Multi-Domain Filter Controls (When multiple domains exist) */}
-          {domains.length > 1 && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EEEEEB] dark:border-border-divider">
-              <div className="flex items-center gap-2 text-xs font-mono text-[#5F625F] dark:text-muted-foreground">
-                <Filter className="w-3.5 h-3.5 text-[#5F625F]" />
-                <span className="uppercase font-semibold tracking-wider">TIMELINE SCOPE:</span>
-              </div>
+    <div className={`w-full max-w-4xl mx-auto space-y-8 py-2 ${className}`} data-testid="changes-timeline-surface">
+      {/* Understanding In-Progress Banner */}
+      {isUnderstanding && (
+        <div
+          className="p-3 bg-[#EEF4FF] dark:bg-blue-950/20 border border-[#C8D8F6] dark:border-blue-900/30 rounded-xl flex items-center justify-between gap-3 text-xs text-[#3568C8] dark:text-blue-400 font-mono"
+          data-testid="changes-understanding-in-progress-banner"
+        >
+          <div className="flex items-center gap-2">
+            <Activity className="w-3.5 h-3.5 animate-pulse shrink-0" />
+            <span>Understanding in progress — analyzing observations against baseline for {domainName}.</span>
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider">Analyzing</span>
+        </div>
+      )}
 
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedFilterDomainId(null);
-                    onSelectDomain?.('');
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer ${
-                    !selectedFilterDomainId
-                      ? 'bg-[#EAF7F2] text-[#178A68] border border-[#B9E5D6] font-semibold'
-                      : 'bg-[#F4F4F1] dark:bg-surface-metadata text-[#5F625F] dark:text-muted-foreground hover:text-foreground border border-transparent'
-                  }`}
-                  data-testid="filter-all-domains"
-                >
-                  All Domains ({domains.length})
-                </button>
+      {/* Surface Header & Hero Question (Section 3 & 11) */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <Eyebrow variant="muted" className="text-[11px] font-mono uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground">
+              CHANGES
+            </Eyebrow>
+            <h2 className="text-2xl sm:text-3xl font-display font-medium text-foreground tracking-tight">
+              {domainName}
+            </h2>
+          </div>
 
-                {domains.map((d) => {
-                  const isSelected = selectedFilterDomainId === d.id;
-                  return (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFilterDomainId(d.id);
-                        onSelectDomain?.(d.id);
-                      }}
-                      className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#EEF4FF] text-[#3568C8] border border-[#C8D8F6] font-semibold'
-                          : 'bg-[#F4F4F1] dark:bg-surface-metadata text-[#5F625F] dark:text-muted-foreground hover:text-foreground border border-transparent'
-                      }`}
-                      data-testid={`filter-domain-${d.id}`}
-                    >
-                      {d.domainName}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Active Understanding In-Progress Banner */}
-          {isUnderstanding && (
-            <div
-              className="p-3 bg-[#EEF4FF] dark:bg-blue-950/20 border border-[#C8D8F6] rounded-lg flex items-center gap-2.5 text-xs text-[#3568C8] dark:text-blue-400 font-mono"
-              data-testid="changes-understanding-in-progress-banner"
+          {/* Temporal Comparison Mode Switcher (AC-01 & AC-07) */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-[#F4F4F1] dark:bg-surface-metadata border border-[#E2E2DD] dark:border-border text-xs font-mono self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setComparisonMode('last_understanding')}
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer text-[11px] font-medium ${
+                comparisonMode === 'last_understanding'
+                  ? 'bg-[#FFFFFF] dark:bg-card text-foreground shadow-xs font-semibold'
+                  : 'text-[#5F625F] dark:text-muted-foreground hover:text-foreground'
+              }`}
             >
-              <Activity className="w-4 h-4 animate-pulse shrink-0" />
-              <span>Understanding in progress — analyzing observations against baseline for {domainName}.</span>
-            </div>
-          )}
-
-          {/* 4. Single-Snapshot Initial Baseline State (FIRST_UNDERSTANDING) */}
-          {state === 'FIRST_UNDERSTANDING' && (
-            <div
-              className="w-full bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-6 sm:p-7 space-y-6 shadow-[0_1px_2px_rgba(16,24,20,0.03)]"
-              data-testid="first-understanding-card"
+              Since last understanding
+            </button>
+            <button
+              type="button"
+              onClick={() => setComparisonMode('last_visit')}
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer text-[11px] font-medium ${
+                comparisonMode === 'last_visit'
+                  ? 'bg-[#FFFFFF] dark:bg-card text-foreground shadow-xs font-semibold'
+                  : 'text-[#5F625F] dark:text-muted-foreground hover:text-foreground'
+              }`}
             >
-              <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#EEEEEB] dark:border-border-divider">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#178A68] shrink-0" />
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#178A68] font-semibold">
-                    INITIAL BASELINE ESTABLISHED
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#178A68] bg-[#EAF7F2] border border-[#B9E5D6] px-2.5 py-0.5 rounded font-semibold">
-                  GENESIS
-                </span>
-              </div>
+              Since last visit
+            </button>
+          </div>
+        </div>
 
-              <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-medium text-foreground tracking-tight">
-                  Infrastructure understood
-                </h3>
-                <p className="text-xs sm:text-sm text-[#5F625F] dark:text-muted-foreground leading-relaxed max-w-2xl">
-                  Nebula established the first verified understanding of {domainName}. This initial baseline represents the beginning of recorded infrastructure memory.
-                </p>
-              </div>
+        {/* Hero Meaning Headline */}
+        <div className="pb-2 border-b border-[#EEEEEB] dark:border-border-divider">
+          <p className="text-sm sm:text-base text-foreground font-medium">
+            {hasMeaningfulChanges ? (
+              <span>
+                <strong>{activeStories.length}</strong> meaningful {activeStories.length === 1 ? 'change' : 'changes'}{' '}
+                {comparisonMode === 'last_visit' ? 'since your last visit' : 'since your last understanding'}
+              </span>
+            ) : (
+              <span>
+                No meaningful changes{' '}
+                {comparisonMode === 'last_visit' ? 'since your last visit' : 'since your last understanding'}
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 pb-2 border-t border-b border-[#EEEEEB] dark:border-border-divider">
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    BASELINE
-                  </span>
-                  <p className="font-mono text-xs text-foreground font-medium">
-                    Verified · {formatFullDate(snapshotPair.currentSnapshot?.capturedAt || snapshotPair.currentSnapshot?.createdAt)}
-                  </p>
-                </div>
+      {/* Category Filter Pills (if multiple categories present) */}
+      {hasMeaningfulChanges && Object.keys(categoryCounts).length > 2 && (
+        <div className="flex items-center gap-1.5 flex-wrap font-mono text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('ALL')}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              selectedCategory === 'ALL'
+                ? 'bg-[#18181B] dark:bg-primary text-white dark:text-primary-foreground'
+                : 'bg-[#F4F4F1] dark:bg-surface-metadata text-[#5F625F] dark:text-muted-foreground hover:bg-[#EBEBE6]'
+            }`}
+          >
+            All ({categoryCounts.ALL || 0})
+          </button>
 
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    SNAPSHOT
-                  </span>
-                  <p className="font-mono text-xs text-foreground font-medium truncate" title={snapshotPair.currentSnapshot?.id}>
-                    {snapshotPair.currentSnapshot?.id ? snapshotPair.currentSnapshot.id.slice(0, 12) : 'Genesis snapshot'}
-                  </p>
-                </div>
+          {AUTHORITATIVE_CHANGE_CATEGORIES.map((cat) => {
+            const count = categoryCounts[cat] || 0;
+            if (count === 0) return null;
+            const isSelected = selectedCategory === cat;
+            const label = CHANGE_CATEGORY_LABELS[cat] || cat;
 
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    COMPARISON
-                  </span>
-                  <p className="font-mono text-xs text-[#5F625F] dark:text-muted-foreground">
-                    Initial baseline established
-                  </p>
-                </div>
-              </div>
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#18181B] dark:bg-primary text-white dark:text-primary-foreground'
+                    : 'bg-[#F4F4F1] dark:bg-surface-metadata text-[#5F625F] dark:text-muted-foreground hover:bg-[#EBEBE6]'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-                <div className="space-y-0.5">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    VERIFIED KNOWLEDGE
-                  </span>
-                  <p className="text-xs text-[#5F625F] dark:text-muted-foreground">
-                    Infrastructure snapshot · Domain context · Initial observation baseline
-                  </p>
-                </div>
+      {/* Calm Empty / Quiet State (AC-09 & Section 10) */}
+      {!hasMeaningfulChanges && (
+        <div
+          className="w-full bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-6 sm:p-8 space-y-4 shadow-[0_1px_2px_rgba(16,24,20,0.02)]"
+          data-testid="quiet-changes-card"
+        >
+          <div className="flex items-center gap-2 font-mono text-xs">
+            <CheckCircle2 className="w-4 h-4 text-[#178A68]" />
+            <span className="font-semibold text-foreground uppercase tracking-wider text-[11px]">
+              No Meaningful Changes
+            </span>
+          </div>
 
-                <div className="flex items-center gap-4 text-xs shrink-0 font-mono">
-                  {onViewInfrastructure && (
-                    <button
-                      type="button"
-                      onClick={onViewInfrastructure}
-                      className="font-medium text-[#3568C8] hover:underline cursor-pointer"
-                      data-testid="view-infrastructure-link"
-                    >
-                      <span>View infrastructure &rarr;</span>
-                    </button>
-                  )}
-                  {onViewSnapshot && snapshotPair.currentSnapshot && (
-                    <button
-                      type="button"
-                      onClick={() => onViewSnapshot(snapshotPair.currentSnapshot!.id)}
-                      className="font-medium text-[#5F625F] hover:text-foreground cursor-pointer"
-                      data-testid="view-baseline-snapshot"
-                    >
-                      <span>View snapshot &rarr;</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-medium text-foreground tracking-tight">
+              Your infrastructure remains consistent with the previous trusted understanding.
+            </h3>
+            <p className="text-xs sm:text-sm text-[#5F625F] dark:text-muted-foreground leading-relaxed">
+              Nebula evaluated current observations against prior baseline snapshots and found no modifications to DNS routing, security policies, certificates, or technology stacks.
+            </p>
+          </div>
 
-          {/* 5. Quiet / Stable State with No Changes Recorded */}
-          {state === 'QUIET' && !hasEvents && (
-            <div
-              className="w-full bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-6 sm:p-7 space-y-6 shadow-[0_1px_2px_rgba(16,24,20,0.03)]"
-              data-testid="quiet-changes-card"
+          <div className="pt-3 border-t border-[#EEEEEB] dark:border-border-divider font-mono text-xs text-[#5F625F] dark:text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>Last understood &bull; {latestCaptureFormatted}</span>
+            <span className="text-foreground font-medium">Nothing else requires attention.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Meaningful Changes List (Section 3 & 11) */}
+      {hasMeaningfulChanges && (
+        <div className="space-y-4" data-testid="scoped-changes-matrix">
+          <div className="flex items-center justify-between font-mono text-xs text-[#5F625F] dark:text-muted-foreground">
+            <span className="uppercase tracking-wider font-semibold text-[11px]">
+              WHAT CHANGED
+            </span>
+            <span className="text-[11px]">
+              {filteredStories.length} {filteredStories.length === 1 ? 'item' : 'items'}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {filteredStories.map((story) => (
+              <ChangeStoryCard
+                key={story.changeId}
+                change={story}
+                onInvestigate={onInvestigateChange}
+                onViewEvidence={onViewEvidence}
+                onViewSnapshot={onViewSnapshot}
+                onViewPreviousSnapshot={onViewSnapshot}
+              />
+            ))}
+          </div>
+
+          {/* Reassurance Closing Note (AC-09 & Section 3) */}
+          <div className="pt-4 text-center">
+            <p className="text-xs font-mono text-[#5F625F] dark:text-muted-foreground">
+              Nothing else requires attention.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Intentional Historical Comparison Affordance (AC-06 & Section 7) */}
+      <div
+        className="pt-6 border-t border-[#EEEEEB] dark:border-border-divider flex items-center justify-between gap-4 font-mono text-xs"
+        data-testid="changes-history-footer"
+      >
+        {onCompareSnapshots && snapshotPair.hasComparisonPair && snapshotPair.currentSnapshot && snapshotPair.previousSnapshot ? (
+          <button
+            type="button"
+            onClick={() =>
+              onCompareSnapshots(
+                snapshotPair.previousSnapshot!.id,
+                snapshotPair.currentSnapshot!.id
+              )
+            }
+            className="text-[#3568C8] dark:text-primary hover:underline cursor-pointer inline-flex items-center gap-1.5 font-medium"
+            data-testid="compare-snapshots-button"
+          >
+            <span>Compare understandings</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <span className="text-[#5F625F] dark:text-muted-foreground text-[11px]">
+            Historical memory preserved
+          </span>
+        )}
+
+        <div className="flex items-center gap-3">
+          {onViewInfrastructure && (
+            <button
+              type="button"
+              onClick={onViewInfrastructure}
+              className="text-[#5F625F] dark:text-muted-foreground hover:text-foreground cursor-pointer text-[11px]"
             >
-              <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#EEEEEB] dark:border-border-divider">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#178A68] shrink-0" />
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#178A68] font-semibold">
-                    VERIFIED UNDERSTANDING
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#178A68] bg-[#EAF7F2] border border-[#B9E5D6] px-2.5 py-0.5 rounded font-semibold">
-                  STABLE
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-medium text-foreground tracking-tight">
-                  No infrastructure changes detected
-                </h3>
-                <p className="text-xs sm:text-sm text-[#5F625F] dark:text-muted-foreground leading-relaxed max-w-2xl">
-                  Nebula compared current verified understandings with previous infrastructure states and found no meaningful differences.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 pb-2 border-t border-b border-[#EEEEEB] dark:border-border-divider">
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    CURRENT UNDERSTANDING
-                  </span>
-                  <p className="font-mono text-xs text-foreground font-medium">
-                    {formatDateTimeShort(snapshotPair.currentSnapshot?.capturedAt || snapshotPair.currentSnapshot?.createdAt)}
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    PREVIOUS STATE
-                  </span>
-                  <p className="font-mono text-xs text-foreground font-medium">
-                    {formatDateTimeShort(snapshotPair.previousSnapshot?.capturedAt || snapshotPair.previousSnapshot?.createdAt)}
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#5F625F] dark:text-muted-foreground block">
-                    CHANGE RESULT
-                  </span>
-                  <p className="font-mono text-xs text-[#178A68] font-medium">
-                    No meaningful changes
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-                <span className="text-xs text-[#5F625F] dark:text-muted-foreground font-mono">
-                  {snapshotPair.totalVerifiedSnapshots} verified snapshots recorded in memory
-                </span>
-
-                <div className="flex items-center gap-4 text-xs font-mono shrink-0">
-                  {onCompareSnapshots && snapshotPair.hasComparisonPair && snapshotPair.currentSnapshot && snapshotPair.previousSnapshot && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onCompareSnapshots(
-                          snapshotPair.previousSnapshot!.id,
-                          snapshotPair.currentSnapshot!.id
-                        )
-                      }
-                      className="font-medium text-[#3568C8] hover:underline cursor-pointer"
-                      data-testid="compare-snapshots-button"
-                    >
-                      <span>Compare understandings &rarr;</span>
-                    </button>
-                  )}
-                  {onViewSnapshot && snapshotPair.currentSnapshot && (
-                    <button
-                      type="button"
-                      onClick={() => onViewSnapshot(snapshotPair.currentSnapshot!.id)}
-                      className="font-medium text-[#5F625F] hover:text-foreground cursor-pointer"
-                      data-testid="view-current-snapshot"
-                    >
-                      <span>View snapshot &rarr;</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+              <span>View Active Architecture &rarr;</span>
+            </button>
           )}
-
-          {/* 6. Empty State (EMPTY) */}
-          {state === 'EMPTY' && (
-            <div
-              className="bg-[#FFFFFF] dark:bg-card border border-[#E1E1DC] dark:border-border rounded-xl p-8 text-center space-y-4"
-              data-testid="empty-changes-card"
-            >
-              <Cluster gap="xs" align="center" justify="center">
-                <Layers className="w-4 h-4 text-[#5F625F]" />
-                <Eyebrow variant="muted" className="text-xs font-mono uppercase">
-                  CHANGES
-                </Eyebrow>
-              </Cluster>
-
-              <div className="space-y-1.5 max-w-lg mx-auto">
-                <Display className="text-xl font-medium text-foreground">
-                  No infrastructure changes recorded.
-                </Display>
-                <BodySmall variant="muted" className="leading-relaxed">
-                  Run understanding to establish a baseline observation state for {domainName}.
-                </BodySmall>
-              </div>
-
-              <div className="pt-2 flex justify-center">
-                <UnderstandNowButton
-                  domainId={domainId}
-                  domainName={domainName}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* 7. Continuous Chronological Infinite Timeline with Progressive Density */}
-          {hasEvents && (
-            <Stack gap="2xl" className="w-full relative" data-testid="infinite-changes-timeline">
-              {/* Compare understandings button (if pair exists) */}
-              {onCompareSnapshots && snapshotPair.hasComparisonPair && snapshotPair.currentSnapshot && snapshotPair.previousSnapshot && (
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onCompareSnapshots(
-                        snapshotPair.previousSnapshot!.id,
-                        snapshotPair.currentSnapshot!.id
-                      )
-                    }
-                    className="inline-flex items-center gap-1 text-xs font-mono text-[#5F625F] hover:text-foreground hover:underline transition-colors cursor-pointer"
-                    data-testid="compare-snapshots-button"
-                  >
-                    <span>Compare understandings &rarr;</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Epoch Groups */}
-              {epochs.map((epoch) => (
-                <div
-                  key={epoch.epochKey}
-                  className="space-y-4 relative"
-                  data-testid={`epoch-group-${epoch.epochKey}`}
-                >
-                  {/* Sticky Epoch Spine Header */}
-                  <StickyEpochSpine epochLabel={epoch.epochLabel} />
-
-                  {/* Items in Epoch rendered according to Progressive Density */}
-                  <div className="space-y-3 pl-2 sm:pl-4 border-l border-[#DCDCD7] dark:border-border ml-3 sm:ml-4">
-                    {epoch.items.map((item) => {
-                      if (item.densityTier === 'RICH') {
-                        return (
-                          <ChangeStoryCard
-                            key={item.story.changeId}
-                            change={item.story}
-                            onInvestigate={onInvestigateChange}
-                            onViewEvidence={onViewEvidence}
-                            onViewSnapshot={onViewSnapshot}
-                            onViewPreviousSnapshot={onViewSnapshot}
-                          />
-                        );
-                      }
-
-                      if (item.densityTier === 'COMPACT') {
-                        return (
-                          <CompactChangeRow
-                            key={item.story.changeId}
-                            item={item}
-                            onInvestigate={onInvestigateChange}
-                            onViewSnapshot={onViewSnapshot}
-                          />
-                        );
-                      }
-
-                      return (
-                        <DenseChangeRow
-                          key={item.story.changeId}
-                          item={item}
-                          onInvestigate={onInvestigateChange}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {/* Prefetch Sentinel Element (400px before bottom) */}
-              <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
-
-              {/* Skeleton Loader during active subsequent page fetch */}
-              {infiniteTimelineQuery.isFetchingNextPage && (
-                <TimelineSkeletonLoader />
-              )}
-
-              {/* Failure Banner on Next Page Fetch Error */}
-              {infiniteTimelineQuery.isFetchNextPageError && (
-                <TimelineFailureBanner
-                  onRetry={() => infiniteTimelineQuery.fetchNextPage()}
-                  isRetrying={infiniteTimelineQuery.isFetchingNextPage}
-                />
-              )}
-
-              {/* Infrastructure Origin Seal (When timeline genesis is reached) */}
-              {isOriginReached && (
-                <InfrastructureOriginSeal originDetails={originDetails} />
-              )}
-
-              {/* Return to Present Telemetry Button */}
-              <ReturnToPresentButton />
-            </Stack>
-          )}
-        </Stack>
-      </ReadingSurface>
-    </Section>
+        </div>
+      </div>
+    </div>
   );
 };
 

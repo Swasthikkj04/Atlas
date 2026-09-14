@@ -115,7 +115,7 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
       // Validate that empty body doesn't trigger 400 Bad Request in ValidationPipe
       const validatedDto = await validationPipe.transform(
         {},
-        { type: 'body', metatype: RefreshTokenDto }
+        { type: 'body', metatype: RefreshTokenDto },
       );
 
       expect(validatedDto).toBeDefined();
@@ -171,7 +171,7 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
       } as unknown as Response;
 
       await expect(controller.refresh(req, res, {})).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
     });
   });
@@ -182,7 +182,9 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
         ...mockSession,
         revokedAt: new Date(),
       };
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(revokedSession);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        revokedSession,
+      );
 
       const req = {
         cookies: { nebula_refresh_token: 'raw_revoked_cookie' },
@@ -191,7 +193,7 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
       const res = { cookie: jest.fn() } as unknown as Response;
 
       await expect(controller.refresh(req, res, {})).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
     });
 
@@ -200,7 +202,9 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
         ...mockSession,
         expiresAt: new Date(Date.now() - 10000),
       };
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(expiredSession);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        expiredSession,
+      );
 
       const req = {
         cookies: { nebula_refresh_token: 'raw_expired_cookie' },
@@ -209,7 +213,7 @@ describe('WX-1014: Auth Refresh Contract & HTTP-Only Cookie Compatibility', () =
       const res = { cookie: jest.fn() } as unknown as Response;
 
       await expect(controller.refresh(req, res, {})).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
     });
   });

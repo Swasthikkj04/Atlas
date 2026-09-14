@@ -150,11 +150,16 @@ export const ExecutiveBrief: React.FC<ExecutiveBriefProps> = ({
     >
       {/* Header Eyebrow & Posture Status */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#EEEEEB] dark:border-border-divider">
-        <Cluster gap="xs" align="center">
-          <Icon icon={Sparkles} size="small" className="text-[#3568C8]" />
-          <Eyebrow variant="muted" className="text-xs font-mono tracking-[0.2em] uppercase font-semibold text-[#5F625F] dark:text-muted-foreground">
+        <Cluster gap="xs" align="center" className="min-w-0">
+          <Icon icon={Sparkles} size="small" className="text-[#3568C8] shrink-0" />
+          <Eyebrow variant="muted" className="text-xs font-mono tracking-[0.2em] uppercase font-semibold text-[#5F625F] dark:text-muted-foreground shrink-0">
             Executive Brief
           </Eyebrow>
+          {domainName && (
+            <span className="text-xs font-mono text-muted-foreground/80 truncate">
+              &bull; {domainName}
+            </span>
+          )}
         </Cluster>
 
         <div

@@ -10,14 +10,15 @@ import { GuestHeader } from "../components/GuestHeader";
 import { GuestFooter } from "../components/GuestFooter";
 import { HeroSection } from "../components/HeroSection";
 import { UnderstandingStage } from "../components/UnderstandingStage";
-import { SplitIntelligenceSurface } from "../components/SplitIntelligenceSurface";
-import { WorkspaceConversion } from "../components/WorkspaceConversion";
+import { GuestWorkspaceView } from "../components/workspace/GuestWorkspaceView";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { CreateWorkspaceSurface } from "../../auth/components/CreateWorkspaceSurface";
+import { telemetry } from "../../../services";
 import {
   startGuestUnderstanding,
   getGuestUnderstandingJob,
   getGuestUnderstandingResult,
+  subscribeToUnderstandingStream,
   InvalidDomainError,
   RateLimitError,
   PlatformError,
@@ -31,6 +32,8 @@ import {
   SENTENCES,
   SENTENCE_DURATIONS,
   ease,
+  normalizeDomain,
+  isValidDomain,
 } from "../types";
 
 export default function GuestPage() {
@@ -50,6 +53,7 @@ export default function GuestPage() {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollAbortControllerRef = useRef<AbortController | null>(null);
+  const unsubscribeStreamRef = useRef<(() => void) | null>(null);
   const isPollingRef = useRef(false);
 
   const clearTimers = () => {
@@ -57,7 +61,15 @@ export default function GuestPage() {
     timers.current = [];
   };
 
+  const stopStream = useCallback(() => {
+    if (unsubscribeStreamRef.current) {
+      unsubscribeStreamRef.current();
+      unsubscribeStreamRef.current = null;
+    }
+  }, []);
+
   const stopPolling = useCallback(() => {
+    stopStream();
     isPollingRef.current = false;
     if (pollTimerRef.current) {
       clearTimeout(pollTimerRef.current);
@@ -67,11 +79,14 @@ export default function GuestPage() {
       pollAbortControllerRef.current.abort();
       pollAbortControllerRef.current = null;
     }
-  }, []);
+  }, [stopStream]);
+
+  const hasAutoStartedRef = useRef(false);
 
   const handleReset = useCallback(() => {
     stopPolling();
     clearTimers();
+    hasAutoStartedRef.current = false;
     setPhase("IDLE");
     setDomain("");
     setActiveSession(null);
@@ -79,12 +94,44 @@ export default function GuestPage() {
     setSections(0);
     setData(null);
     setError(null);
+    if (typeof window !== "undefined" && window.location.search) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => inputRef.current?.focus(), 420);
   }, [stopPolling]);
 
+  const handleJobCompleted = useCallback(
+    async (jobId: string) => {
+      stopPolling();
+      stopStream();
+      try {
+        const result = await getGuestUnderstandingResult(jobId);
+        setData(result);
+        setPhase("PAUSING");
+
+        telemetry.track('SCAN_DOMAIN', {
+          path: '/guest',
+          surface: 'gx',
+          submittedDomain: domain || result.domain,
+          status: 'SUCCESS',
+        });
+
+        const tPause = setTimeout(() => {
+          setPhase("UNDERSTOOD");
+          setSections(1);
+        }, 600);
+        timers.current.push(tPause);
+      } catch {
+        clearTimers();
+        setPhase("ERROR");
+        setError("PLATFORM_FAILURE");
+      }
+    },
+    [stopPolling, stopStream, domain],
+  );
+
   const startPollingJob = useCallback((jobId: string) => {
-    stopPolling();
     isPollingRef.current = true;
 
     const poll = async () => {
@@ -105,22 +152,7 @@ export default function GuestPage() {
           setPhase("UNDERSTANDING");
           pollTimerRef.current = setTimeout(poll, 1000);
         } else if (status === "COMPLETED") {
-          stopPolling();
-          try {
-            const result = await getGuestUnderstandingResult(jobId);
-            setData(result);
-            setPhase("PAUSING");
-
-            const tPause = setTimeout(() => {
-              setPhase("UNDERSTOOD");
-              setSections(1);
-            }, 600);
-            timers.current.push(tPause);
-          } catch {
-            clearTimers();
-            setPhase("ERROR");
-            setError("PLATFORM_FAILURE");
-          }
+          handleJobCompleted(jobId);
         } else if (status === "FAILED") {
           stopPolling();
           clearTimers();
@@ -152,51 +184,144 @@ export default function GuestPage() {
     };
 
     poll();
-  }, [stopPolling]);
+  }, [stopPolling, handleJobCompleted]);
 
-  const handleSubmit = async (submittedDomain: string) => {
-    stopPolling();
-    clearTimers();
-    setDomain(submittedDomain);
-    setError(null);
-    setPhase("VALIDATING");
+  const startStreamingOrPolling = useCallback(
+    (jobId: string) => {
+      stopStream();
+
+      let isStreamActive = true;
+
+      try {
+        const unsubscribe = subscribeToUnderstandingStream(jobId, {
+          onInit: (payload) => {
+            if (!isStreamActive) return;
+            if (payload.stage === "COMPLETED") {
+              handleJobCompleted(jobId);
+            } else if (payload.stage === "FAILED") {
+              stopStream();
+              clearTimers();
+              setPhase("ERROR");
+              setError("PLATFORM_FAILURE");
+            }
+          },
+          onProgress: (payload) => {
+            if (!isStreamActive) return;
+            if (payload.stageIndex && payload.stageIndex > 1) {
+              setSentenceIdx((prev) =>
+                Math.min(
+                  SENTENCES.length - 1,
+                  Math.max(prev, payload.stageIndex! - 1),
+                ),
+              );
+            }
+          },
+          onComplete: () => {
+            if (!isStreamActive) return;
+            handleJobCompleted(jobId);
+          },
+          onError: () => {
+            if (!isStreamActive) return;
+            // Fallback to polling seamlessly if SSE fails
+            startPollingJob(jobId);
+          },
+        });
+
+        unsubscribeStreamRef.current = () => {
+          isStreamActive = false;
+          unsubscribe();
+        };
+      } catch {
+        startPollingJob(jobId);
+      }
+    },
+    [stopStream, handleJobCompleted, startPollingJob],
+  );
+
+  const handleSubmit = useCallback(
+    async (submittedDomain: string) => {
+      const normalized = normalizeDomain(submittedDomain);
+      if (!normalized || !isValidDomain(normalized)) {
+        setError("DOMAIN_INSUFFICIENT_SIGNAL");
+        setPhase("ERROR");
+        return;
+      }
+
+      stopPolling();
+      clearTimers();
+      setDomain(normalized);
+      setError(null);
+      setPhase("VALIDATING");
+
+      telemetry.track('SCAN_DOMAIN', {
+        path: '/guest',
+        surface: 'gx',
+        submittedDomain: normalized,
+      });
+
+      try {
+        const response = await startGuestUnderstanding(normalized);
+        setActiveSession({ jobId: response.jobId, sessionId: response.sessionId });
+
+        setPhase("UNDERSTANDING");
+        setSentenceIdx(0);
+
+        let idx = 0;
+        const advance = () => {
+          if (idx < SENTENCES.length - 1) {
+            idx++;
+            setSentenceIdx(idx);
+            const tAdv = setTimeout(advance, SENTENCE_DURATIONS[idx] ?? 1350);
+            timers.current.push(tAdv);
+          }
+        };
+
+        const tFirst = setTimeout(advance, SENTENCE_DURATIONS[0]);
+        timers.current.push(tFirst);
+
+        startStreamingOrPolling(response.jobId);
+      } catch (err) {
+        setPhase("ERROR");
+        if (err instanceof InvalidDomainError) {
+          setError("DOMAIN_INSUFFICIENT_SIGNAL");
+        } else if (err instanceof RateLimitError) {
+          setError("RATE_LIMIT_EXCEEDED");
+        } else if (err instanceof PlatformError) {
+          setError("PLATFORM_FAILURE");
+        } else {
+          setError("NETWORK_FAILURE");
+        }
+      }
+    },
+    [stopPolling, startStreamingOrPolling],
+  );
+
+  // Auto-initiate domain understanding if URL contains ?domain=... or ?d=...
+  useEffect(() => {
+    if (typeof window === "undefined" || hasAutoStartedRef.current) return;
 
     try {
-      const response = await startGuestUnderstanding(submittedDomain);
-      setActiveSession({ jobId: response.jobId, sessionId: response.sessionId });
-
-      setPhase("UNDERSTANDING");
-      setSentenceIdx(0);
-
-      let idx = 0;
-      const advance = () => {
-        if (idx < SENTENCES.length - 1) {
-          idx++;
-          setSentenceIdx(idx);
-          const tAdv = setTimeout(advance, SENTENCE_DURATIONS[idx] ?? 1350);
-          timers.current.push(tAdv);
+      const searchParams = new URLSearchParams(window.location.search);
+      const queryDomain = searchParams.get("domain") || searchParams.get("d");
+      if (queryDomain) {
+        const normalized = normalizeDomain(queryDomain);
+        if (normalized && isValidDomain(normalized)) {
+          hasAutoStartedRef.current = true;
+          setDomain(normalized);
+          handleSubmit(normalized);
         }
-      };
-
-      const tFirst = setTimeout(advance, SENTENCE_DURATIONS[0]);
-      timers.current.push(tFirst);
-
-      startPollingJob(response.jobId);
-    } catch (err) {
-      setPhase("ERROR");
-      if (err instanceof InvalidDomainError) {
-        setError("DOMAIN_INSUFFICIENT_SIGNAL");
-      } else if (err instanceof RateLimitError) {
-        setError("RATE_LIMIT_EXCEEDED");
-      } else if (err instanceof PlatformError) {
-        setError("PLATFORM_FAILURE");
-      } else {
-        setError("NETWORK_FAILURE");
       }
+    } catch {
+      // Gracefully ignore URL parsing error
     }
-  };
+  }, [handleSubmit]);
 
   const handleConvert = () => {
+    telemetry.track('CLAIM_SESSION', {
+      path: '/guest',
+      surface: 'gx',
+      submittedDomain: domain,
+    });
     setPhase("CONVERTED");
   };
 
@@ -217,6 +342,65 @@ export default function GuestPage() {
 
   const isUnderstanding = phase === "VALIDATING" || phase === "UNDERSTANDING" || phase === "PAUSING";
   const isUnderstood = phase === "UNDERSTOOD" || phase === "CONVERTED";
+
+  // When understood, render the Obsidian Guest Workspace Shell
+  if (isUnderstood && data) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col relative">
+        <a
+          href="#guest-main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-card focus:px-4 focus:py-2 focus:text-[12.5px] focus:font-medium focus:rounded-lg focus:shadow-md focus:border focus:border-border"
+        >
+          Skip to main content
+        </a>
+
+        <div
+          ref={resultsRef}
+          className={`transition-all duration-300 ${
+            phase === "CONVERTED"
+              ? "opacity-30 dark:opacity-25 pointer-events-none select-none"
+              : "opacity-100"
+          }`}
+        >
+          <GuestWorkspaceView
+            domain={domain}
+            assessmentData={data}
+            sessionId={data?.sessionId || activeSession?.sessionId}
+            jobId={data?.jobId || activeSession?.jobId}
+            onReset={handleReset}
+            onClaim={handleConvert}
+            mode={mode}
+            setMode={setMode}
+          />
+        </div>
+
+        {/* Claim Workspace Dialog Overlay */}
+        <AnimatePresence>
+          {phase === "CONVERTED" && (
+            <motion.div
+              key="create-workspace-modal-overlay"
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              role="dialog"
+              aria-modal="true"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-background/60 backdrop-blur-xs pt-16 pb-12"
+            >
+              <CreateWorkspaceSurface
+                domain={domain}
+                sessionId={data?.sessionId || activeSession?.sessionId}
+                jobId={data?.jobId || activeSession?.jobId}
+                expiresAt={null}
+                onClose={() => setPhase("UNDERSTOOD")}
+                reduced={reduced}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <GuestLayout>
@@ -265,6 +449,7 @@ export default function GuestPage() {
                   "UNDERSTANDING"
                 }
                 sentenceIdx={sentenceIdx}
+                domain={domain}
                 reduced={reduced}
               />
             </motion.div>
@@ -354,65 +539,6 @@ export default function GuestPage() {
                 )}
               </ContentColumn>
             </motion.section>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {isUnderstood && data && (
-            <div
-              ref={resultsRef}
-              key="results"
-              role="region"
-              aria-label={`Infrastructure understanding for ${domain}`}
-              className={`pt-[72px] sm:pt-[80px] transition-all duration-300 ${
-                phase === "CONVERTED"
-                  ? "opacity-30 dark:opacity-25 pointer-events-none select-none"
-                  : "opacity-100"
-              }`}
-            >
-              {sections >= 1 && (
-                <>
-                  <SplitIntelligenceSurface
-                    domain={domain}
-                    data={data}
-                    reduced={reduced}
-                  />
-                  <WorkspaceConversion
-                    phase={phase}
-                    domain={domain}
-                    sessionId={data?.sessionId || activeSession?.sessionId}
-                    jobId={data?.jobId || activeSession?.jobId}
-                    onConvert={handleConvert}
-                    onContinue={handleReset}
-                    reduced={reduced}
-                  />
-                </>
-              )}
-            </div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {phase === "CONVERTED" && (
-            <motion.div
-              key="create-workspace-modal-overlay"
-              initial={reduced ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              role="dialog"
-              aria-modal="true"
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-background/60 backdrop-blur-xs pt-16 pb-12"
-            >
-              <CreateWorkspaceSurface
-                domain={domain}
-                sessionId={data?.sessionId || activeSession?.sessionId}
-                jobId={data?.jobId || activeSession?.jobId}
-                expiresAt={null}
-                onClose={() => setPhase("UNDERSTOOD")}
-                reduced={reduced}
-              />
-            </motion.div>
           )}
         </AnimatePresence>
 

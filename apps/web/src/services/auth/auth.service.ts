@@ -28,6 +28,10 @@ export class AuthService {
     return apiClient.get<User>('/api/v1/auth/me');
   }
 
+  async getCurrentUser(signal?: AbortSignal): Promise<User> {
+    return apiClient.get<User>('/api/v1/auth/me', { signal });
+  }
+
   async updateProfile(data: { fullName: string }): Promise<User> {
     return apiClient.patch<User, { fullName: string }>(
       '/api/v1/users/profile',

@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AdaptiveBackpressureService } from './services/adaptive-backpressure.service';
 
 export interface RateLimitCheckResult {
   isBlocked: boolean;
@@ -16,8 +17,13 @@ export class RateLimiterService {
   private readonly isEnabled: boolean;
   private readonly defaultGlobalLimit: number;
   private readonly defaultGlobalWindowSeconds: number;
+  private simulatedFailure = false;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional()
+    private readonly backpressureService?: AdaptiveBackpressureService,
+  ) {
     this.isEnabled =
       this.configService.get<string>('RATE_LIMIT_ENABLED') !== 'false';
     this.defaultGlobalLimit =
@@ -26,11 +32,28 @@ export class RateLimiterService {
       Number(this.configService.get<string>('RATE_LIMIT_WINDOW')) || 60;
   }
 
+  getBackpressureService(): AdaptiveBackpressureService | undefined {
+    return this.backpressureService;
+  }
+
+  setSimulatedFailure(simulated: boolean): void {
+    this.simulatedFailure = simulated;
+  }
+
+  clear(): void {
+    this.windows.clear();
+    this.simulatedFailure = false;
+  }
+
   checkLimit(
     key: string,
     customLimit?: number,
     customWindowSeconds?: number,
   ): RateLimitCheckResult {
+    if (this.simulatedFailure) {
+      throw new Error('Simulated rate limiter storage failure');
+    }
+
     if (!this.isEnabled) {
       return {
         isBlocked: false,

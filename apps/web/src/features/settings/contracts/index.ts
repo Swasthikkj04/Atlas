@@ -5,4 +5,5 @@ export * from './session-management.contract.ts';
 export * from './connected-accounts.contract.ts';
 export * from './preferences.contract.ts';
 export * from './account-lifecycle.contract.ts';
+export * from './privacy-requests.contract.ts';
 export * from './settings-iconography.contract.ts';

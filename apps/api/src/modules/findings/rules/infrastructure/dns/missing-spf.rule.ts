@@ -23,7 +23,11 @@ export class MissingSpfRule implements FindingRule {
     // P0 Truth Invariant (WX-1020): DNS lookup failed != SPF record absent.
     // If the TXT lookup failed (TIMEOUT, SERVFAIL, FAILED), do NOT convert absence of evidence into evidence of absence.
     const txtStatus = dns.status?.txt;
-    if (txtStatus === 'FAILED' || txtStatus === 'TIMEOUT' || txtStatus === 'SERVFAIL') {
+    if (
+      txtStatus === 'FAILED' ||
+      txtStatus === 'TIMEOUT' ||
+      txtStatus === 'SERVFAIL'
+    ) {
       return [];
     }
 

@@ -78,7 +78,9 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
         create: jest.fn().mockResolvedValue(mockSessionLinux),
         update: jest.fn().mockResolvedValue(mockSessionLinux),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        findMany: jest.fn().mockResolvedValue([mockSessionLinux, mockSessionLaptop]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([mockSessionLinux, mockSessionLaptop]),
       },
       $transaction: jest.fn().mockImplementation(async (cb) => cb(mockPrisma)),
     };
@@ -123,7 +125,9 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
 
   describe('1. Silent Session Renewal & Token Rotation', () => {
     it('renews access token and rotates refresh token when valid refresh credential is provided', async () => {
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(mockSessionLinux);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        mockSessionLinux,
+      );
 
       const rawToken = 'raw_refresh_token_valid_123';
       const result = await authService.refresh(rawToken);
@@ -140,10 +144,12 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
         ...mockSessionLinux,
         revokedAt: new Date(Date.now() - 10000), // Revoked 10s ago
       };
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(revokedSession);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        revokedSession,
+      );
 
       await expect(
-        authService.refresh('raw_revoked_token_123')
+        authService.refresh('raw_revoked_token_123'),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -152,10 +158,12 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
         ...mockSessionLinux,
         expiresAt: new Date(Date.now() - 60000), // Expired 1m ago
       };
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(expiredSession);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        expiredSession,
+      );
 
       await expect(
-        authService.refresh('raw_expired_token_123')
+        authService.refresh('raw_expired_token_123'),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -169,18 +177,20 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
         user: deactivatedUser,
       };
       (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
-        sessionWithDeactivatedUser
+        sessionWithDeactivatedUser,
       );
 
       await expect(
-        authService.refresh('raw_token_deactivated_user')
+        authService.refresh('raw_token_deactivated_user'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('2. Multi-Device Session Isolation', () => {
     it('revoking Linux session leaves Laptop session active', async () => {
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(mockSessionLinux);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        mockSessionLinux,
+      );
 
       await authService.revokeSession(mockUser.id, mockSessionLinux.id);
 
@@ -196,7 +206,9 @@ describe('WX-1013: Backend Persistent Session Renewal & Rotation Architecture', 
     });
 
     it('logout current session only revokes current session and preserves other devices', async () => {
-      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(mockSessionLinux);
+      (prisma.userSession.findUnique as jest.Mock).mockResolvedValue(
+        mockSessionLinux,
+      );
 
       await authService.logout('raw_linux_token');
 

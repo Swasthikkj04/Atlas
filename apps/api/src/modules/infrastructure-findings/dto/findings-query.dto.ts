@@ -63,6 +63,14 @@ export class FindingsQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter findings by status (ACTIVE, RESOLVED).',
+    example: 'ACTIVE',
+  })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional({
     description: 'Page number for pagination.',
     default: 1,
     minimum: 1,
@@ -71,7 +79,7 @@ export class FindingsQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page: number = 1;
+  page?: number = 1;
 
   @ApiPropertyOptional({
     description: 'Number of items per page.',
@@ -84,10 +92,11 @@ export class FindingsQueryDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number = 20;
+  limit?: number = 20;
 
   @ApiPropertyOptional({
-    description: 'Whether to include historical findings across superseded snapshots (default false, returns latest verified snapshot findings only).',
+    description:
+      'Whether to include historical findings across superseded snapshots (default false, returns latest verified snapshot findings only).',
     default: false,
   })
   @IsOptional()

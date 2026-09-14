@@ -28,10 +28,16 @@ export class ProcessingEvidenceItemDto {
   @ApiProperty({ example: 'Finding resolved' })
   step!: string;
 
-  @ApiProperty({ example: 'SUCCESS', description: 'SUCCESS | WARNING | ERROR | INFO' })
+  @ApiProperty({
+    example: 'SUCCESS',
+    description: 'SUCCESS | WARNING | ERROR | INFO',
+  })
   status!: string;
 
-  @ApiProperty({ example: 'Finding find-http-missing-hsts-123 resolved from snapshot', required: false })
+  @ApiProperty({
+    example: 'Finding find-http-missing-hsts-123 resolved from snapshot',
+    required: false,
+  })
   description?: string;
 
   @ApiProperty({ example: '2026-08-25T12:00:00Z', required: false })
@@ -48,7 +54,10 @@ export class FindingEvidenceLineageDto {
   @ApiProperty({ example: 'security_header' })
   observationKey!: string;
 
-  @ApiProperty({ example: 'Strict-Transport-Security is absent', required: false })
+  @ApiProperty({
+    example: 'Strict-Transport-Security is absent',
+    required: false,
+  })
   observedValue?: string;
 
   @ApiProperty({ example: 'rule.http.security_header', required: false })
@@ -74,16 +83,28 @@ export class FindingDetailDto {
   @ApiProperty({ example: 'SECURITY_HEADER' })
   category!: string;
 
-  @ApiProperty({ example: 'HIGH', description: 'Severity level (CRITICAL, HIGH, MEDIUM, LOW, INFO).' })
+  @ApiProperty({
+    example: 'HIGH',
+    description: 'Severity level (CRITICAL, HIGH, MEDIUM, LOW, INFO).',
+  })
   severity!: string;
 
-  @ApiProperty({ example: 'CERTAIN', description: 'Confidence model rating (CERTAIN, PROBABLE, UNKNOWN).' })
+  @ApiProperty({
+    example: 'CERTAIN',
+    description: 'Confidence model rating (CERTAIN, PROBABLE, UNKNOWN).',
+  })
   confidence!: string;
 
-  @ApiProperty({ example: 'OPEN', description: 'Canonical state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).' })
+  @ApiProperty({
+    example: 'OPEN',
+    description: 'Canonical state (OPEN, RESOLVED, REGRESSED, ACKNOWLEDGED).',
+  })
   state!: string;
 
-  @ApiProperty({ example: 'ACTIVE', description: 'Canonical status (ACTIVE, RESOLVED, MUTED).' })
+  @ApiProperty({
+    example: 'ACTIVE',
+    description: 'Canonical status (ACTIVE, RESOLVED, MUTED).',
+  })
   status!: string;
 
   @ApiProperty({ example: 'Missing HSTS Header' })
@@ -130,10 +151,17 @@ export class FindingDetailDto {
   })
   whatThisDoesNotProve?: string;
 
-  @ApiProperty({ example: 'COMPLETED', description: 'Explicit processing state (COMPLETED, PARTIAL, INVALID, FAILED).' })
+  @ApiProperty({
+    example: 'COMPLETED',
+    description:
+      'Explicit processing state (COMPLETED, PARTIAL, INVALID, FAILED).',
+  })
   processingStatus!: string;
 
-  @ApiProperty({ example: 'Infrastructure was processed successfully and finding state verified.' })
+  @ApiProperty({
+    example:
+      'Infrastructure was processed successfully and finding state verified.',
+  })
   processingSummary!: string;
 
   @ApiProperty({ type: [ProcessingEvidenceItemDto] })

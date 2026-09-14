@@ -226,7 +226,7 @@ export class GuestUnderstandingService {
     const isApprovedBrief =
       briefRecordToUse?.summary &&
       approvedAnchors.some((anchor) =>
-        briefRecordToUse!.summary.includes(anchor),
+        briefRecordToUse.summary.includes(anchor),
       ) &&
       !briefRecordToUse.summary
         .toLowerCase()

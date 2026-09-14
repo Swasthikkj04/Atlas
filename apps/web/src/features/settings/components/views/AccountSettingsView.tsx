@@ -5,6 +5,7 @@ import {
   UserRoundCog,
   Mail,
   ShieldCheck,
+  ShieldAlert,
   Check,
   AlertCircle,
   AlertTriangle,
@@ -12,6 +13,9 @@ import {
   Trash2,
   PowerOff,
   Lock,
+  FileText,
+  ExternalLink,
+  Info,
 } from 'lucide-react';
 import { Icon } from '../../../../components/icons';
 import { Stack, Cluster } from '../../../../components/layout';
@@ -23,6 +27,7 @@ import {
   formatAccountStatus,
   isLifecycleDestructiveActionAllowed,
 } from '../../contracts/account-lifecycle.contract';
+import { PrivacyRequestDrawer } from '../PrivacyRequestDrawer';
 import type { User } from '../../../../types/auth.types';
 
 export interface AccountSettingsViewProps {
@@ -30,13 +35,14 @@ export interface AccountSettingsViewProps {
 }
 
 /**
- * Authoritative Account & Profile Management Surface (AX-103 / AX-108).
+ * Authoritative Account & Profile Management Surface (AX-103 / AX-108 / LEGAL-003).
  *
  * Implements:
  * - Real profile identity editing (Full Name)
  * - Authoritative Account Lifecycle Status (Active / Deactivated)
  * - Secure Account Deactivation with Session Termination
- * - Irreversible Permanent Account Deletion with Re-Authentication Gate
+ * - Irreversible Permanent Account Deletion with Re-Authentication Gate & Cascade Warnings
+ * - Data Subject Rights & Privacy Request Drawer (GDPR/CCPA Access, Rectification, Restriction)
  */
 export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }) => {
   const { updateProfile, logout } = useAuth();
@@ -65,6 +71,9 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Data Subject Rights Drawer State
+  const [showPrivacyDrawer, setShowPrivacyDrawer] = useState(false);
 
   const [lifecycleSuccessMessage, setLifecycleSuccessMessage] = useState<string | null>(null);
 
@@ -377,7 +386,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                   <h3 className="text-xs font-semibold text-foreground">Deactivate Account</h3>
                 </Cluster>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Temporarily disable your account and sign out all active sessions across your devices.
+                  Temporarily pause active scanning and sign out all active sessions across your devices.
                   Your historical infrastructure snapshots and monitoring configurations remain securely preserved.
                 </p>
               </div>
@@ -404,7 +413,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                   <h3 className="text-xs font-semibold text-destructive">Delete Account Permanently</h3>
                 </Cluster>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Permanently delete your Nebula account, terminate all sessions, and remove your identity.
+                  Permanently purge your Nebula account, remove all saved domains, and terminate access across all devices.
                   This action is irreversible and cannot be undone.
                 </p>
               </div>
@@ -434,8 +443,8 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                 <h3 className="text-xs font-semibold text-foreground">
                   Confirm Account Deactivation
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  All active sessions will be terminated. You will need to contact support or log in to reactivate.
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  All active sessions across your devices will be terminated immediately. Your domain configurations and historical snapshots remain safely stored until you log in again to reactivate.
                 </p>
               </div>
             </div>
@@ -478,7 +487,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                     htmlFor="deactivate-confirm-text"
                     className="block text-xs font-medium text-foreground"
                   >
-                    Type <code className="font-mono bg-muted px-1 rounded">DEACTIVATE</code> to confirm
+                    Type <code className="font-mono bg-muted px-1 rounded font-bold">DEACTIVATE</code> to confirm
                   </label>
                   <input
                     id="deactivate-confirm-text"
@@ -535,10 +544,23 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                   Permanent Account Deletion Warning
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  This action permanently deletes your Nebula account, external provider links, and access credentials.
+                  This action permanently deletes your Nebula account, infrastructure targets, and access credentials.
                   This action is irreversible.
                 </p>
               </div>
+            </div>
+
+            {/* Cascade Warnings Breakdown */}
+            <div className="p-3.5 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2 text-xs">
+              <span className="font-semibold text-destructive flex items-center gap-1.5">
+                <Icon icon={Info} size="small" /> Deletion Cascade Scope:
+              </span>
+              <ul className="space-y-1 text-muted-foreground text-[11px] list-disc pl-4 leading-relaxed">
+                <li><strong className="text-foreground">Domains &amp; Monitoring:</strong> All configured domains, automated observation schedules, and briefs are deleted.</li>
+                <li><strong className="text-foreground">Historical Snapshots &amp; Diffs:</strong> All DNS, HTTP, and TLS historical diffs and evidence graphs are permanently purged.</li>
+                <li><strong className="text-foreground">Sessions &amp; OAuth Links:</strong> All active sessions across devices are revoked immediately, and third-party logins are decoupled.</li>
+                <li><strong className="text-foreground">Backups:</strong> Residual system backup records expire on a standard 30-day rolling rotation cycle.</li>
+              </ul>
             </div>
 
             {deleteError && (
@@ -580,7 +602,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
                   htmlFor="delete-confirm-text"
                   className="block text-xs font-medium text-foreground"
                 >
-                  Type <code className="font-mono bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-bold">DELETE</code> to confirm
+                  Type <code className="font-mono bg-destructive/15 text-destructive px-1.5 py-0.5 rounded font-bold">DELETE</code> to confirm
                 </label>
                 <input
                   id="delete-confirm-text"
@@ -630,6 +652,72 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({ user }
           </div>
         )}
       </div>
+
+      {/* 3. Data Subject Rights & Privacy Requests (LEGAL-003 / AX-109) */}
+      <div className="rounded-xl border border-border-hairline bg-surface-elevated p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-lg bg-muted/60 border border-border-hairline flex items-center justify-center text-muted-foreground flex-shrink-0">
+            <Icon icon={ShieldAlert} size="default" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <h2 className="text-sm font-semibold text-foreground">Data Subject Rights &amp; Privacy Requests</h2>
+            <p className="text-xs text-muted-foreground">
+              Exercise your statutory rights under GDPR, CCPA, and applicable data protection regulations.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border-hairline bg-card p-5 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-3.5 rounded-lg border border-border-hairline bg-muted/10 space-y-1.5">
+              <span className="font-medium text-foreground flex items-center gap-1.5">
+                <Icon icon={FileText} size="small" className="text-primary" /> Data Access &amp; Export
+              </span>
+              <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+                Request an export archive of your registered domains, snapshot summaries, and account metadata.
+              </p>
+            </div>
+            <div className="p-3.5 rounded-lg border border-border-hairline bg-muted/10 space-y-1.5">
+              <span className="font-medium text-foreground flex items-center gap-1.5">
+                <Icon icon={ShieldCheck} size="small" className="text-primary" /> Rectification &amp; Restriction
+              </span>
+              <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+                Request corrections to identity records, or request restrictions on specific infrastructure intelligence processing.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border-hairline">
+            <div className="text-[11.5px] text-muted-foreground space-y-0.5">
+              <span>Read how Argonion handles your information in the </span>
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground underline underline-offset-2 hover:opacity-80 font-medium inline-flex items-center gap-0.5"
+              >
+                Privacy Policy <Icon icon={ExternalLink} size="small" className="inline w-3 h-3" />
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPrivacyDrawer(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-medium hover:opacity-90 transition-opacity cursor-pointer focus-ring shadow-sm flex-shrink-0"
+            >
+              <Icon icon={ShieldAlert} size="small" />
+              <span>Submit Privacy Request</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Privacy Request Drawer */}
+      <PrivacyRequestDrawer
+        isOpen={showPrivacyDrawer}
+        onClose={() => setShowPrivacyDrawer(false)}
+        userEmail={user?.email || 'user@example.com'}
+        userId={user?.id || 'anonymous'}
+      />
     </Stack>
   );
 };

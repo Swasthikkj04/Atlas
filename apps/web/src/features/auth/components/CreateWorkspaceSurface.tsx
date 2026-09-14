@@ -38,9 +38,11 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   reduced = false,
   mode: propMode,
 }) => {
-  const { login, checkAndClaimGuestSession } = useAuth();
+  const { user, isAuthenticated, login, checkAndClaimGuestSession, claimGuestSession } = useAuth();
   const [step, setStep] = useState<Step>('register');
   const [sentEmail, setSentEmail] = useState('');
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const isContextAware = propMode === 'direct' ? false : Boolean(domain || sessionId || propMode === 'context-aware');
 
@@ -96,6 +98,35 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
     window.location.href = `/api/v1/auth/${provider}`;
   };
 
+  const handleAuthenticatedClaim = async () => {
+    setClaimError(null);
+    setIsClaiming(true);
+
+    try {
+      if (sessionId) {
+        await claimGuestSession(sessionId);
+      } else {
+        await checkAndClaimGuestSession();
+      }
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('nebula_guest_claim');
+        sessionStorage.removeItem('nebula_claim_error');
+      }
+      window.location.href = '/workspace';
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Sorry, your domain limit has been reached.';
+      setClaimError(msg);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('nebula_claim_error', msg);
+      }
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
   // Inline Login Form State (Step 3)
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -106,6 +137,7 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
   const handleLoginSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoginError(null);
+    setClaimError(null);
     setLoginSubmitting(true);
 
     try {
@@ -115,7 +147,17 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
       });
 
       if (isContextAware) {
-        await checkAndClaimGuestSession();
+        try {
+          await checkAndClaimGuestSession();
+        } catch (claimErr: unknown) {
+          const claimMsg =
+            claimErr instanceof Error
+              ? claimErr.message
+              : 'Sorry, your domain limit has been reached.';
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('nebula_claim_error', claimMsg);
+          }
+        }
       }
 
       window.location.href = '/workspace';
@@ -159,13 +201,84 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
 
       {/* UnderstandingContextCard — visible in Mode A only */}
       {isContextAware && context && (
-        <UnderstandingContextCard context={context} step={step === 'login' ? 'login' : step} />
+        <UnderstandingContextCard context={context} step={isAuthenticated ? 'verify' : step === 'login' ? 'login' : step} />
       )}
 
-      {/* ── STEP 1: REGISTER ────────────────────────────────────────────── */}
-      {step === 'register' && (
+      {/* ── AUTHENTICATED USER VIEW ────────────────────────────────────── */}
+      {isAuthenticated && user ? (
         <>
           <div className="mb-6">
+            <h2
+              id="create-workspace-title"
+              className="font-serif text-[2.1rem] sm:text-[2.35rem] font-medium text-foreground leading-[1.12] tracking-tight mb-2.5"
+            >
+              Preserve in workspace.<br />
+              <em>{domain || 'Your infrastructure'}</em>
+            </h2>
+            <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
+              Signed in as <strong className="text-foreground">{user.fullName || user.email}</strong>. Claim this perimeter into your monitored workspace portfolio.
+            </p>
+          </div>
+
+          {claimError && (
+            <div
+              role="alert"
+              className="mb-5 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs leading-relaxed space-y-1"
+            >
+              <div className="font-medium text-[13px]">{claimError}</div>
+              <div className="text-muted-foreground text-[11.5px]">
+                Your workspace already contains the maximum allowed 4 domains. Remove an existing domain to claim this infrastructure.
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {!claimError ? (
+              <button
+                type="button"
+                onClick={handleAuthenticatedClaim}
+                disabled={isClaiming}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg px-5 py-3 text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring cursor-pointer shadow-sm"
+              >
+                {isClaiming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Claiming infrastructure...
+                  </>
+                ) : (
+                  <>
+                    Claim to Workspace
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            ) : (
+              <a
+                href="/workspace"
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg px-5 py-3 text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity focus-visible:ring-2 focus-visible:ring-ring cursor-pointer shadow-sm"
+              >
+                Open Workspace
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            )}
+
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full text-center py-2 text-[11px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+              >
+                ← Return to understanding report
+              </button>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* ── STEP 1: REGISTER ────────────────────────────────────────────── */}
+          {step === 'register' && (
+            <>
+              <div className="mb-6">
             {isContextAware ? (
               <>
                 <h2
@@ -339,6 +452,8 @@ export const CreateWorkspaceSurface: React.FC<CreateWorkspaceSurfaceProps> = ({
               </button>
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </motion.div>

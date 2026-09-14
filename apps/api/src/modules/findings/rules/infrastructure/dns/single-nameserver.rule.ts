@@ -22,7 +22,11 @@ export class SingleNameserverRule implements FindingRule {
 
     // P0 Truth Invariant (WX-1020): DNS lookup failure != single nameserver.
     const nsStatus = dns.status?.ns;
-    if (nsStatus === 'FAILED' || nsStatus === 'TIMEOUT' || nsStatus === 'SERVFAIL') {
+    if (
+      nsStatus === 'FAILED' ||
+      nsStatus === 'TIMEOUT' ||
+      nsStatus === 'SERVFAIL'
+    ) {
       return [];
     }
 

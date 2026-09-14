@@ -4,6 +4,7 @@ import { FindingDto } from '../../infrastructure-findings/dto/finding.dto';
 import {
   InfrastructureBriefResult,
   InfrastructureBriefRecommendation,
+  InfrastructureBriefHighlight,
 } from '../contracts/infrastructure-brief-result.interface';
 
 @Injectable()
@@ -12,16 +13,17 @@ export class InfrastructureBriefBuilder {
     snapshot: SnapshotDetailDto,
     findings: FindingDto[],
   ): InfrastructureBriefResult {
-    const critical = findings.filter(
+    const criticalFindings = findings.filter(
       (finding) => finding.severity === 'CRITICAL',
-    ).length;
+    );
+    const critical = criticalFindings.length;
 
-    const high = findings.filter(
+    const highFindings = findings.filter(
       (finding) => finding.severity === 'HIGH',
-    ).length;
+    );
+    const high = highFindings.length;
 
     let overallHealth = 'Excellent';
-
     if (critical > 0) {
       overallHealth = 'Critical';
     } else if (high > 0) {
@@ -59,56 +61,164 @@ export class InfrastructureBriefBuilder {
       domain = 'the target domain';
     }
 
-    const severityMap: Record<string, number> = {
-      CRITICAL: 4,
-      HIGH: 3,
-      MEDIUM: 2,
-      LOW: 1,
-      INFO: 0,
-    };
+    const archBrief = snapshotPayload?.technology?.architectureBrief;
+    const changes = Array.isArray(snapshotPayload?.changes)
+      ? snapshotPayload.changes
+      : undefined;
 
-    const sortedFindings = [...findings].sort(
-      (a, b) => (severityMap[b.severity] ?? 0) - (severityMap[a.severity] ?? 0),
+    const highlights: InfrastructureBriefHighlight[] = [];
+
+    // Critical & High findings highlights
+    for (const f of findings) {
+      if (f.severity === 'CRITICAL' || f.severity === 'HIGH') {
+        highlights.push({
+          id: f.id,
+          severity: f.severity,
+          title: f.title,
+          description: f.description,
+        });
+      }
+    }
+
+    // TLS Certificate Expiry Horizon (< 30 days) highlights
+    const certExpiryFinding = findings.find(
+      (f) =>
+        f.ruleId === 'ssl.certificate-expiry' ||
+        f.title?.toLowerCase().includes('certificate expir'),
     );
+    if (
+      certExpiryFinding &&
+      !highlights.some((h) => h.id === certExpiryFinding.id)
+    ) {
+      highlights.push({
+        id: certExpiryFinding.id,
+        severity: certExpiryFinding.severity,
+        title: certExpiryFinding.title,
+        description: certExpiryFinding.description,
+      });
+    } else if (
+      !certExpiryFinding &&
+      snapshotPayload?.ssl?.certificate?.validTo
+    ) {
+      const validTo = new Date(snapshotPayload.ssl.certificate.validTo);
+      const now = new Date();
+      const diffDays = Math.ceil(
+        (validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (diffDays > 0 && diffDays <= 30) {
+        highlights.push({
+          id: 'hl-tls-expiry',
+          severity: diffDays <= 15 ? 'HIGH' : 'MEDIUM',
+          title: 'SSL Certificate Expiring Soon',
+          description: `The TLS certificate will expire in ${diffDays} day(s).`,
+        });
+      }
+    }
 
-    const summary = this.buildExecutiveSummary(
-      domain,
-      snapshot,
-      sortedFindings,
-      critical,
-      high,
-    );
+    // Changes highlights
+    if (changes && changes.length > 0) {
+      for (const c of changes) {
+        const titleClass = (c.classification || 'CHANGE DETECTED').replace(
+          /_/g,
+          ' ',
+        );
+        highlights.push({
+          id: c.id ? `chg-${c.id}` : 'chg-summary',
+          severity: 'INFO',
+          title: `${titleClass}: ${c.summary || c.description}`,
+          description: c.description || c.summary,
+        });
+      }
+    }
 
-    return {
+    // Integrations highlights
+    if (archBrief?.integrations && archBrief.integrations.length > 0) {
+      const integrationNames = archBrief.integrations
+        .map((i: any) => i.name)
+        .join(', ');
+      highlights.push({
+        id: 'hl-integrations',
+        severity: 'INFO',
+        title: 'External Integrations Detected',
+        description: `External services integrated: ${integrationNames}.`,
+      });
+    }
+
+    // Build summary
+    let summary = '';
+    if (critical > 0) {
+      const topCritical = criticalFindings[0];
+      summary = `Critical security condition observed for ${domain}: ${topCritical.title}. ${topCritical.description}`;
+    } else if (changes && changes.length > 0) {
+      const changeSummary = changes[0].summary || changes[0].description;
+      summary = `Recent baseline comparison indicates ${changeSummary}.`;
+      if (archBrief?.summary) {
+        summary += ` ${archBrief.summary}`;
+      }
+    } else if (archBrief?.summary) {
+      summary = archBrief.summary;
+      if (archBrief.knownUnknowns && archBrief.knownUnknowns.length > 0) {
+        const masked = archBrief.knownUnknowns
+          .map((k: any) => k.dimension)
+          .join(' and ');
+        summary += ` ${masked} remain unobservable from external inspection.`;
+      }
+      if (findings.length === 0) {
+        summary +=
+          ' The current infrastructure configuration appears stable with no critical or high-severity gaps.';
+      }
+    } else {
+      summary = this.buildExecutiveSummary(
+        domain,
+        snapshot,
+        findings,
+        critical,
+        high,
+      );
+    }
+
+    const recommendations = [
+      ...new Map(
+        findings
+          .flatMap((finding) =>
+            Array.isArray(finding.recommendations)
+              ? finding.recommendations
+              : [],
+          )
+          .map((recommendation: InfrastructureBriefRecommendation) => [
+            recommendation.title,
+            recommendation,
+          ]),
+      ).values(),
+    ].slice(0, 5);
+
+    const result: InfrastructureBriefResult & {
+      architecture?: any;
+      changes?: any[];
+    } = {
       overallHealth,
-      summary,
-      highlights: findings
-        .filter(
-          (finding) =>
-            finding.severity === 'CRITICAL' || finding.severity === 'HIGH',
-        )
-        .slice(0, 5)
-        .map((finding) => ({
-          id: finding.id,
-          severity: finding.severity,
-          title: finding.title,
-          description: finding.description,
-        })),
-      recommendations: [
-        ...new Map(
-          findings
-            .flatMap((finding) =>
-              Array.isArray(finding.recommendations)
-                ? finding.recommendations
-                : [],
-            )
-            .map((recommendation: InfrastructureBriefRecommendation) => [
-              recommendation.title,
-              recommendation,
-            ]),
-        ).values(),
-      ].slice(0, 5),
+      summary: this.formatSentence(summary),
+      highlights: highlights.slice(0, 10),
+      recommendations,
     };
+
+    if (archBrief) {
+      result.architecture = {
+        summary: archBrief.summary,
+        ingressPath: archBrief.architecturePath || archBrief.ingressPath || [],
+        integrations: archBrief.integrations || [],
+        knownUnknowns: archBrief.knownUnknowns || [],
+        claimBoundaries: archBrief.claimBoundaries || [],
+        layers: archBrief.layers || [],
+        keyTechnologies: archBrief.keyTechnologies || [],
+      };
+    }
+
+    if (changes) {
+      result.changes = changes;
+    }
+
+    return result;
   }
 
   private buildExecutiveSummary(

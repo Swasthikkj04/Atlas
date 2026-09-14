@@ -70,7 +70,14 @@ export class InfrastructureOverviewDto {
   @ApiProperty({
     description: 'Attribution decision state',
     example: 'CONFIRMED',
-    enum: ['CONFIRMED', 'STRONGLY_INFERRED', 'INFERRED', 'POSSIBLE', 'UNKNOWN', 'CONFLICTED'],
+    enum: [
+      'CONFIRMED',
+      'STRONGLY_INFERRED',
+      'INFERRED',
+      'POSSIBLE',
+      'UNKNOWN',
+      'CONFLICTED',
+    ],
     nullable: true,
   })
   hostingDecision?: string | null;
@@ -85,7 +92,8 @@ export class InfrastructureOverviewDto {
 
   @ApiProperty({
     description: 'Attribution reasoning and signal summary',
-    example: 'Authoritatively confirmed deployment on Replit via correlated DNS CNAME and Replit HTTP headers.',
+    example:
+      'Authoritatively confirmed deployment on Replit via correlated DNS CNAME and Replit HTTP headers.',
     nullable: true,
   })
   hostingExplanation?: string | null;
@@ -123,4 +131,10 @@ export class InfrastructureOverviewDto {
     nullable: true,
   })
   attribution?: any;
+
+  @ApiProperty({
+    description: 'Technology architecture brief, ingress path, and layers',
+    nullable: true,
+  })
+  technologyArchitecture?: any;
 }

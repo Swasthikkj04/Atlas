@@ -29,8 +29,12 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
 
       const findings = await rule.evaluate(context);
       expect(findings).toHaveLength(1);
-      expect(findings[0].riskClassification).toBe('CONFIRMED_SECURITY_CONDITION');
-      expect(findings[0].whatThisDoesNotProve).toContain('does not prove active eavesdropping');
+      expect(findings[0].riskClassification).toBe(
+        'CONFIRMED_SECURITY_CONDITION',
+      );
+      expect(findings[0].whatThisDoesNotProve).toContain(
+        'does not prove active eavesdropping',
+      );
     });
 
     it('accurately classifies missing HSTS as SECURITY_HARDENING_GAP without claiming traffic is intercepted', async () => {
@@ -56,7 +60,9 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
       const findings = await rule.evaluate(context);
       expect(findings).toHaveLength(1);
       expect(findings[0].riskClassification).toBe('SECURITY_HARDENING_GAP');
-      expect(findings[0].whatThisDoesNotProve).toContain('does not establish that network traffic is currently being intercepted');
+      expect(findings[0].whatThisDoesNotProve).toContain(
+        'does not establish that network traffic is currently being intercepted',
+      );
     });
 
     it('accurately classifies missing SPF and DMARC as SECURITY_HARDENING_GAP without claiming active spoofing', async () => {
@@ -87,11 +93,17 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
 
       expect(spfFindings).toHaveLength(1);
       expect(spfFindings[0].riskClassification).toBe('SECURITY_HARDENING_GAP');
-      expect(spfFindings[0].whatThisDoesNotProve).toContain('does not establish that unauthorized emails are currently being forged');
+      expect(spfFindings[0].whatThisDoesNotProve).toContain(
+        'does not establish that unauthorized emails are currently being forged',
+      );
 
       expect(dmarcFindings).toHaveLength(1);
-      expect(dmarcFindings[0].riskClassification).toBe('SECURITY_HARDENING_GAP');
-      expect(dmarcFindings[0].whatThisDoesNotProve).toContain('does not establish that phishing attacks are actively impersonating');
+      expect(dmarcFindings[0].riskClassification).toBe(
+        'SECURITY_HARDENING_GAP',
+      );
+      expect(dmarcFindings[0].whatThisDoesNotProve).toContain(
+        'does not establish that phishing attacks are actively impersonating',
+      );
     });
   });
 
@@ -116,7 +128,9 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
       expect(findings).toHaveLength(1);
       expect(findings[0].category).toBe(FindingCategory.PERFORMANCE);
       expect(findings[0].riskClassification).toBe('OPERATIONAL_OBSERVATION');
-      expect(findings[0].whatThisDoesNotProve).toContain('does not represent a security vulnerability');
+      expect(findings[0].whatThisDoesNotProve).toContain(
+        'does not represent a security vulnerability',
+      );
     });
 
     it('accurately classifies Missing MX and Single Nameserver as OPERATIONAL_OBSERVATION', async () => {
@@ -147,11 +161,15 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
 
       expect(mxFindings).toHaveLength(1);
       expect(mxFindings[0].riskClassification).toBe('OPERATIONAL_OBSERVATION');
-      expect(mxFindings[0].whatThisDoesNotProve).toContain('does not represent a security vulnerability');
+      expect(mxFindings[0].whatThisDoesNotProve).toContain(
+        'does not represent a security vulnerability',
+      );
 
       expect(nsFindings).toHaveLength(1);
       expect(nsFindings[0].riskClassification).toBe('OPERATIONAL_OBSERVATION');
-      expect(nsFindings[0].whatThisDoesNotProve).toContain('does not indicate an exploitable vulnerability');
+      expect(nsFindings[0].whatThisDoesNotProve).toContain(
+        'does not indicate an exploitable vulnerability',
+      );
     });
   });
 
@@ -180,7 +198,9 @@ describe('WX-1023: Finding Risk Classification and Exploit Boundary Audit', () =
       expect(findings).toHaveLength(1);
       expect(findings[0].severity).toBe(Severity.INFO);
       expect(findings[0].riskClassification).toBe('INFORMATIONAL_OBSERVATION');
-      expect(findings[0].whatThisDoesNotProve).toContain('does not represent a vulnerability or security risk');
+      expect(findings[0].whatThisDoesNotProve).toContain(
+        'does not represent a vulnerability or security risk',
+      );
     });
   });
 });

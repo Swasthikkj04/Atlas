@@ -7,6 +7,7 @@ import {
   useTriggerUnderstanding,
 } from '../../../../hooks/queries/useUnderstanding';
 import { findActiveJob } from '../../contracts/understanding-convergence.contract';
+import { UnderstandingProgressStepper } from './UnderstandingProgressStepper';
 import type { ActiveUnderstandingBannerProps } from './ActiveUnderstandingBanner.types';
 
 /**
@@ -86,9 +87,12 @@ export const ActiveUnderstandingBanner: React.FC<ActiveUnderstandingBannerProps>
             Nebula is understanding {domainName}
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-            Discovering and validating current infrastructure signals.
+            Discovering and validating current infrastructure signals across authoritative pipeline stages.
           </p>
         </div>
+
+        {/* Authoritative Discovery Stepper */}
+        <UnderstandingProgressStepper job={effectiveJob} />
 
         <div className="pt-2 border-t border-border-hairline/60 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground font-mono">
           <span>The previous understanding remains available until the new understanding is complete.</span>

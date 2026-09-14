@@ -10,4 +10,6 @@ export interface DiscoverySnapshot {
   ssl?: SslDiscoveryResult;
   technology?: TechnologyDiscoveryResult;
   attribution?: InfrastructureAttributionMap;
+  memory?: any;
+  [key: string]: any;
 }

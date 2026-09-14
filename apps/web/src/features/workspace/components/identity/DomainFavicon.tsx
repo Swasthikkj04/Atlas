@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Globe } from 'lucide-react';
 import { Icon } from '../../../../components/icons';
-import type { DomainFaviconProps, DomainIdentitySize } from './DomainFavicon.types';
+import {
+  type DomainFaviconProps,
+  type DomainIdentitySize,
+  sanitizeDomain,
+  resolveFaviconUrls,
+} from './DomainFavicon.types';
 
 const CONTAINER_SIZES: Record<DomainIdentitySize, string> = {
   primary: 'w-8 h-8 rounded-lg shadow-[0_1px_2px_rgba(16,24,20,0.035)]',
@@ -21,16 +26,6 @@ const ICON_SIZES: Record<DomainIdentitySize, 'default' | 'small'> = {
   compact: 'small',
 };
 
-function sanitizeDomain(domain: string | null | undefined): string | null {
-  if (!domain) return null;
-  return domain
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '')
-    .replace(/:\d+$/, '');
-}
-
 /**
  * DomainFavicon (WX-1021 / Domain Identity Primitive).
  *
@@ -48,21 +43,45 @@ export const DomainFavicon: React.FC<DomainFaviconProps> = ({
   fallbackIconClassName = '',
   ...rest
 }) => {
+  const [urlIndex, setUrlIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const cleanDomain = sanitizeDomain(domain);
+  const urls = resolveFaviconUrls(cleanDomain);
 
   // Reset state when domain changes
   useEffect(() => {
+    setUrlIndex(0);
     setHasError(false);
     setIsLoaded(false);
   }, [cleanDomain]);
 
-  if (!cleanDomain || hasError) {
+  // Check if image is immediately available from browser cache
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
+      setIsLoaded(true);
+    }
+  }, [cleanDomain, urlIndex]);
+
+  const handleImageError = () => {
+    if (urlIndex < urls.length - 1) {
+      setUrlIndex((prev) => prev + 1);
+      setIsLoaded(false);
+    } else {
+      setHasError(true);
+    }
+  };
+
+  const handleImageLoad = () => {
+    setIsLoaded(true);
+  };
+
+  if (!cleanDomain || hasError || urls.length === 0) {
     return (
       <div
-        className={`flex items-center justify-center shrink-0 bg-[#F4F4F1] dark:bg-[#242422] border border-[#E2E2DD] dark:border-[#2E2E2B] text-[#5F625F] dark:text-[#8E8E8A] ${CONTAINER_SIZES[size]} ${className}`}
+        className={`relative flex items-center justify-center shrink-0 bg-[#F4F4F1] dark:bg-[#242422] border border-[#E2E2DD] dark:border-[#2E2E2B] text-[#5F625F] dark:text-[#8E8E8A] ${CONTAINER_SIZES[size]} ${className}`}
         data-testid="domain-favicon-fallback"
         aria-hidden="true"
         {...rest}
@@ -76,21 +95,23 @@ export const DomainFavicon: React.FC<DomainFaviconProps> = ({
     );
   }
 
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=64`;
+  const currentUrl = urls[urlIndex];
 
   return (
     <div
-      className={`flex items-center justify-center shrink-0 overflow-hidden bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E1E1DC] dark:border-[#2E2E2B] ${CONTAINER_SIZES[size]} ${className}`}
+      className={`relative flex items-center justify-center shrink-0 overflow-hidden bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E1E1DC] dark:border-[#2E2E2B] ${CONTAINER_SIZES[size]} ${className}`}
       data-testid="domain-favicon-container"
       {...rest}
     >
       <img
-        src={faviconUrl}
+        ref={imgRef}
+        key={`${cleanDomain}-${urlIndex}`}
+        src={currentUrl}
         alt=""
         aria-hidden="true"
-        loading="lazy"
-        onLoad={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
+        decoding="async"
+        onLoad={handleImageLoad}
+        onError={handleImageError}
         className={`${IMAGE_SIZES[size]} object-contain transition-opacity duration-150 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
@@ -98,7 +119,7 @@ export const DomainFavicon: React.FC<DomainFaviconProps> = ({
       />
       {!isLoaded && !hasError && (
         <div
-          className="absolute flex items-center justify-center text-[#5F625F] dark:text-[#8E8E8A]"
+          className="absolute inset-0 flex items-center justify-center text-[#5F625F] dark:text-[#8E8E8A] pointer-events-none"
           aria-hidden="true"
         >
           <Icon

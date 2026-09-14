@@ -243,11 +243,15 @@ export function resolveFindingMeaningHierarchy(params: {
     finding.observations?.[0]?.value ||
     finding.title;
 
-  // 7. How Nebula Knows (Verification Details)
+  const isResolved =
+    finding.status === 'RESOLVED' || finding.state === 'RESOLVED';
+
+  // 7. How Nebula Knows (Verification Details - WX-211 / WX-1019)
   const howNebulaKnows: readonly ProcessingEvidenceItemDto[] =
     finding.processingEvidence && finding.processingEvidence.length > 0
       ? finding.processingEvidence
-      : [
+      : isResolved
+      ? [
           {
             step: 'Finding resolved',
             status: 'SUCCESS',
@@ -255,7 +259,33 @@ export function resolveFindingMeaningHierarchy(params: {
             timestamp: finding.detectedAt || finding.createdAt,
           },
           {
-            step: 'Snapshot resolved',
+            step: 'Resolving snapshot verified',
+            status: 'SUCCESS',
+            description: 'Infrastructure state was authoritative',
+            timestamp: finding.detectedAt || finding.createdAt,
+          },
+          {
+            step: 'Resolution observation evaluated',
+            status: 'SUCCESS',
+            description: `Evaluated against ${ruleId || finding.category}`,
+            timestamp: finding.detectedAt || finding.createdAt,
+          },
+          {
+            step: 'Investigation assembled',
+            status: 'SUCCESS',
+            description: 'Evidence lineage verified',
+            timestamp: finding.detectedAt || finding.createdAt,
+          },
+        ]
+      : [
+          {
+            step: 'Finding active',
+            status: 'SUCCESS',
+            description: `Finding active in snapshot ${snapshotShortId}`,
+            timestamp: finding.detectedAt || finding.createdAt,
+          },
+          {
+            step: 'Snapshot verified',
             status: 'SUCCESS',
             description: 'Infrastructure state was authoritative',
             timestamp: finding.detectedAt || finding.createdAt,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { authService } from '../../services/auth.service';
+import { authService } from '../../services/auth';
 import { queryKeys } from './query-keys';
 import type { UserDto } from '../../types/api';
 

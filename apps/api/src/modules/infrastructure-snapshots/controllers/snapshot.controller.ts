@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Optional,
   Param,
   ParseIntPipe,
   Query,
@@ -18,6 +19,7 @@ import { Request } from 'express';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { InfrastructureSnapshotService } from '../services/infrastructure-snapshot.service';
+import { SnapshotDriftForensicsService } from '../services/snapshot-drift-forensics.service';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -34,6 +36,8 @@ interface AuthenticatedRequest extends Request {
 export class SnapshotController {
   constructor(
     private readonly snapshotService: InfrastructureSnapshotService,
+    @Optional()
+    private readonly driftForensicsService?: SnapshotDriftForensicsService,
   ) {}
 
   @Get('domains/:domainId/snapshots')
@@ -70,6 +74,29 @@ export class SnapshotController {
       domainId,
       page,
       limit,
+    );
+  }
+
+  @Get('domains/:domainId/snapshots/:snapshotId/diff')
+  @ApiOperation({
+    summary: 'Get snapshot drift forensics comparison',
+    description:
+      'Compares a target snapshot against a base snapshot (or immediate predecessor) and returns complete drift forensics.',
+  })
+  async getSnapshotDiff(
+    @Req() req: AuthenticatedRequest,
+    @Param('domainId') domainId: string,
+    @Param('snapshotId') snapshotId: string,
+    @Query('baseSnapshotId') baseSnapshotId?: string,
+  ) {
+    if (!this.driftForensicsService) {
+      throw new Error('SnapshotDriftForensicsService is not available');
+    }
+    return this.driftForensicsService.computeSnapshotDrift(
+      req.user.id,
+      domainId,
+      snapshotId,
+      baseSnapshotId,
     );
   }
 

@@ -5,6 +5,7 @@ import {
   InsufficientSignalError,
   RateLimitError,
 } from './client';
+import type { InfrastructureOverviewDto } from '../../types/api/overview.dto';
 
 export interface StartGuestUnderstandingRequest {
   domain: string;
@@ -133,6 +134,7 @@ export interface GuestUnderstandingResult {
     relatedTechnologies?: string[];
     relatedObservations?: string[];
   }>;
+  infrastructure?: InfrastructureOverviewDto;
 }
 
 export async function getGuestUnderstandingResult(

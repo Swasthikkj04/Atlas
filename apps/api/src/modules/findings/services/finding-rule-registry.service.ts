@@ -1,93 +1,116 @@
 import { Injectable } from '@nestjs/common';
 
 import { FindingRule } from '../contracts/finding-rule.interface';
-import { CertificateExpiryRule } from '../rules/infrastructure/ssl/certificate-expiry.rule';
-import { SslUnsupportedRule } from '../rules/infrastructure/ssl/ssl-not-supported.rule';
-import { WeakTlsVersionRule } from '../rules/infrastructure/ssl/weak-tls-version.rule';
-import { SelfSignedCertificateRule } from '../rules/infrastructure/ssl/self-signed-certificate.rule';
-import { SslEndpointUnreachableRule } from '../rules/infrastructure/ssl/ssl-endpoint-unreachable.rule';
-import { MissingSpfRule } from '../rules/infrastructure/dns/missing-spf.rule';
-import { MissingDmarcRule } from '../rules/infrastructure/dns/missing-dmarc.rules';
-import { MissingMxRule } from '../rules/infrastructure/dns/missing-mx.rules';
-import { SingleNameserverRule } from '../rules/infrastructure/dns/single-nameserver.rule';
-import { MissingIpv6Rule } from '../rules/infrastructure/dns/missing-ipv6.rule';
-import { MissingHstsRule } from '../rules/infrastructure/http/missing-hsts.rule';
-import { MissingContentSecurityPolicyRule } from '../rules/infrastructure/http/missing-content-security-policy.rule';
-import { MissingXFrameOptionsRule } from '../rules/infrastructure/http/missing-x-frame-options.rule';
-import { MissingXContentTypeOptionsRule } from '../rules/infrastructure/http/missing-x-content-type-options.rule';
-import { MissingReferrerPolicyRule } from '../rules/infrastructure/http/missing-referrer-policy.rule';
-import { SlowResponseRule } from '../rules/infrastructure/http/slow-response.rule';
-import { HttpServiceUnreachableRule } from '../rules/infrastructure/http/http-service-unreachable.rule';
+import * as Rules from '../rules';
+import { HttpTransitAnalyzerService } from './http-transit-analyzer.service';
+import { ContentSecurityAnalyzerService } from './content-security-analyzer.service';
+import { CookieSecurityAnalyzerService } from './cookie-security-analyzer.service';
+import { DataLeakageAnalyzerService } from './data-leakage-analyzer.service';
+import { DnsSecurityAnalyzerService } from './dns-security-analyzer.service';
+import { PerimeterExposureAnalyzerService } from './perimeter-exposure-analyzer.service';
+import { TlsHygieneAnalyzerService } from './tls-hygiene-analyzer.service';
+import { AdvancedDnsRoutingAnalyzerService } from './advanced-dns-routing-analyzer.service';
 
 @Injectable()
 export class FindingRuleRegistryService {
-  constructor(
-    private readonly certificateExpiryRule: CertificateExpiryRule,
-    private readonly sslUnsupportedRule: SslUnsupportedRule,
-    private readonly weakTlsVersionRule: WeakTlsVersionRule,
-    private readonly selfSignedCertificateRule: SelfSignedCertificateRule,
-    private readonly sslEndpointUnreachableRule: SslEndpointUnreachableRule,
-    private readonly missingSpfRule: MissingSpfRule,
-    private readonly missingDmarcRule: MissingDmarcRule,
-    private readonly missingMxRule: MissingMxRule,
-    private readonly singleNameserverRule: SingleNameserverRule,
-    private readonly missingIpv6Rule: MissingIpv6Rule,
-    private readonly missingHstsRule: MissingHstsRule,
-    private readonly missingContentSecurityPolicyRule: MissingContentSecurityPolicyRule,
-    private readonly missingXFrameOptionsRule: MissingXFrameOptionsRule,
-    private readonly missingXContentTypeOptionsRule: MissingXContentTypeOptionsRule,
-    private readonly missingReferrerPolicyRule: MissingReferrerPolicyRule,
-    private readonly SlowResponseRule: SlowResponseRule,
-    private readonly httpServiceUnreachableRule: HttpServiceUnreachableRule,
-  ) {}
+  private readonly rulesMap = new Map<string, FindingRule>();
 
-  private validateRules(rules: FindingRule[]): void {
-    const ids = new Set<string>();
+  constructor() {
+    this.registerDefaults();
+  }
 
-    for (const rule of rules) {
-      if (!rule.id) {
-        throw new Error('Finding rule missing id');
+  register(rule: FindingRule): void {
+    if (!rule || !rule.id) return;
+    this.rulesMap.set(rule.id, rule);
+  }
+
+  private registerDefaults(): void {
+    const transitAnalyzer = new HttpTransitAnalyzerService();
+    const contentAnalyzer = new ContentSecurityAnalyzerService();
+    const cookieAnalyzer = new CookieSecurityAnalyzerService();
+    const dataLeakageAnalyzer = new DataLeakageAnalyzerService();
+    const dnsAnalyzer = new DnsSecurityAnalyzerService();
+    const perimeterAnalyzer = new PerimeterExposureAnalyzerService();
+    const tlsAnalyzer = new TlsHygieneAnalyzerService();
+    const advDnsAnalyzer = new AdvancedDnsRoutingAnalyzerService();
+
+    const defaults: (FindingRule | undefined)[] = [
+      new Rules.CertificateExpiryRule(),
+      new Rules.SslUnsupportedRule(),
+      new Rules.WeakTlsVersionRule(),
+      new Rules.SelfSignedCertificateRule(),
+      new Rules.SslEndpointUnreachableRule(),
+      new Rules.MissingSpfRule(),
+      new Rules.MissingDmarcRule(),
+      new Rules.MissingMxRule(),
+      new Rules.SingleNameserverRule(),
+      new Rules.MissingIpv6Rule(),
+      new Rules.MissingHstsRule(),
+      new Rules.MissingContentSecurityPolicyRule(),
+      new Rules.MissingXFrameOptionsRule(),
+      new Rules.MissingXContentTypeOptionsRule(),
+      new Rules.MissingReferrerPolicyRule(),
+      new Rules.SlowResponseRule(),
+      new Rules.HttpServiceUnreachableRule(),
+
+      // HTTP Transit
+      new Rules.InsecureCorsPolicyRule(transitAnalyzer),
+      new Rules.DangerousMethodsExposedRule(transitAnalyzer),
+      new Rules.CleartextUpgradeMissingRule(transitAnalyzer),
+
+      // Perimeter & Configuration Exposure
+      new Rules.EnvFileExposureRule(perimeterAnalyzer),
+      new Rules.GitRepositoryExposureRule(perimeterAnalyzer),
+      new Rules.ManagementEndpointExposureRule(perimeterAnalyzer),
+
+      // Data Leakage & Debug Exposure
+      new Rules.DebugHeaderExposureRule(dataLeakageAnalyzer),
+      new Rules.InternalTopologyLeakageRule(dataLeakageAnalyzer),
+      new Rules.StackTraceDisclosureRule(dataLeakageAnalyzer),
+
+      // Content Security
+      new Rules.CspPermissiveDirectivesRule(contentAnalyzer),
+      new Rules.PermissionsPolicyHygieneRule(contentAnalyzer),
+      new Rules.CrossOriginIsolationHygieneRule(contentAnalyzer),
+
+      // Cookie Security
+      new Rules.AuthCookieHttpOnlyRule(cookieAnalyzer),
+      new Rules.AuthCookieSecureRule(cookieAnalyzer),
+      new Rules.AuthCookieSameSiteRule(cookieAnalyzer),
+
+      // DNS Security & Routing
+      new Rules.SpfPermissivePolicyRule(dnsAnalyzer),
+      new Rules.DmarcPolicyHygieneRule(dnsAnalyzer),
+      new Rules.DanglingCnameTakeoverRule(dnsAnalyzer),
+      new Rules.DnssecValidationRule(advDnsAnalyzer),
+      new Rules.CaaPolicyComplianceRule(advDnsAnalyzer),
+      new Rules.BgpRpkiValidationRule(advDnsAnalyzer),
+
+      // TLS Hygiene
+      new Rules.SanCoverageMismatchRule(tlsAnalyzer),
+      new Rules.ModernTlsUpgradeOpportunityRule(tlsAnalyzer),
+      new Rules.HstsPolicyHygieneRule(tlsAnalyzer),
+
+      // Technology Finding Rules
+      new Rules.TechnologyVersionExposureRule(),
+      new Rules.DeprecatedGatewayVersionRule(),
+      new Rules.MissingSecureIngressRule(),
+      new Rules.EdgeOriginExposureRule(),
+      new Rules.OriginIpBypassLeakageRule(),
+      new Rules.InsecureIngressTransitRule(),
+      new Rules.ClientIntegrationExposureRule(),
+      new Rules.RuntimeDebugTraceExposureRule(),
+      new Rules.ArchitectureDriftRiskRule(),
+    ];
+
+    for (const r of defaults) {
+      if (r && r.id) {
+        this.rulesMap.set(r.id, r);
       }
-
-      if (!rule.name) {
-        throw new Error(`Finding rule ${rule.id} missing name`);
-      }
-
-      if (!rule.category) {
-        throw new Error(`Finding rule ${rule.id} missing category`);
-      }
-
-      if (ids.has(rule.id)) {
-        throw new Error(`Duplicate finding rule id: ${rule.id}`);
-      }
-
-      ids.add(rule.id);
     }
   }
 
   getRules(): FindingRule[] {
-    const rules: FindingRule[] = [
-      this.certificateExpiryRule,
-      this.sslUnsupportedRule,
-      this.weakTlsVersionRule,
-      this.selfSignedCertificateRule,
-      this.sslEndpointUnreachableRule,
-      this.missingSpfRule,
-      this.missingDmarcRule,
-      this.missingMxRule,
-      this.singleNameserverRule,
-      this.missingIpv6Rule,
-      this.missingHstsRule,
-      this.missingContentSecurityPolicyRule,
-      this.missingXFrameOptionsRule,
-      this.missingXContentTypeOptionsRule,
-      this.missingReferrerPolicyRule,
-      this.SlowResponseRule,
-      this.httpServiceUnreachableRule,
-    ];
-
-    this.validateRules(rules);
-
-    return rules;
+    return Array.from(this.rulesMap.values());
   }
 }

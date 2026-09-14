@@ -101,7 +101,7 @@ export const SecondaryStories: React.FC<SecondaryStoriesProps> = ({
       if (canonicalKey) seen.add(canonicalKey);
       result.push(story);
     }
-    return result;
+    return result.slice(0, 3);
   }, [rawStories]);
 
   const isLoading = !storiesProp && overviewQuery.isLoading;

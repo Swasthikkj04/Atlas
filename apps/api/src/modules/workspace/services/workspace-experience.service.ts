@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { InfrastructureBriefService } from '../../infrastructure-brief/services/infrastructure-brief.service';
 import { InfrastructureFindingService } from '../../infrastructure-findings/services/infrastructure-finding.service';
 import { TimelineExperienceService } from '../../timeline/services/timeline-experience.service';
+import { SecurityBriefBuilder } from '../../infrastructure-brief/builders/security-brief.builder';
 
 import { QuickActionDto } from '../dto/quick-action.dto';
 import { WelcomeBackDto } from '../dto/welcome-back.dto';
@@ -29,8 +35,10 @@ export class WorkspaceExperienceService {
     private readonly workspaceQueryService: WorkspaceQueryService,
     private readonly prisma: PrismaService,
     private readonly infrastructureBriefService: InfrastructureBriefService,
-    private readonly findingService: InfrastructureFindingService,
-    private readonly timelineExperienceService: TimelineExperienceService,
+    @Optional() private readonly securityBriefBuilder?: SecurityBriefBuilder,
+    @Optional() private readonly findingService?: InfrastructureFindingService,
+    @Optional()
+    private readonly timelineExperienceService?: TimelineExperienceService,
   ) {}
 
   async getWorkspaceOverview(userId: string, domainId: string): Promise<any> {
@@ -65,13 +73,19 @@ export class WorkspaceExperienceService {
     }
 
     const findingsResponse =
-      await this.findingService.getFindingsExperienceList(userId, {
-        domainId,
-        snapshotId: latestSnapshot?.id,
-        page: 1,
-        limit: 50,
-      });
-    const findings = findingsResponse.data;
+      this.findingService &&
+      typeof this.findingService.getFindingsExperienceList === 'function'
+        ? await this.findingService.getFindingsExperienceList(userId, {
+            domainId,
+            snapshotId: latestSnapshot?.id,
+            status: 'ACTIVE',
+            page: 1,
+            limit: 50,
+          })
+        : { data: [] };
+    const findings = (findingsResponse?.data || []).filter(
+      (f) => f.status !== 'RESOLVED' && f.state !== 'RESOLVED',
+    );
 
     const severityRank: Record<string, number> = {
       CRITICAL: 5,
@@ -93,7 +107,10 @@ export class WorkspaceExperienceService {
     });
 
     // 2. Identity Deduplication across all findings (type + canonicalId/ruleId)
-    const uniqueFindings = this.deduplicateByIdentity('FINDING', sortedFindings);
+    const uniqueFindings = this.deduplicateByIdentity(
+      'FINDING',
+      sortedFindings,
+    );
 
     // 3. Primary Story Selection
     const primaryStory = uniqueFindings[0] || null;
@@ -103,19 +120,22 @@ export class WorkspaceExperienceService {
       'FINDING',
       uniqueFindings.slice(1),
       primaryStory?.id,
-      (primaryStory as any)?.ruleId,
+      primaryStory?.ruleId,
     );
 
     // 5. Recent Changes Deduplication
     const timelineResponse =
-      await this.timelineExperienceService.getTimelineData(userId, {
-        domainId,
-        page: 1,
-        limit: 10,
-      });
+      this.timelineExperienceService &&
+      typeof this.timelineExperienceService.getTimelineData === 'function'
+        ? await this.timelineExperienceService.getTimelineData(userId, {
+            domainId,
+            page: 1,
+            limit: 10,
+          })
+        : { data: [] };
     const recentChanges = this.deduplicateByIdentity(
       'CHANGE',
-      timelineResponse.data,
+      timelineResponse?.data || [],
     ).slice(0, 5);
 
     const executiveBrief = briefRecord
@@ -127,26 +147,35 @@ export class WorkspaceExperienceService {
           healthScore: null,
           highlights: Array.isArray(briefRecord.highlights)
             ? (() => {
-                const rawHighlights = (briefRecord.highlights as any[]).map((h: any, idx: number) => {
-                  const highlightTitle = typeof h === 'string' ? h : h.title || 'Observation';
-                  const highlightSeverity = typeof h === 'object' ? h.severity : undefined;
-                  const matchingFinding = !h.id
-                    ? uniqueFindings.find(
-                        (f) =>
-                          f.title.toLowerCase() === highlightTitle.toLowerCase() ||
-                          (highlightSeverity && f.severity === highlightSeverity && (
-                            f.title.toLowerCase().includes(highlightTitle.toLowerCase()) ||
-                            highlightTitle.toLowerCase().includes(f.title.toLowerCase())
-                          )),
-                      )
-                    : null;
-                  return {
-                    id: h.id || matchingFinding?.id || `hl-${idx}`,
-                    title: highlightTitle,
-                    summary: typeof h === 'string' ? h : h.summary || '',
-                    severity: highlightSeverity,
-                  };
-                });
+                const rawHighlights = (briefRecord.highlights as any[]).map(
+                  (h: any, idx: number) => {
+                    const highlightTitle =
+                      typeof h === 'string' ? h : h.title || 'Observation';
+                    const highlightSeverity =
+                      typeof h === 'object' ? h.severity : undefined;
+                    const matchingFinding = !h.id
+                      ? uniqueFindings.find(
+                          (f) =>
+                            f.title.toLowerCase() ===
+                              highlightTitle.toLowerCase() ||
+                            (highlightSeverity &&
+                              f.severity === highlightSeverity &&
+                              (f.title
+                                .toLowerCase()
+                                .includes(highlightTitle.toLowerCase()) ||
+                                highlightTitle
+                                  .toLowerCase()
+                                  .includes(f.title.toLowerCase()))),
+                        )
+                      : null;
+                    return {
+                      id: h.id || matchingFinding?.id || `hl-${idx}`,
+                      title: highlightTitle,
+                      summary: typeof h === 'string' ? h : h.summary || '',
+                      severity: highlightSeverity,
+                    };
+                  },
+                );
                 return this.deduplicateByIdentity('HIGHLIGHT', rawHighlights);
               })()
             : [],
@@ -196,7 +225,14 @@ export class WorkspaceExperienceService {
    * to guarantee that duplicate scan results or repeated observations appear at most ONCE.
    * If `primaryIdToExclude` or `primaryRuleIdToExclude` is provided, primary items are excluded.
    */
-  public deduplicateByIdentity<T extends { id: string; ruleId?: string; category?: string; title?: string }>(
+  public deduplicateByIdentity<
+    T extends {
+      id: string;
+      ruleId?: string;
+      category?: string;
+      title?: string;
+    },
+  >(
     type: string,
     items: readonly T[],
     primaryIdToExclude?: string | null,
@@ -204,8 +240,12 @@ export class WorkspaceExperienceService {
   ): T[] {
     const seen = new Set<string>();
     const result: T[] = [];
-    const primaryKey = primaryIdToExclude ? `${type}:${primaryIdToExclude}` : null;
-    const primaryRuleKey = primaryRuleIdToExclude ? `${type}:rule:${primaryRuleIdToExclude}` : null;
+    const primaryKey = primaryIdToExclude
+      ? `${type}:${primaryIdToExclude}`
+      : null;
+    const primaryRuleKey = primaryRuleIdToExclude
+      ? `${type}:rule:${primaryRuleIdToExclude}`
+      : null;
 
     for (const item of items) {
       if (!item || !item.id) continue;
@@ -379,6 +419,53 @@ export class WorkspaceExperienceService {
       findings,
       recentActivity,
       attentionDomains,
+    };
+  }
+
+  async getWorkspaceSecurity(userId: string, domainId: string): Promise<any> {
+    const domain = await this.prisma.domain.findFirst({
+      where: { id: domainId, userId },
+    });
+
+    if (!domain) {
+      throw new NotFoundException(`Domain '${domainId}' not found for user.`);
+    }
+
+    const latestSnapshot = await this.prisma.infrastructureSnapshot.findFirst({
+      where: { domainId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const findingsResponse =
+      await this.findingService.getFindingsExperienceList(userId, {
+        domainId,
+        snapshotId: latestSnapshot?.id,
+        page: 1,
+        limit: 50,
+      });
+    const findings = findingsResponse?.data || [];
+
+    const builder = this.securityBriefBuilder || new SecurityBriefBuilder();
+    const brief = builder.build(
+      (latestSnapshot || {
+        id: '',
+        domainId,
+        domainName: domain.domainName,
+        createdAt: new Date(),
+        payload: {},
+      }) as any,
+      findings,
+    );
+
+    return {
+      domainId: domain.id,
+      domainName: domain.domainName,
+      securityScore: brief.securityScore,
+      securityGrade: brief.securityGrade,
+      posture: brief.posture,
+      securityBrief: brief,
+      securityPillars: brief.pillars,
+      securityFindings: findings,
     };
   }
 }

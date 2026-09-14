@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, ArrowRight, X } from 'lucide-react';
+import { Globe, ArrowRight, X, RefreshCw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '../../../../components/icons';
-import { LoadingState } from '../../../../components/states';
 import { useCreateDomain } from '../../../../hooks/queries/useDomains';
-import { useTriggerUnderstanding, useUnderstandingJob } from '../../../../hooks/queries/useUnderstanding';
+import {
+  useTriggerUnderstanding,
+  useUnderstandingJob,
+  reconcileWorkspaceUnderstanding,
+} from '../../../../hooks/queries/useUnderstanding';
 import {
   resolveDomainEntryError,
   type DomainEntryErrorState,
 } from '../../contracts/domain-entry-error.contract';
+import { UnderstandingProgressStepper } from '../understanding/UnderstandingProgressStepper';
 import type { DomainEntryDialogProps } from './DomainEntryDialog.types';
 import type { DomainDto } from '../../../../types/api';
 
@@ -20,6 +25,8 @@ import type { DomainDto } from '../../../../types/api';
  * - Refined geometry and hairline borders
  * - First Domain (0 domains): Centered focused interaction in the canvas.
  * - Additional Domain (existing domains): Modal dialog triggered from Workspace actions.
+ * - Authoritative Understanding Buffer Process: Uses the exact same stage-driven
+ *   UnderstandingProgressStepper and live telemetry as manual understanding.
  * - Calm, human-readable error states ("We couldn't find that domain.") without raw HTTP/API text.
  * - Preserves domain input state on error so users can easily edit typos and retry.
  */
@@ -31,6 +38,7 @@ export const DomainEntryDialog: React.FC<DomainEntryDialogProps> = ({
   onClose,
   className = '',
 }) => {
+  const queryClient = useQueryClient();
   const [domainInput, setDomainInput] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [entryError, setEntryError] = useState<DomainEntryErrorState | null>(null);
@@ -47,9 +55,10 @@ export const DomainEntryDialog: React.FC<DomainEntryDialogProps> = ({
   // Track job completion and notify parent
   useEffect(() => {
     if (jobStatus === 'COMPLETED' && establishedDomain && onDomainEstablished) {
+      reconcileWorkspaceUnderstanding(queryClient, establishedDomain.id);
       onDomainEstablished(establishedDomain);
     }
-  }, [jobStatus, establishedDomain, onDomainEstablished]);
+  }, [jobStatus, establishedDomain, onDomainEstablished, queryClient]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,12 +126,15 @@ export const DomainEntryDialog: React.FC<DomainEntryDialogProps> = ({
 
   const targetDomainName = establishedDomain?.domainName || domainInput.trim();
 
+  const isUnderstandingInProgress =
+    isCreating || (activeJobId && (jobStatus === 'PENDING' || jobStatus === 'RUNNING'));
+
   const dialogContent = (
     <div
       role="dialog"
       aria-modal={isModal}
       aria-labelledby="domain-entry-title"
-      className={`w-full max-w-[500px] bg-card/95 border border-border/80 rounded-2xl p-7 sm:p-9 shadow-2xl backdrop-blur-xl relative space-y-6 ${className}`}
+      className={`w-full max-w-[580px] bg-card/95 border border-border/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative space-y-6 ${className}`}
     >
       {/* Optional Dismiss Action for Modal / Additional Domains */}
       {isDismissable && onClose && (
@@ -136,13 +148,54 @@ export const DomainEntryDialog: React.FC<DomainEntryDialogProps> = ({
         </button>
       )}
 
-      {/* 1. Loading State */}
-      {isCreating || (activeJobId && (jobStatus === 'PENDING' || jobStatus === 'RUNNING')) ? (
-        <div className="py-8 flex items-center justify-center">
-          <LoadingState
-            label={`Understanding ${targetDomainName}...`}
-            description="Connecting to authoritative DNS, edge networks, and security endpoints"
+      {/* 1. Authoritative Understanding Buffer Process Flow (Matching Manual Understanding) */}
+      {isUnderstandingInProgress ? (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label={`Nebula is understanding ${targetDomainName}`}
+          className="space-y-4 py-1"
+          data-testid="domain-entry-understanding-progress"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-primary">
+              UNDERSTANDING
+            </span>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium bg-primary/10 text-primary border border-primary/20">
+              <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+              <span>Understanding in progress</span>
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-normal text-foreground font-display tracking-tight">
+              Nebula is understanding {targetDomainName}
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Discovering and validating current infrastructure signals across authoritative pipeline stages.
+            </p>
+          </div>
+
+          {/* Authoritative Discovery Stepper (Identical to Manual Understanding) */}
+          <UnderstandingProgressStepper
+            job={
+              understandingJobQuery.data || {
+                id: activeJobId || 'pending-job',
+                domainId: establishedDomain?.id || '',
+                status: 'RUNNING',
+                triggerType: 'INITIAL_DISCOVERY',
+                startedAt: new Date().toISOString(),
+              }
+            }
           />
+
+          <div className="pt-2 border-t border-border-hairline/60 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground font-mono">
+            <span>Infrastructure graph will assemble automatically.</span>
+            <span className="inline-flex items-center gap-1.5 text-foreground/70">
+              <Icon icon={RefreshCw} size="small" className="animate-spin text-primary" />
+              <span>Observing backend worker</span>
+            </span>
+          </div>
         </div>
       ) : currentErrorState ? (
         /* 2. Calm Human-Readable Product Error State (Nonexistent Domain UX Correction) */
@@ -167,19 +220,27 @@ export const DomainEntryDialog: React.FC<DomainEntryDialogProps> = ({
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={handleEditDomain}
+              onClick={
+                currentErrorState.kind === 'DOMAIN_LIMIT_REACHED' && onClose
+                  ? onClose
+                  : handleEditDomain
+              }
               className="px-4 py-2.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors focus-ring cursor-pointer"
             >
-              Edit domain
+              {currentErrorState.kind === 'DOMAIN_LIMIT_REACHED' && onClose
+                ? 'Close'
+                : 'Edit domain'}
             </button>
-            <button
-              type="button"
-              onClick={handleRetry}
-              disabled={isCreating}
-              className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2.5 rounded-xl hover:opacity-90 active:opacity-75 transition-all shadow-[0_2px_8px_rgba(26,86,219,0.25)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer focus-ring"
-            >
-              Try again
-            </button>
+            {currentErrorState.canRetry && (
+              <button
+                type="button"
+                onClick={handleRetry}
+                disabled={isCreating}
+                className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2.5 rounded-xl hover:opacity-90 active:opacity-75 transition-all shadow-[0_2px_8px_rgba(26,86,219,0.25)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer focus-ring"
+              >
+                Try again
+              </button>
+            )}
           </div>
         </div>
       ) : (

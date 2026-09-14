@@ -6,6 +6,7 @@ import { InfrastructureFindingsModule } from '../infrastructure-findings/infrast
 
 import { InfrastructureBriefController } from './controllers/infrastructure-brief.controller';
 import { InfrastructureBriefBuilder } from './builders/infrastructure-brief.builder';
+import { SecurityBriefBuilder } from './builders/security-brief.builder';
 import { InfrastructureBriefRepository } from './repositories/infrastructure-brief.repository';
 import { InfrastructureBriefService } from './services/infrastructure-brief.service';
 
@@ -20,7 +21,12 @@ import { InfrastructureBriefService } from './services/infrastructure-brief.serv
     InfrastructureBriefRepository,
     InfrastructureBriefService,
     InfrastructureBriefBuilder,
+    SecurityBriefBuilder,
   ],
-  exports: [InfrastructureBriefService],
+  exports: [
+    InfrastructureBriefService,
+    InfrastructureBriefBuilder,
+    SecurityBriefBuilder,
+  ],
 })
 export class InfrastructureBriefModule {}

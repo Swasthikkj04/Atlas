@@ -236,45 +236,103 @@ export class InfrastructureFindingService {
 
   async getFindingsExperienceList(
     userId: string,
-    query: FindingsQueryDto,
+    query: Partial<FindingsQueryDto> = {},
   ): Promise<FindingsListDto> {
     const result = await this.repository.findUserFindings(userId, query);
     const limit = query.limit || 20;
     const page = query.page || 1;
 
-    return {
-      data: result.data.map((record) => {
-        const semantics = resolveFindingSemantics(
-          record.ruleId,
-          record.title,
-          record.category,
+    let latestSnapshots: any[] = [];
+    try {
+      if (
+        this.repository.prisma &&
+        typeof this.repository.prisma.infrastructureSnapshot?.findMany ===
+          'function'
+      ) {
+        latestSnapshots =
+          (await this.repository.prisma.infrastructureSnapshot.findMany({
+            where: query.domainId ? { domainId: query.domainId } : undefined,
+            orderBy: { createdAt: 'desc' },
+            include: { findings: true },
+          })) || [];
+      }
+    } catch {
+      latestSnapshots = [];
+    }
+
+    const latestSnapshotByDomain = new Map<string, any>();
+    for (const snap of latestSnapshots) {
+      if (!latestSnapshotByDomain.has(snap.domainId)) {
+        latestSnapshotByDomain.set(snap.domainId, snap);
+      }
+    }
+
+    let mappedData = result.data.map((record) => {
+      const semantics = resolveFindingSemantics(
+        record.ruleId,
+        record.title,
+        record.category,
+      );
+
+      const domainId =
+        (record.snapshot as any)?.domainId || (record as any).domainId;
+      const latestSnap = latestSnapshotByDomain.get(domainId);
+
+      let status: 'ACTIVE' | 'RESOLVED' = 'ACTIVE';
+      let state: 'OPEN' | 'RESOLVED' = 'OPEN';
+
+      if (latestSnap && latestSnap.id !== record.snapshotId) {
+        const activeInLatest = (latestSnap.findings || []).some(
+          (f: any) =>
+            f.ruleId === record.ruleId ||
+            f.id === record.id ||
+            f.title === record.title,
         );
-        return {
-          id: record.id,
-          ruleId: record.ruleId,
-          domainId: record.snapshot.domainId,
-          domainName: record.snapshot.domain.domainName,
-          snapshotId: record.snapshotId,
-          title: record.title,
-          description: record.description,
-          explanation: record.description,
-          severity: record.severity,
-          category: record.category,
-          confidence: semantics.confidence,
-          riskClassification: semantics.riskClassification,
-          severityRationale: semantics.severityRationale,
-          whatThisDoesNotProve: semantics.whatThisDoesNotProve,
-          state: 'OPEN',
-          status: 'ACTIVE',
-          detectedAt: record.createdAt,
-          createdAt: record.createdAt,
-        };
-      }),
+        if (!activeInLatest) {
+          status = 'RESOLVED';
+          state = 'RESOLVED';
+        }
+      }
+
+      return {
+        id: record.id,
+        ruleId: record.ruleId,
+        domainId,
+        domainName:
+          (record.snapshot as any)?.domain?.domainName ||
+          (record.snapshot as any)?.domainName ||
+          (record as any).domainName,
+        snapshotId: record.snapshotId,
+        title: record.title,
+        description: record.description,
+        explanation: record.description,
+        severity: record.severity,
+        category: record.category,
+        confidence: semantics.confidence,
+        riskClassification: semantics.riskClassification,
+        severityRationale: semantics.severityRationale,
+        whatThisDoesNotProve: semantics.whatThisDoesNotProve,
+        state,
+        status,
+        detectedAt: record.createdAt,
+        createdAt: record.createdAt,
+      };
+    });
+
+    if (query.status) {
+      mappedData = mappedData.filter((f) => f.status === query.status);
+    }
+
+    return {
+      data: mappedData,
       pagination: {
         page,
         limit,
-        total: result.total,
-        pages: Math.ceil(result.total / limit) || 1,
+        total: query.status ? mappedData.length : result.total,
+        pages:
+          Math.ceil(
+            (query.status ? mappedData.length : result.total) / limit,
+          ) || 1,
       },
     };
   }
@@ -288,13 +346,48 @@ export class InfrastructureFindingService {
       throw new NotFoundException(`Finding '${findingId}' not found`);
     }
 
-    const domainName = record.snapshot.domain.domainName;
-    const domainId = record.snapshot.domainId;
+    const domainName =
+      (record.snapshot as any)?.domain?.domainName ||
+      (record.snapshot as any)?.domainName ||
+      (record as any).domainName;
+    const domainId =
+      (record.snapshot as any)?.domainId || (record as any).domainId;
 
     const [rawEvidences, timelineChanges] = await Promise.all([
       this.repository.findRawEvidenceForDomain(domainId),
       this.repository.findTimelineForDomain(domainId),
     ]);
+
+    let latestSnap: any = null;
+    try {
+      if (
+        this.repository.prisma &&
+        typeof this.repository.prisma.infrastructureSnapshot?.findFirst ===
+          'function'
+      ) {
+        latestSnap =
+          await this.repository.prisma.infrastructureSnapshot.findFirst({
+            where: { domainId },
+            orderBy: { createdAt: 'desc' },
+            include: { findings: true },
+          });
+      }
+    } catch {
+      latestSnap = null;
+    }
+
+    let isResolved = false;
+    if (latestSnap && latestSnap.id !== record.snapshotId) {
+      const activeInLatest = (latestSnap.findings || []).some(
+        (f: any) =>
+          f.ruleId === record.ruleId ||
+          f.id === record.id ||
+          f.title === record.title,
+      );
+      if (!activeInLatest) {
+        isResolved = true;
+      }
+    }
 
     const evidenceArtifacts = rawEvidences.map((e) => ({
       evidenceId: e.id,
@@ -315,7 +408,8 @@ export class InfrastructureFindingService {
       evidenceArtifacts.push({
         evidenceId: `ev-${record.id.slice(0, 8)}`,
         collector: `${record.module.toLowerCase()}-collector`,
-        collectionTime: record.createdAt,
+        collectionTime:
+          isResolved && latestSnap ? latestSnap.createdAt : record.createdAt,
         category: 'HTTP_RESPONSE',
         integrityStatus: 'VERIFIED',
         hashSha256: 'sha256-verified-evidence-proof',
@@ -339,45 +433,74 @@ export class InfrastructureFindingService {
       ? record.description || 'Infrastructure was processed successfully.'
       : 'Infrastructure processing completed with an invalid observation date.';
 
-    const processingEvidence = [
-      {
-        step: 'Finding resolved',
-        status: 'SUCCESS',
-        description: `Finding ${record.id} resolved from snapshot ${record.snapshotId}`,
-        timestamp: isDateValid ? record.createdAt : undefined,
-      },
-      {
-        step: 'Snapshot resolved',
-        status: 'SUCCESS',
-        description: `Snapshot ${record.snapshotId} authoritative state verified`,
-        timestamp:
-          record.snapshot?.createdAt ||
-          (isDateValid ? record.createdAt : undefined),
-      },
-      {
-        step: 'Observation evaluated',
-        status: isDateValid ? 'SUCCESS' : 'WARNING',
-        description: `Evaluated ${record.category.toLowerCase()} against rule ${ruleId}`,
-        timestamp: isDateValid ? record.createdAt : undefined,
-      },
-      ...(!isDateValid
+    const processingEvidence =
+      isResolved && latestSnap
         ? [
             {
-              step: 'Invalid date detected',
-              status: 'WARNING',
+              step: 'Finding resolved',
+              status: 'SUCCESS',
+              description: `Finding ${record.id} resolved in authoritative snapshot ${latestSnap.id}`,
+              timestamp: latestSnap.createdAt,
+            },
+            {
+              step: 'Resolving snapshot verified',
+              status: 'SUCCESS',
+              description: `Resolving snapshot ${latestSnap.id} authoritative state verified`,
+              timestamp: latestSnap.createdAt,
+            },
+            {
+              step: 'Resolution observation evaluated',
+              status: 'SUCCESS',
+              description: `Resolution evaluated against rule ${ruleId} in authoritative snapshot ${latestSnap.id}`,
+              timestamp: latestSnap.createdAt,
+            },
+            {
+              step: 'Investigation assembled',
+              status: 'SUCCESS',
               description:
-                'The source observation contains a date value that could not be interpreted as a valid timestamp.',
+                'Authoritative evidence lineage and snapshot context verified',
+              timestamp: latestSnap.createdAt,
             },
           ]
-        : []),
-      {
-        step: 'Investigation assembled',
-        status: 'SUCCESS',
-        description:
-          'Authoritative evidence lineage and snapshot context verified',
-        timestamp: isDateValid ? record.createdAt : undefined,
-      },
-    ];
+        : [
+            {
+              step: 'Finding active',
+              status: 'SUCCESS',
+              description: `Finding ${record.id} active in snapshot ${record.snapshotId}`,
+              timestamp: isDateValid ? record.createdAt : undefined,
+            },
+            {
+              step: 'Snapshot verified',
+              status: 'SUCCESS',
+              description: `Snapshot ${record.snapshotId} authoritative state verified`,
+              timestamp:
+                record.snapshot?.createdAt ||
+                (isDateValid ? record.createdAt : undefined),
+            },
+            {
+              step: 'Observation evaluated',
+              status: isDateValid ? 'SUCCESS' : 'WARNING',
+              description: `Evaluated ${record.category.toLowerCase()} against rule ${ruleId}`,
+              timestamp: isDateValid ? record.createdAt : undefined,
+            },
+            ...(!isDateValid
+              ? [
+                  {
+                    step: 'Invalid date detected',
+                    status: 'WARNING',
+                    description:
+                      'The source observation contains a date value that could not be interpreted as a valid timestamp.',
+                  },
+                ]
+              : []),
+            {
+              step: 'Investigation assembled',
+              status: 'SUCCESS',
+              description:
+                'Authoritative evidence lineage and snapshot context verified',
+              timestamp: isDateValid ? record.createdAt : undefined,
+            },
+          ];
 
     const lineage = {
       snapshotId: record.snapshotId,
@@ -398,9 +521,16 @@ export class InfrastructureFindingService {
       record.category,
     );
 
+    const status = isResolved ? 'RESOLVED' : 'ACTIVE';
+    const state = isResolved ? 'RESOLVED' : 'OPEN';
+    const lastVerifiedAt =
+      isResolved && latestSnap
+        ? latestSnap.createdAt
+        : record.snapshot?.createdAt || record.createdAt;
+
     return {
       id: record.id,
-      domainId: record.snapshot.domainId,
+      domainId: record.snapshot?.domainId || (record as any).domainId,
       snapshotId: record.snapshotId,
       domainName,
       category: record.category,
@@ -409,8 +539,8 @@ export class InfrastructureFindingService {
       riskClassification: semantics.riskClassification,
       severityRationale: semantics.severityRationale,
       whatThisDoesNotProve: semantics.whatThisDoesNotProve,
-      state: 'OPEN',
-      status: 'ACTIVE',
+      state,
+      status,
       title: record.title,
       description: record.description,
       explanation: record.description,
@@ -431,16 +561,17 @@ export class InfrastructureFindingService {
       observations: [
         {
           key: record.category.toLowerCase(),
-          state: 'NON_COMPLIANT',
-          observedAt: record.createdAt,
+          state: isResolved ? 'COMPLIANT' : 'NON_COMPLIANT',
+          observedAt:
+            isResolved && latestSnap ? latestSnap.createdAt : record.createdAt,
           evidenceRef: evidenceArtifacts[0].evidenceId,
         },
       ],
       evidence: evidenceArtifacts,
       timeline: {
         firstDetectedAt: record.createdAt,
-        lastVerifiedAt: record.createdAt,
-        state: 'OPEN',
+        lastVerifiedAt,
+        state,
       },
       recommendations: [
         {
@@ -623,7 +754,10 @@ export class InfrastructureFindingService {
     };
   }
 
-  async getSummaryByDomain(domainId: string): Promise<{
+  async getSummaryByDomain(
+    domainId: string,
+    snapshotId?: string,
+  ): Promise<{
     total: number;
     critical: number;
     high: number;
@@ -631,7 +765,7 @@ export class InfrastructureFindingService {
     low: number;
     informational: number;
   }> {
-    return this.repository.getSummaryByDomain(domainId);
+    return this.repository.getSummaryByDomain(domainId, snapshotId);
   }
 
   async getSeveritySummaryByUser(userId: string): Promise<{

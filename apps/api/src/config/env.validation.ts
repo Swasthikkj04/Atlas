@@ -98,6 +98,22 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  EMAIL_FROM_NAME?: string;
+
+  @IsString()
+  @IsOptional()
+  EMAIL_FROM_ADDRESS?: string;
+
+  @IsString()
+  @IsOptional()
+  EMAIL_REPLY_TO?: string;
+
+  @IsString()
+  @IsOptional()
+  NEBULA_APP_URL?: string;
+
+  @IsString()
+  @IsOptional()
   SMTP_HOST?: string;
 
   @IsOptional()
@@ -110,6 +126,10 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SMTP_PASS?: string;
+
+  @IsString()
+  @IsOptional()
+  RESEND_API_KEY?: string;
 
   @IsString()
   @IsOptional()
@@ -212,6 +232,15 @@ export function validateEnvironment(config: Record<string, unknown>) {
     }
     if (!rawConfig.EMAIL_FROM) {
       rawConfig.EMAIL_FROM = 'no-reply@argonion.com';
+    }
+    if (!rawConfig.EMAIL_FROM_NAME) {
+      rawConfig.EMAIL_FROM_NAME = 'Swasthik K J';
+    }
+    if (!rawConfig.EMAIL_FROM_ADDRESS) {
+      rawConfig.EMAIL_FROM_ADDRESS = 'swasthik@argonion.com';
+    }
+    if (!rawConfig.EMAIL_REPLY_TO) {
+      rawConfig.EMAIL_REPLY_TO = 'support@argonion.com';
     }
   }
 
@@ -350,6 +379,17 @@ export function validateEnvironment(config: Record<string, unknown>) {
       }
     }
 
+    if (emailProvider === 'resend') {
+      if (
+        !validatedConfig.RESEND_API_KEY ||
+        isWeakOrPlaceholderSecret(validatedConfig.RESEND_API_KEY)
+      ) {
+        securityViolations.push(
+          'RESEND_API_KEY is required and must not be a placeholder when EMAIL_PROVIDER=resend in production.',
+        );
+      }
+    }
+
     if (
       validatedConfig.EMAIL_FROM &&
       (validatedConfig.EMAIL_FROM.includes('example.com') ||
@@ -357,6 +397,16 @@ export function validateEnvironment(config: Record<string, unknown>) {
     ) {
       securityViolations.push(
         'EMAIL_FROM cannot use example.com or localhost domain in production.',
+      );
+    }
+
+    if (
+      validatedConfig.EMAIL_FROM_ADDRESS &&
+      (validatedConfig.EMAIL_FROM_ADDRESS.includes('example.com') ||
+        validatedConfig.EMAIL_FROM_ADDRESS.includes('localhost'))
+    ) {
+      securityViolations.push(
+        'EMAIL_FROM_ADDRESS cannot use example.com or localhost domain in production.',
       );
     }
 

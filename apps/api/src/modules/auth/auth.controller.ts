@@ -201,10 +201,13 @@ export class AuthController {
 
     setAuthCookies(res, accessToken, refreshToken);
 
+    const isProduction =
+      this.configService?.get<string>('NODE_ENV') === 'production' ||
+      process.env.NODE_ENV === 'production';
     const frontendUrl =
       this.configService?.get<string>('FRONTEND_URL') ||
       process.env.FRONTEND_URL ||
-      'http://localhost:5173';
+      (isProduction ? 'https://nebula.argonion.com' : 'http://localhost:5173');
     return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
@@ -253,10 +256,13 @@ export class AuthController {
 
     setAuthCookies(res, accessToken, refreshToken);
 
+    const isProduction =
+      this.configService?.get<string>('NODE_ENV') === 'production' ||
+      process.env.NODE_ENV === 'production';
     const frontendUrl =
       this.configService?.get<string>('FRONTEND_URL') ||
       process.env.FRONTEND_URL ||
-      'http://localhost:5173';
+      (isProduction ? 'https://nebula.argonion.com' : 'http://localhost:5173');
     return res.redirect(`${frontendUrl}/auth/callback`);
   }
 

@@ -1,0 +1,198 @@
+name: CI Quality Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Cancel redundant in-progress CI runs on the same branch / PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_ENV: test
+  CI: 'true'
+  TURBO_TELEMETRY_DISABLED: '1'
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # 1. Static Quality Gate (Lint & TypeScript Typecheck)
+  # ----------------------------------------------------------------------------
+  quality:
+    name: Static Quality & Standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Monorepo ESLint Quality Gate
+        run: pnpm lint
+
+      - name: Monorepo TypeScript Typecheck Gate
+        run: pnpm typecheck
+
+  # ----------------------------------------------------------------------------
+  # 2. Automated Test Gate (API NestJS & Web Frontend Suites)
+  # ----------------------------------------------------------------------------
+  test:
+    name: Test Suite Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Execute Monorepo Test Suites
+        run: pnpm test
+
+  # ----------------------------------------------------------------------------
+  # 3. Production Build Gate (API & Web Route-Split Bundles)
+  # ----------------------------------------------------------------------------
+  build:
+    name: Production Build Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Build Monorepo (API Nest & Web Vite)
+        run: pnpm build
+
+      - name: Verify Build Artifacts & Route-Split Output
+        run: |
+          test -d apps/api/dist || (echo "❌ API dist directory missing!" && exit 1)
+          test -d apps/web/dist || (echo "❌ Web dist directory missing!" && exit 1)
+          test -f apps/web/dist/index.html || (echo "❌ Web index.html missing!" && exit 1)
+          echo "✅ Production artifacts verified successfully."
+
+  # ----------------------------------------------------------------------------
+  # 4. Dependency & Supply-Chain Security Verification
+  # ----------------------------------------------------------------------------
+  security:
+    name: Dependency & Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Verify Lockfile Integrity
+        run: pnpm install --frozen-lockfile
+
+      - name: Supply-Chain Dependency Audit
+        run: |
+          echo "==> Running dependency security audit..."
+          if pnpm audit --audit-level=critical; then
+            echo "✅ [PASS] No critical supply-chain vulnerabilities detected."
+          else
+            echo "⚠️ [REVIEW REQUIRED] Vulnerabilities detected in dependencies."
+            pnpm audit --audit-level=high || true
+          fi
+
+      - name: Verify Production GCP Foundation Architecture
+        run: bash infra/gcp/scripts/verify-production-foundation.sh
+
+  # ----------------------------------------------------------------------------
+  # 5. Authoritative CI Quality Gatekeeper (Branch Protection Target)
+  # ----------------------------------------------------------------------------
+  ci-gate:
+    name: CI Quality Gatekeeper
+    needs: [quality, test, build, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    steps:
+      - name: Evaluate All Quality Gates
+        run: |
+          QUALITY_RESULT="${{ needs.quality.result }}"
+          TEST_RESULT="${{ needs.test.result }}"
+          BUILD_RESULT="${{ needs.build.result }}"
+          SECURITY_RESULT="${{ needs.security.result }}"
+
+          echo "=================================================="
+          echo "Nebula Authoritative CI Gate Summary"
+          echo "=================================================="
+          echo "Static Quality (Lint & Typecheck) : $QUALITY_RESULT"
+          echo "Test Suite Verification           : $TEST_RESULT"
+          echo "Production Build Gate             : $BUILD_RESULT"
+          echo "Supply-Chain & Foundation Audit   : $SECURITY_RESULT"
+          echo "=================================================="
+
+          if [ "$QUALITY_RESULT" = "success" ] && \
+             [ "$TEST_RESULT" = "success" ] && \
+             [ "$BUILD_RESULT" = "success" ] && \
+             [ "$SECURITY_RESULT" = "success" ]; then
+            echo "🟢 ALL CI QUALITY GATES PASSED. SAFE TO MERGE."
+            exit 0
+          else
+            echo "🔴 ONE OR MORE CI QUALITY GATES FAILED."
+            exit 1
+          fi

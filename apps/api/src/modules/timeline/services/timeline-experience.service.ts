@@ -274,7 +274,8 @@ export class TimelineExperienceService {
       rule: {
         ruleId: details.rule?.ruleId || 'rule.timeline.change',
         ruleVersion: details.rule?.ruleVersion || '1.0.0',
-        name: details.rule?.name || `${details.event.category} Change Detection`,
+        name:
+          details.rule?.name || `${details.event.category} Change Detection`,
         category: details.event.category || 'CHANGE',
         evaluationLogic:
           details.rule?.description ||
@@ -342,7 +343,12 @@ export class TimelineExperienceService {
       return 'HTTP Security Headers Updated';
     }
 
-    if (category === 'CERTIFICATE' || category === 'TLS' || titleLower.includes('tls') || titleLower.includes('certificate')) {
+    if (
+      category === 'CERTIFICATE' ||
+      category === 'TLS' ||
+      titleLower.includes('tls') ||
+      titleLower.includes('certificate')
+    ) {
       return 'TLS Certificate Renewed';
     }
     if (category === 'TECHNOLOGY') {
@@ -370,10 +376,16 @@ export class TimelineExperienceService {
 
   private generateSubject(title: string, category: string): string {
     const titleLower = title.toLowerCase();
-    if (titleLower.includes('content-security-policy') || titleLower.includes('csp')) {
+    if (
+      titleLower.includes('content-security-policy') ||
+      titleLower.includes('csp')
+    ) {
       return 'Content-Security-Policy';
     }
-    if (titleLower.includes('strict-transport-security') || titleLower.includes('hsts')) {
+    if (
+      titleLower.includes('strict-transport-security') ||
+      titleLower.includes('hsts')
+    ) {
       return 'Strict-Transport-Security';
     }
     if (titleLower.includes('x-frame-options')) {
@@ -403,10 +415,16 @@ export class TimelineExperienceService {
     domainName: string,
   ): string {
     const titleLower = title.toLowerCase();
-    if (titleLower.includes('content-security-policy') || titleLower.includes('csp')) {
+    if (
+      titleLower.includes('content-security-policy') ||
+      titleLower.includes('csp')
+    ) {
       return 'Nebula verified that the current authoritative response contains a Content-Security-Policy that differs from the previous verified response.';
     }
-    if (titleLower.includes('strict-transport-security') || titleLower.includes('hsts')) {
+    if (
+      titleLower.includes('strict-transport-security') ||
+      titleLower.includes('hsts')
+    ) {
       return 'Nebula verified that the current authoritative response contains a Strict-Transport-Security header enforcing encrypted transport.';
     }
     if (titleLower.includes('tls') || titleLower.includes('certificate')) {
@@ -420,10 +438,16 @@ export class TimelineExperienceService {
     _category: string,
   ): string {
     const titleLower = title.toLowerCase();
-    if (titleLower.includes('content-security-policy') || titleLower.includes('csp')) {
+    if (
+      titleLower.includes('content-security-policy') ||
+      titleLower.includes('csp')
+    ) {
       return 'This change does not guarantee that all content-injection or XSS scenarios are prevented.';
     }
-    if (titleLower.includes('strict-transport-security') || titleLower.includes('hsts')) {
+    if (
+      titleLower.includes('strict-transport-security') ||
+      titleLower.includes('hsts')
+    ) {
       return 'This change does not guarantee that application endpoints or client certificates cannot be compromised through other vectors.';
     }
     if (titleLower.includes('tls') || titleLower.includes('certificate')) {
@@ -448,19 +472,37 @@ export class TimelineExperienceService {
     overallPosture?: string;
   } | null {
     const titleLower = title.toLowerCase();
-    const isCsp = titleLower.includes('content-security-policy') || titleLower.includes('csp');
+    const isCsp =
+      titleLower.includes('content-security-policy') ||
+      titleLower.includes('csp');
 
     if (!isCsp && category !== 'SECURITY_HEADER') {
       return null;
     }
 
     if (isCsp) {
-      const isPrevAbsent = !previousValue || previousValue === 'Not configured' || previousValue.toLowerCase() === 'absent';
-      const isCurrPresent = Boolean(currentValue && currentValue !== 'Removed' && currentValue.toLowerCase() !== 'absent');
+      const isPrevAbsent =
+        !previousValue ||
+        previousValue === 'Not configured' ||
+        previousValue.toLowerCase() === 'absent';
+      const isCurrPresent = Boolean(
+        currentValue &&
+        currentValue !== 'Removed' &&
+        currentValue.toLowerCase() !== 'absent',
+      );
 
       const countDirectives = (val: string | null): number => {
-        if (!val || val === 'Not configured' || val === 'Removed' || val === 'absent') return 0;
-        return val.split(';').map((d) => d.trim()).filter(Boolean).length;
+        if (
+          !val ||
+          val === 'Not configured' ||
+          val === 'Removed' ||
+          val === 'absent'
+        )
+          return 0;
+        return val
+          .split(';')
+          .map((d) => d.trim())
+          .filter(Boolean).length;
       };
 
       const prevCount = countDirectives(previousValue);
@@ -471,7 +513,8 @@ export class TimelineExperienceService {
           previousLabel: 'No effective CSP',
           currentLabel: 'CSP present',
           postureChange: 'Protection improved',
-          directives: currCount > 0 ? { previous: 0, current: currCount } : undefined,
+          directives:
+            currCount > 0 ? { previous: 0, current: currCount } : undefined,
           allowedSources: 'Configured',
           browserRestrictions: 'Stronger',
           overallPosture: 'Improved',
@@ -483,7 +526,8 @@ export class TimelineExperienceService {
           previousLabel: 'CSP present',
           currentLabel: 'No effective CSP',
           postureChange: 'Protection degraded',
-          directives: prevCount > 0 ? { previous: prevCount, current: 0 } : undefined,
+          directives:
+            prevCount > 0 ? { previous: prevCount, current: 0 } : undefined,
           allowedSources: 'Removed',
           browserRestrictions: 'Weakened',
           overallPosture: 'Degraded',
@@ -495,7 +539,9 @@ export class TimelineExperienceService {
         return {
           previousLabel: `CSP (${prevCount} directives)`,
           currentLabel: `CSP (${currCount} directives)`,
-          postureChange: isStrengthened ? 'Protection improved' : 'Policy modified',
+          postureChange: isStrengthened
+            ? 'Protection improved'
+            : 'Policy modified',
           directives: { previous: prevCount, current: currCount },
           allowedSources: currCount > prevCount ? 'Expanded' : 'Maintained',
           browserRestrictions: isStrengthened ? 'Stronger' : 'Modified',

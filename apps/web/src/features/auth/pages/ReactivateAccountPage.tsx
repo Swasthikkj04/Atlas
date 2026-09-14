@@ -343,3 +343,6 @@ export const ReactivateAccountPage: React.FC = () => {
 };
 
 ReactivateAccountPage.displayName = 'ReactivateAccountPage';
+
+export default ReactivateAccountPage;
+

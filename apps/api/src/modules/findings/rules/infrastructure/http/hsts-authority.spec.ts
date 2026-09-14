@@ -15,7 +15,7 @@ describe('WX-1022: HSTS Finding Authority & Verification Audit', () => {
     domainName: 'google.com',
     snapshot: {
       http,
-    } as any,
+    },
   });
 
   describe('1. Final Authoritative HTTPS Response Evaluation', () => {
@@ -71,7 +71,9 @@ describe('WX-1022: HSTS Finding Authority & Verification Audit', () => {
       const findings = await rule.evaluate(context);
       expect(findings).toHaveLength(1);
       expect(findings[0].severity).toBe(Severity.HIGH);
-      expect(findings[0].description).toContain('https://insecure-app.example.com/');
+      expect(findings[0].description).toContain(
+        'https://insecure-app.example.com/',
+      );
     });
   });
 

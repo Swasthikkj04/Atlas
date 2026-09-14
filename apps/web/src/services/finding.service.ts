@@ -17,11 +17,11 @@ export interface FindingQueryParams {
 }
 
 export const findingService = {
-  getFindingsForDomain: (
+  getFindingsForDomain: async (
     domainId: string,
     params?: FindingQueryParams,
     signal?: AbortSignal
-  ) => {
+  ): Promise<FindingListResponseDto> => {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);
     if (params?.severity) query.set('severity', params.severity);
@@ -30,10 +30,19 @@ export const findingService = {
     if (params?.offset) query.set('offset', String(params.offset));
     const qs = query.toString() ? `?${query.toString()}` : '';
 
-    return apiClient.get<FindingListResponseDto>(
+    const response = await apiClient.get<any>(
       `/domains/${encodeURIComponent(domainId)}/findings${qs}`,
       { signal }
     );
+
+    const items = response?.findings ?? response?.data ?? [];
+    const total =
+      response?.total ?? response?.pagination?.total ?? items.length;
+
+    return {
+      findings: items,
+      total,
+    };
   },
 
   getFindingById: (findingId: string, signal?: AbortSignal) =>

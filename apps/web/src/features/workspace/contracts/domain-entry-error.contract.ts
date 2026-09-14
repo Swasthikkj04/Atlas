@@ -9,7 +9,8 @@ export type DomainEntryErrorKind =
   | 'NONEXISTENT_DOMAIN'
   | 'NETWORK_ERROR'
   | 'SERVER_ERROR'
-  | 'VALIDATION_ERROR';
+  | 'VALIDATION_ERROR'
+  | 'DOMAIN_LIMIT_REACHED';
 
 export interface DomainEntryErrorState {
   readonly kind: DomainEntryErrorKind;
@@ -20,6 +21,10 @@ export interface DomainEntryErrorState {
 }
 
 export const DOMAIN_ENTRY_ERROR_COPY = {
+  DOMAIN_LIMIT_REACHED: {
+    title: 'Domain limit reached.',
+    description: 'Sorry, your domain limit has been reached.',
+  },
   NONEXISTENT_DOMAIN: {
     title: 'Unable to reach this domain.',
     description: 'Check the address and try again.',
@@ -50,7 +55,62 @@ export function resolveDomainEntryError(
   error: unknown,
   jobError?: string | null
 ): DomainEntryErrorState {
-  // 1. Check job error string if provided
+  // 0. Check for Domain Limit Reached (SEC-GXWX-003)
+  if (jobError) {
+    const lower = jobError.toLowerCase();
+    if (
+      lower.includes('domain limit') ||
+      lower.includes('limit has been reached') ||
+      (lower.includes('limit') && (lower.includes('domain') || lower.includes('workspace') || lower.includes('4')))
+    ) {
+      return {
+        kind: 'DOMAIN_LIMIT_REACHED',
+        title: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.title,
+        description: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.description,
+        canEditDomain: true,
+        canRetry: false,
+      };
+    }
+  }
+
+  // 1. Check typed API client errors
+  if (error instanceof ApiError) {
+    const errorMsg = (error.message || '').toLowerCase();
+    if (
+      error.code === 'DOMAIN_LIMIT_REACHED' ||
+      error.code === 'QUOTA_EXCEEDED' ||
+      errorMsg.includes('domain limit') ||
+      errorMsg.includes('limit has been reached') ||
+      (error.status === 400 && errorMsg.includes('limit'))
+    ) {
+      return {
+        kind: 'DOMAIN_LIMIT_REACHED',
+        title: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.title,
+        description: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.description,
+        canEditDomain: true,
+        canRetry: false,
+      };
+    }
+  }
+
+  if (error instanceof Error) {
+    const errorMsg = error.message.toLowerCase();
+    if (
+      errorMsg.includes('domain limit') ||
+      errorMsg.includes('limit has been reached') ||
+      (errorMsg.includes('limit') && errorMsg.includes('domain'))
+    ) {
+      return {
+        kind: 'DOMAIN_LIMIT_REACHED',
+        title: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.title,
+        description: DOMAIN_ENTRY_ERROR_COPY.DOMAIN_LIMIT_REACHED.description,
+        canEditDomain: true,
+        canRetry: false,
+      };
+    }
+  }
+
+  // 2. Check job error string if provided
   if (jobError) {
     const lower = jobError.toLowerCase();
     if (
@@ -74,7 +134,7 @@ export function resolveDomainEntryError(
     }
   }
 
-  // 2. Check typed API client errors
+  // 3. Check typed API client errors
   if (error instanceof InsufficientSignalError || error instanceof NotFoundError) {
     return {
       kind: 'NONEXISTENT_DOMAIN',

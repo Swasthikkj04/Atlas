@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nebula Production Dependency Inventory",
+  "version": "1.0.0",
+  "ticketId": "S-10",
+  "generatedAt": "2026-09-03T22:00:00.000Z",
+  "toolchain": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.1.1",
+    "nestjs": "^11.0.0",
+    "prisma": "^6.4.0",
+    "turborepo": "^2.10.4"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "directDependencies": {
+    "api": [
+      "@nestjs/common",
+      "@nestjs/core",
+      "@nestjs/jwt",
+      "@nestjs/passport",
+      "@nestjs/platform-express",
+      "@nestjs/swagger",
+      "@nestjs/terminus",
+      "@nestjs/throttler",
+      "@prisma/client",
+      "@simplewebauthn/server",
+      "argon2",
+      "class-transformer",
+      "class-validator",
+      "cookie-parser",
+      "cors",
+      "date-fns",
+      "express",
+      "helmet",
+      "ioredis",
+      "node-cache",
+      "passport",
+      "passport-github2",
+      "passport-google-oauth20",
+      "passport-jwt",
+      "reflect-metadata",
+      "rxjs",
+      "zod"
+    ],
+    "web": [
+      "@simplewebauthn/browser",
+      "@tanstack/react-query",
+      "lucide-react",
+      "motion",
+      "react",
+      "react-dom"
+    ]
+  },
+  "integrityVerification": "SHA-512 / SHA-256 Lockfile Verified"
+}

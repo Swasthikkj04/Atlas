@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nebula Supply Chain Security Master Policy",
+  "version": "1.0.0",
+  "ticketId": "S-10",
+  "phase": "Production Security Hardening",
+  "priority": "P0 — BLOCKING",
+  "status": "CERTIFIED_DEPENDENCY_SUPPLY_CHAIN_SECURITY",
+  "canonicalCertificationGate": "Every third-party dependency, package, plugin, build tool, container dependency, transitive dependency, generated artifact, and external software component entering Nebula is explicitly identified, version-controlled, integrity-verified, vulnerability-evaluated, and governed throughout its lifecycle.",
+  "secondaryCertificationGate": "Nebula's software supply chain is explicitly governed from dependency introduction through production execution. Dependency identity, integrity, provenance, vulnerabilities, licensing, execution behavior, and lifecycle are continuously controlled, and any inability to establish software trust fails closed before production release.",
+  "frozenPrinciple": "The software we depend on is part of our security boundary.",
+  "lifecycleStages": [
+    "PROPOSE",
+    "IDENTIFY",
+    "REVIEW",
+    "RESOLVE",
+    "INTEGRITY_VERIFY",
+    "VULNERABILITY_SCAN",
+    "LICENSE_CHECK",
+    "TEST",
+    "BUILD",
+    "SECURITY_CERTIFY",
+    "MONITOR",
+    "UPDATE_OR_REMOVE"
+  ],
+  "failClosed": true
+}

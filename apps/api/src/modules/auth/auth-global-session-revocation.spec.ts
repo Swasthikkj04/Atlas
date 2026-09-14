@@ -98,6 +98,7 @@ describe('AUTH-018: Global Session Revocation & Multi-Device Security Invariants
       sendPasswordResetConfirmationEmail: jest
         .fn()
         .mockResolvedValue(undefined),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ status: 'SENT' }),
     };
 
     const mockResolver = {

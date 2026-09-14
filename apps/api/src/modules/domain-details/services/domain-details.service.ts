@@ -28,8 +28,11 @@ export class DomainDetailsService {
     return this.infrastructureSnapshotService.countByDomain(domainId);
   }
 
-  async getFindingsSummary(domainId: string) {
-    return this.infrastructureFindingService.getSummaryByDomain(domainId);
+  async getFindingsSummary(domainId: string, snapshotId?: string) {
+    return this.infrastructureFindingService.getSummaryByDomain(
+      domainId,
+      snapshotId,
+    );
   }
 
   async getLatestBrief(domainId: string) {

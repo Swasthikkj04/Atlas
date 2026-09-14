@@ -1,5 +1,6 @@
 import type { DomainDto } from '../../../../types/api';
 import type { MultiDomainBriefResult } from '../../contracts/multi-domain-brief.contract';
+import type { MultiDomainArchitectureMatrixData, DomainOverviewInput } from '../../contracts/multi-domain-matrix.contract';
 
 export interface WorkspaceIntelligenceLandingProps {
   readonly onSelectDomain: (domainId: string) => void;
@@ -9,8 +10,11 @@ export interface WorkspaceIntelligenceLandingProps {
   readonly onViewInfrastructureMemory?: (domainId?: string) => void;
   readonly initialBrief?: MultiDomainBriefResult;
   readonly domains?: readonly DomainDto[];
+  readonly domainOverviews?: readonly DomainOverviewInput[];
+  readonly initialMatrixData?: MultiDomainArchitectureMatrixData;
   readonly className?: string;
 }
+
 
 export interface MultiDomainHeroProps {
   readonly brief: MultiDomainBriefResult;

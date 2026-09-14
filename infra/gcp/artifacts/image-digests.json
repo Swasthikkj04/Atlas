@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-08-29T06:02:10Z",
+  "projectId": "nebula-production",
+  "region": "us-central1",
+  "repository": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo",
+  "gitSha": "404a16d",
+  "version": "v1.0.0",
+  "artifacts": {
+    "api": {
+      "image": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-api:404a16d",
+      "versionTag": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-api:v1.0.0",
+      "digest": "sha256:d6ec6a75e4529a46151ded1d73430f15d73cccb861b38c696d94be33234bd841"
+    },
+    "worker": {
+      "image": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-worker:404a16d",
+      "versionTag": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-worker:v1.0.0",
+      "digest": "sha256:0f05054022186b877c9c2aa82f03c9cf0ba1d4fda99a4f81c3bdb021b96e1f07"
+    },
+    "web": {
+      "image": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-web:404a16d",
+      "versionTag": "us-central1-docker.pkg.dev/nebula-production/nebula-docker-repo/nebula-web:v1.0.0",
+      "digest": "sha256:5562d7bd9deb80e9e03ad21b92ad28142edaff10b62e6cfb1a83b65cfcdc1a32"
+    }
+  }
+}

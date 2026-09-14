@@ -1,11 +1,18 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 import { EMAIL_PROVIDER } from './providers/email-provider.interface';
 import type { EmailProvider } from './providers/email-provider.interface';
 import { buildVerificationEmailTemplate } from './templates/verification-email.template';
 import { buildPasswordResetEmailTemplate } from './templates/password-reset-email.template';
 import { buildPasswordResetConfirmationTemplate } from './templates/password-reset-confirmation.template';
 import { buildAccountReactivationEmailTemplate } from './templates/account-reactivation-email.template';
+import { buildWelcomeEmailTemplate } from './templates/welcome-email.template';
+
+export interface WelcomeEmailResult {
+  status: 'SENT' | 'ALREADY_SENT' | 'FAILED' | 'SKIPPED';
+  error?: string;
+}
 
 @Injectable()
 export class EmailService {
@@ -14,6 +21,7 @@ export class EmailService {
   constructor(
     @Inject(EMAIL_PROVIDER) private readonly emailProvider: EmailProvider,
     private readonly configService: ConfigService,
+    @Optional() private readonly prisma?: PrismaService,
   ) {}
 
   private getSender(): string {
@@ -27,12 +35,49 @@ export class EmailService {
     return this.configService.get<string>('REPLY_TO_EMAIL') || undefined;
   }
 
-  private getAppUrl(): string {
+  private getWelcomeSender(): string {
+    const fromName =
+      this.configService.get<string>('EMAIL_FROM_NAME') || 'Swasthik K J';
+    const fromAddress =
+      this.configService.get<string>('EMAIL_FROM_ADDRESS') ||
+      'swasthik@argonion.com';
+    return `${fromName} <${fromAddress}>`;
+  }
+
+  private getWelcomeReplyTo(): string {
     return (
-      this.configService.get<string>('APP_URL') ||
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:5173'
+      this.configService.get<string>('EMAIL_REPLY_TO') || 'support@argonion.com'
     );
+  }
+
+  private getAppUrl(): string {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production' ||
+      (!this.configService.get<string>('NODE_ENV') &&
+        process.env.NODE_ENV === 'production');
+
+    const configServiceUrl =
+      this.configService.get<string>('NEBULA_APP_URL') ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      this.configService.get<string>('APP_URL');
+
+    if (configServiceUrl && configServiceUrl.trim() !== '') {
+      return configServiceUrl.trim().replace(/\/+$/, '');
+    }
+
+    if (!isProduction) {
+      const processEnvUrl =
+        process.env.NEBULA_APP_URL ||
+        process.env.FRONTEND_URL ||
+        process.env.APP_URL;
+      if (processEnvUrl && processEnvUrl.trim() !== '') {
+        return processEnvUrl.trim().replace(/\/+$/, '');
+      }
+    }
+
+    return isProduction
+      ? 'https://nebula.argonion.com'
+      : 'http://localhost:5173';
   }
 
   async sendVerificationEmail(
@@ -41,7 +86,7 @@ export class EmailService {
     recipientName?: string,
   ): Promise<void> {
     const baseUrl = this.getAppUrl();
-    const verificationUrl = `${baseUrl}/auth/verify-email?token=${rawVerificationToken}`;
+    const verificationUrl = `${baseUrl}/verify-email?token=${rawVerificationToken}`;
 
     const { subject, html, text } = buildVerificationEmailTemplate({
       recipientName,
@@ -73,7 +118,7 @@ export class EmailService {
     recipientName?: string,
   ): Promise<void> {
     const baseUrl = this.getAppUrl();
-    const resetUrl = `${baseUrl}/auth/reset-password?token=${rawResetToken}`;
+    const resetUrl = `${baseUrl}/reset-password?token=${rawResetToken}`;
 
     const { subject, html, text } = buildPasswordResetEmailTemplate({
       recipientName,
@@ -134,7 +179,7 @@ export class EmailService {
     recipientName?: string,
   ): Promise<void> {
     const baseUrl = this.getAppUrl();
-    const reactivationUrl = `${baseUrl}/auth/reactivate?token=${rawReactivationToken}`;
+    const reactivationUrl = `${baseUrl}/reactivate?token=${rawReactivationToken}`;
 
     const { subject, html, text } = buildAccountReactivationEmailTemplate({
       recipientName,
@@ -157,6 +202,134 @@ export class EmailService {
       this.logger.error(
         `Failed to deliver account reactivation email to ${toEmail}: ${error?.message || error}`,
       );
+    }
+  }
+
+  async sendWelcomeEmail(
+    userId: string,
+    toEmail: string,
+    recipientName?: string | null,
+  ): Promise<WelcomeEmailResult> {
+    if (
+      !userId ||
+      !toEmail ||
+      typeof toEmail !== 'string' ||
+      !toEmail.includes('@')
+    ) {
+      this.logger.warn(
+        `[WelcomeEmail] Skipped: invalid recipient or userId (userId=${userId}, email=${toEmail})`,
+      );
+      return { status: 'SKIPPED', error: 'Invalid recipient email or userId' };
+    }
+
+    const idempotencyKey = `welcome-email:${userId}`;
+    const normalizedEmail = toEmail.trim().toLowerCase();
+
+    // 1. Check idempotency record if prisma is available
+    if (this.prisma) {
+      try {
+        const existing = await this.prisma.emailDeliveryRecord.findUnique({
+          where: { idempotencyKey },
+        });
+
+        if (existing && existing.status === 'SENT') {
+          this.logger.log(
+            `[WelcomeEmail] Skipped - already sent for userId=${userId}`,
+          );
+          return { status: 'ALREADY_SENT' };
+        }
+
+        if (!existing) {
+          await this.prisma.emailDeliveryRecord
+            .create({
+              data: {
+                userId,
+                idempotencyKey,
+                emailType: 'WELCOME_EMAIL',
+                recipientEmail: normalizedEmail,
+                status: 'PENDING',
+                attemptCount: 0,
+              },
+            })
+            .catch((createErr) => {
+              this.logger.debug(
+                `[WelcomeEmail] Record creation race handled: ${createErr?.message}`,
+              );
+            });
+        }
+
+        await this.prisma.emailDeliveryRecord.updateMany({
+          where: { idempotencyKey },
+          data: {
+            status: 'ATTEMPTED',
+            attemptCount: { increment: 1 },
+            lastAttemptAt: new Date(),
+          },
+        });
+      } catch (dbErr: any) {
+        this.logger.warn(
+          `[WelcomeEmail] DB delivery tracking warning (proceeding with send): ${dbErr?.message}`,
+        );
+      }
+    }
+
+    // 2. Build email template
+    const appUrl = this.getAppUrl();
+    const { subject, html, text } = buildWelcomeEmailTemplate({
+      recipientName,
+      appUrl,
+    });
+
+    // 3. Dispatch email via provider
+    try {
+      await this.emailProvider.send({
+        to: normalizedEmail,
+        from: this.getWelcomeSender(),
+        replyTo: this.getWelcomeReplyTo(),
+        subject,
+        html,
+        text,
+      });
+
+      if (this.prisma) {
+        await this.prisma.emailDeliveryRecord
+          .updateMany({
+            where: { idempotencyKey },
+            data: {
+              status: 'SENT',
+              sentAt: new Date(),
+              errorMessage: null,
+            },
+          })
+          .catch(() => null);
+      }
+
+      this.logger.log(
+        `[WelcomeEmail] Welcome email dispatched successfully to ${normalizedEmail} (userId=${userId}).`,
+      );
+      return { status: 'SENT' };
+    } catch (error: any) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : String(error || 'Unknown email error');
+      this.logger.error(
+        `[WelcomeEmail] Failed to deliver welcome email to ${normalizedEmail} (userId=${userId}): ${errorMsg}`,
+      );
+
+      if (this.prisma) {
+        await this.prisma.emailDeliveryRecord
+          .updateMany({
+            where: { idempotencyKey },
+            data: {
+              status: 'FAILED',
+              errorMessage: errorMsg,
+            },
+          })
+          .catch(() => null);
+      }
+
+      return { status: 'FAILED', error: errorMsg };
     }
   }
 }

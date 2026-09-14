@@ -118,7 +118,7 @@ describe('AX-113: Reactivation Database Schema & Runtime Integrity Verification'
       expect(validRecord?.userId).toBe(testUserId);
 
       // Consume token
-      await tokenService.markTokenConsumed(validRecord!.id);
+      await tokenService.markTokenConsumed(validRecord.id);
 
       // Verify second lookup fails (single-use enforcement)
       const consumedLookup = await tokenService.findValidTokenByRaw(rawToken);

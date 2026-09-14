@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { LandingPage } from './features/landing';
-import { GuestPage } from './features/guest';
-import {
-  AuthProvider,
-  CreateWorkspacePage,
-  LoginPage,
-  VerifyEmailPage,
-  AuthCallbackPage,
-  ForgotPasswordPage,
-  ResetPasswordPage,
-  ReactivateAccountPage,
-} from './features/auth';
-import { WorkspacePage } from './features/workspace';
-import { SettingsPage } from './features/settings';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { AuthProvider } from './features/auth/context/AuthContext';
+import { telemetry } from './services';
 import { resolveAppRoute, ProtectedRoute } from './routes';
 import { SkipToContent } from './components/accessibility';
+import { ErrorBoundary, RouteLoadingFallback } from './components/feedback';
+import { useSessionPresence } from './hooks';
+
+// TKT-001: Route-level Dynamic Imports & Code Splitting
+const LandingPage = lazy(() => import('./features/landing/LandingPage'));
+const GuestPage = lazy(() => import('./features/guest/pages/GuestPage'));
+const CreateWorkspacePage = lazy(() => import('./features/auth/pages/CreateWorkspacePage'));
+const LoginPage = lazy(() => import('./features/auth/pages/LoginPage'));
+const VerifyEmailPage = lazy(() => import('./features/auth/pages/VerifyEmailPage'));
+const AuthCallbackPage = lazy(() => import('./features/auth/pages/AuthCallbackPage'));
+const ForgotPasswordPage = lazy(() => import('./features/auth/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./features/auth/pages/ResetPasswordPage'));
+const ReactivateAccountPage = lazy(() => import('./features/auth/pages/ReactivateAccountPage'));
+const WorkspacePage = lazy(() => import('./features/workspace/WorkspacePage'));
+const SettingsPage = lazy(() => import('./features/settings/pages/SettingsPage'));
+const AdminPage = lazy(() => import('./features/admin/AdminPage'));
+const PrivacyPolicyPage = lazy(() => import('./features/legal/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./features/legal/TermsPage'));
+const DocsPage = lazy(() => import('./features/docs/DocsPage'));
 
 export const AppRoutes: React.FC = () => {
+  // ADMIN-003: Observational browser tab presence & session lifecycle
+  useSessionPresence();
+
   const [pathname, setPathname] = useState(() =>
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
@@ -57,41 +67,69 @@ export const AppRoutes: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // Record client visitor telemetry beacon quietly in background
+    if (typeof window !== 'undefined' && !pathname.startsWith('/admin')) {
+      telemetry.track('PAGE_VIEW', {
+        path: pathname,
+        referrer: document.referrer || undefined,
+      });
+    }
+  }, [pathname]);
+
   const route = resolveAppRoute(pathname);
 
-  switch (route) {
-    case 'AUTH_CALLBACK':
-      return <AuthCallbackPage />;
-    case 'CREATE_WORKSPACE':
-      return <CreateWorkspacePage />;
-    case 'FORGOT_PASSWORD':
-      return <ForgotPasswordPage />;
-    case 'RESET_PASSWORD':
-      return <ResetPasswordPage />;
-    case 'REACTIVATE':
-      return <ReactivateAccountPage />;
-    case 'LOGIN':
-      return <LoginPage />;
-    case 'VERIFY_EMAIL':
-      return <VerifyEmailPage />;
-    case 'GUEST':
-      return <GuestPage />;
-    case 'WORKSPACE':
-      return (
-        <ProtectedRoute>
-          <WorkspacePage />
-        </ProtectedRoute>
-      );
-    case 'SETTINGS':
-      return (
-        <ProtectedRoute>
-          <SettingsPage />
-        </ProtectedRoute>
-      );
-    case 'LANDING':
-    default:
-      return <LandingPage />;
-  }
+  const renderRoute = () => {
+    switch (route) {
+      case 'AUTH_CALLBACK':
+        return <AuthCallbackPage />;
+      case 'CREATE_WORKSPACE':
+        return <CreateWorkspacePage />;
+      case 'FORGOT_PASSWORD':
+        return <ForgotPasswordPage />;
+      case 'RESET_PASSWORD':
+        return <ResetPasswordPage />;
+      case 'REACTIVATE':
+        return <ReactivateAccountPage />;
+      case 'LOGIN':
+        return <LoginPage />;
+      case 'VERIFY_EMAIL':
+        return <VerifyEmailPage />;
+      case 'GUEST':
+        return <GuestPage />;
+      case 'WORKSPACE':
+        return (
+          <ProtectedRoute>
+            <WorkspacePage />
+          </ProtectedRoute>
+        );
+      case 'SETTINGS':
+        return (
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        );
+      case 'ADMIN':
+        return <AdminPage />;
+      case 'PRIVACY':
+        return <PrivacyPolicyPage />;
+      case 'TERMS':
+        return <TermsPage />;
+      case 'DOCS':
+        return <DocsPage />;
+      case 'LANDING':
+      default:
+        return <LandingPage />;
+    }
+  };
+
+  return (
+    <ErrorBoundary resetKeys={[pathname]}>
+      <Suspense fallback={<RouteLoadingFallback />}>
+        {renderRoute()}
+      </Suspense>
+    </ErrorBoundary>
+  );
 };
 
 export const App: React.FC = () => {
@@ -106,3 +144,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

@@ -180,47 +180,32 @@ export const CurrentIntelligence: React.FC<CurrentIntelligenceProps> = ({
     );
   }
 
-  // 4. Authoritative Current Intelligence: Executive Brief + Infrastructure Overview (Top Grid) + Stories
+  // 4. Authoritative Current Intelligence (WX-211 Hierarchy: Brief -> Primary Story -> Secondary Stories -> Infrastructure)
   return (
-    <div className={`space-y-7 sm:space-y-8 ${className}`} data-testid="current-intelligence-content">
-      {/* 4A. Authoritative Top Grid: Executive Brief + Infrastructure Overview (WX-914) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Executive Brief */}
-        <div className="lg:col-span-7 xl:col-span-7 flex flex-col h-full">
-          {executiveBrief ? (
-            <ExecutiveBrief
-              domainId={domainId}
-              domainName={domainName}
-              initialBrief={executiveBrief}
-              onSelectHighlight={onInvestigate}
-              className="h-full"
-            />
-          ) : (
-            <ExecutiveBrief
-              domainId={domainId}
-              domainName={domainName}
-              onSelectHighlight={onInvestigate}
-              className="h-full"
-            />
-          )}
-        </div>
-
-        {/* Right Column: Compact Infrastructure Overview */}
-        <div className="lg:col-span-5 xl:col-span-5 flex flex-col h-full">
-          <CompactInfrastructureOverview
+    <div className={`space-y-8 sm:space-y-9 ${className}`} data-testid="current-intelligence-content">
+      {/* 4A. Current Understanding & Executive Brief (Rank 1 Summary) */}
+      <div className="w-full">
+        {executiveBrief ? (
+          <ExecutiveBrief
             domainId={domainId}
             domainName={domainName}
-            onViewFullInfrastructure={onViewOverview}
-            className="h-full"
+            initialBrief={executiveBrief}
+            onSelectHighlight={onInvestigate}
           />
-        </div>
+        ) : (
+          <ExecutiveBrief
+            domainId={domainId}
+            domainName={domainName}
+            onSelectHighlight={onInvestigate}
+          />
+        )}
       </div>
 
-      {/* 4B. Dominant Primary Story ("WHAT MATTERS NOW") */}
+      {/* 4B. Dominant Primary Story ("WHAT MATTERS NOW") - WX-211C */}
       {primaryStory && (
-        <div className="space-y-2.5 pt-1">
-          <div className="px-1">
-            <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-muted-foreground/80">
+        <section className="space-y-3" aria-label="What Matters Now">
+          <div className="px-1 flex items-center justify-between">
+            <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-muted-foreground/90">
               WHAT MATTERS NOW
             </span>
           </div>
@@ -231,15 +216,15 @@ export const CurrentIntelligence: React.FC<CurrentIntelligenceProps> = ({
             onInvestigate={onInvestigate}
             onViewEvidence={onViewEvidence}
           />
-        </div>
+        </section>
       )}
 
-      {/* 4C. Supporting Secondary Intelligence ("OTHER THINGS WORTH KNOWING") */}
+      {/* 4C. Supporting Secondary Intelligence ("OTHER THINGS WORTH KNOWING") - WX-211D */}
       {secondaryStories.length > 0 && (
-        <div className="space-y-2.5 pt-4 border-t border-border-hairline">
-          <div className="px-1">
-            <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-muted-foreground/80">
-              OTHER THINGS WORTH KNOWING
+        <section className="space-y-3 pt-2" aria-label="Other Things Worth Knowing">
+          <div className="px-1 flex items-center justify-between">
+            <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-muted-foreground/90">
+              OTHER THINGS WORTH KNOWING ({secondaryStories.length})
             </span>
           </div>
           <SecondaryStories
@@ -249,8 +234,22 @@ export const CurrentIntelligence: React.FC<CurrentIntelligenceProps> = ({
             onInvestigate={onInvestigate}
             onViewEvidence={onViewEvidence}
           />
-        </div>
+        </section>
       )}
+
+      {/* 4D. Infrastructure Understanding Surface - WX-211E */}
+      <section className="space-y-3 pt-2" aria-label="Infrastructure Overview">
+        <div className="px-1 flex items-center justify-between">
+          <span className="font-mono text-[11px] font-semibold tracking-[0.24em] uppercase text-muted-foreground/90">
+            INFRASTRUCTURE TOPOLOGY
+          </span>
+        </div>
+        <CompactInfrastructureOverview
+          domainId={domainId}
+          domainName={domainName}
+          onViewFullInfrastructure={onViewOverview}
+        />
+      </section>
 
       {/* Contextual Destinations Footer in Canvas */}
       <div className="pt-6 border-t border-border-hairline flex flex-wrap items-center justify-between gap-4">

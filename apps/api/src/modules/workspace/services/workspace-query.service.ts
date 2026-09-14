@@ -217,7 +217,10 @@ export class WorkspaceQueryService {
       }),
     ]);
 
-    const rawEvents: (RecentActivityDto & { canonicalType: string; canonicalId: string })[] = [];
+    const rawEvents: (RecentActivityDto & {
+      canonicalType: string;
+      canonicalId: string;
+    })[] = [];
 
     for (const d of userDomains) {
       rawEvents.push({

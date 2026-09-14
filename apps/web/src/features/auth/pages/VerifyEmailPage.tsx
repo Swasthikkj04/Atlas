@@ -52,6 +52,7 @@ export const VerifyEmailPage: React.FC = () => {
   );
   const [resendCooldown, setResendCooldown] = useState(0);
   const [claimedDomain, setClaimedDomain] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   // Context if guest session was active
   const [context] = useState<GuestUnderstandingContext | null>(() => {
@@ -107,8 +108,17 @@ export const VerifyEmailPage: React.FC = () => {
           if (claimResult?.domainName && isMounted) {
             setClaimedDomain(claimResult.domainName);
           }
-        } catch {
-          // non-blocking
+        } catch (claimErr: unknown) {
+          const msg =
+            claimErr instanceof Error
+              ? claimErr.message
+              : 'Sorry, your domain limit has been reached.';
+          if (isMounted) {
+            setClaimError(msg);
+          }
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('nebula_claim_error', msg);
+          }
         }
 
         const timer = setTimeout(() => {
@@ -278,10 +288,14 @@ export const VerifyEmailPage: React.FC = () => {
 
               <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                 Your authenticated session is active.
-                {claimedDomain ? (
+                {claimedDomain && !claimError ? (
                   <span className="block mt-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                     Infrastructure understanding for {claimedDomain} has been
                     preserved in your workspace.
+                  </span>
+                ) : claimError ? (
+                  <span className="block mt-1.5 font-medium text-amber-600 dark:text-amber-400">
+                    {claimError}
                   </span>
                 ) : (
                   ' Your workspace is ready.'

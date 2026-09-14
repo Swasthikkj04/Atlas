@@ -4,17 +4,49 @@ import { DiscoveryModule } from '../contracts/discovery-module.interface';
 import { DiscoveryCollector } from '../collector/discovery-collector.interface';
 
 export type DnsLookupStatus =
-  | 'SUCCESS'
-  | 'NODATA'
-  | 'NOT_FOUND'
-  | 'TIMEOUT'
-  | 'SERVFAIL'
-  | 'FAILED';
+  'SUCCESS' | 'NODATA' | 'NOT_FOUND' | 'TIMEOUT' | 'SERVFAIL' | 'FAILED';
 
 export interface DnsLookupResult<T> {
   readonly data: T;
   readonly status: DnsLookupStatus;
   readonly error?: string;
+}
+
+export type DnssecStatus =
+  | 'VALID'
+  | 'SECURE'
+  | 'INSECURE'
+  | 'BOGUS'
+  | 'INDETERMINATE'
+  | 'UNSIGNED'
+  | 'EXPIRED_RRSIG'
+  | 'MISCONFIGURED'
+  | 'WEAK_ALGORITHM'
+  | 'UNSUPPORTED_DIGEST';
+
+export interface CaaRecordEntry {
+  critical?: number;
+  tag?: string;
+  value?: string;
+  issuer?: string;
+  issue?: string;
+  issuewild?: string;
+  iodef?: string;
+  contactemail?: string;
+  contactphone?: string;
+}
+
+export interface DnssecRecordData {
+  enabled: boolean;
+  status: DnssecStatus;
+  hasDs?: boolean;
+  hasDnskey?: boolean;
+  hasRrsig?: boolean;
+  keyTags?: number[];
+  algorithms?: string[];
+  digestTypes?: string[];
+  flags?: number[];
+  error?: string;
 }
 
 export interface DnsDiscoveryResult {
@@ -25,6 +57,8 @@ export interface DnsDiscoveryResult {
   cname: string[];
   txt: string[][];
   dmarc: string[][];
+  caa?: CaaRecordEntry[];
+  dnssec?: DnssecRecordData;
   status?: {
     a?: DnsLookupStatus;
     aaaa?: DnsLookupStatus;
@@ -33,6 +67,8 @@ export interface DnsDiscoveryResult {
     cname?: DnsLookupStatus;
     txt?: DnsLookupStatus;
     dmarc?: DnsLookupStatus;
+    caa?: DnsLookupStatus;
+    dnssec?: DnsLookupStatus;
   };
   errors?: Record<string, string>;
   rawRecords?: {
@@ -46,7 +82,10 @@ export interface DnsDiscoveryResult {
   };
 }
 
-export function classifyDnsError(err: unknown): { status: DnsLookupStatus; error: string } {
+export function classifyDnsError(err: unknown): {
+  status: DnsLookupStatus;
+  error: string;
+} {
   if (!err) {
     return { status: 'SUCCESS', error: '' };
   }
@@ -56,10 +95,20 @@ export function classifyDnsError(err: unknown): { status: DnsLookupStatus; error
   const lowerMsg = message.toLowerCase();
 
   if (code === 'ENODATA' || code === 'NODATA') {
-    return { status: 'NODATA', error: 'No DNS records found for this query type (ENODATA)' };
+    return {
+      status: 'NODATA',
+      error: 'No DNS records found for this query type (ENODATA)',
+    };
   }
-  if (code === 'ENOTFOUND' || code === 'NXDOMAIN' || lowerMsg.includes('nxdomain')) {
-    return { status: 'NOT_FOUND', error: 'Domain name not found in DNS (NXDOMAIN/ENOTFOUND)' };
+  if (
+    code === 'ENOTFOUND' ||
+    code === 'NXDOMAIN' ||
+    lowerMsg.includes('nxdomain')
+  ) {
+    return {
+      status: 'NOT_FOUND',
+      error: 'Domain name not found in DNS (NXDOMAIN/ENOTFOUND)',
+    };
   }
   if (
     code === 'ETIMEOUT' ||
@@ -69,7 +118,11 @@ export function classifyDnsError(err: unknown): { status: DnsLookupStatus; error
   ) {
     return { status: 'TIMEOUT', error: 'DNS resolution timed out' };
   }
-  if (code === 'ESERVFAIL' || code === 'SERVFAIL' || lowerMsg.includes('servfail')) {
+  if (
+    code === 'ESERVFAIL' ||
+    code === 'SERVFAIL' ||
+    lowerMsg.includes('servfail')
+  ) {
     return { status: 'SERVFAIL', error: 'DNS server returned SERVFAIL' };
   }
   return { status: 'FAILED', error: message || 'DNS query failed' };
@@ -107,12 +160,27 @@ export class DnsDiscoveryService
     ]);
 
     let txtRes = txtInitialRes;
-    if (txtRes.data.length === 0 && txtRes.status !== 'TIMEOUT' && txtRes.status !== 'SERVFAIL' && txtRes.status !== 'FAILED' && apexDomain !== domainName) {
-      txtRes = await this.safeLookupDetailed(() => dns.resolveTxt(apexDomain), []);
+    if (
+      txtRes.data.length === 0 &&
+      txtRes.status !== 'TIMEOUT' &&
+      txtRes.status !== 'SERVFAIL' &&
+      txtRes.status !== 'FAILED' &&
+      apexDomain !== domainName
+    ) {
+      txtRes = await this.safeLookupDetailed(
+        () => dns.resolveTxt(apexDomain),
+        [],
+      );
     }
 
     let dmarcRes = dmarcInitialRes;
-    if (dmarcRes.data.length === 0 && dmarcRes.status !== 'TIMEOUT' && dmarcRes.status !== 'SERVFAIL' && dmarcRes.status !== 'FAILED' && apexDomain !== domainName) {
+    if (
+      dmarcRes.data.length === 0 &&
+      dmarcRes.status !== 'TIMEOUT' &&
+      dmarcRes.status !== 'SERVFAIL' &&
+      dmarcRes.status !== 'FAILED' &&
+      apexDomain !== domainName
+    ) {
       dmarcRes = await this.safeLookupDetailed(
         () => dns.resolveTxt(`_dmarc.${apexDomain}`),
         [],
@@ -120,13 +188,31 @@ export class DnsDiscoveryService
     }
 
     let mxRes = mxInitialRes;
-    if (mxRes.data.length === 0 && mxRes.status !== 'TIMEOUT' && mxRes.status !== 'SERVFAIL' && mxRes.status !== 'FAILED' && apexDomain !== domainName) {
-      mxRes = await this.safeLookupDetailed(() => dns.resolveMx(apexDomain), []);
+    if (
+      mxRes.data.length === 0 &&
+      mxRes.status !== 'TIMEOUT' &&
+      mxRes.status !== 'SERVFAIL' &&
+      mxRes.status !== 'FAILED' &&
+      apexDomain !== domainName
+    ) {
+      mxRes = await this.safeLookupDetailed(
+        () => dns.resolveMx(apexDomain),
+        [],
+      );
     }
 
     let nsRes = nsInitialRes;
-    if (nsRes.data.length === 0 && nsRes.status !== 'TIMEOUT' && nsRes.status !== 'SERVFAIL' && nsRes.status !== 'FAILED' && apexDomain !== domainName) {
-      nsRes = await this.safeLookupDetailed(() => dns.resolveNs(apexDomain), []);
+    if (
+      nsRes.data.length === 0 &&
+      nsRes.status !== 'TIMEOUT' &&
+      nsRes.status !== 'SERVFAIL' &&
+      nsRes.status !== 'FAILED' &&
+      apexDomain !== domainName
+    ) {
+      nsRes = await this.safeLookupDetailed(
+        () => dns.resolveNs(apexDomain),
+        [],
+      );
     }
 
     const errors: Record<string, string> = {};
@@ -138,8 +224,12 @@ export class DnsDiscoveryService
     if (txtRes.error) errors.txt = txtRes.error;
     if (dmarcRes.error) errors.dmarc = dmarcRes.error;
 
-    const flattenedTxt = txtRes.data.map((r) => Array.isArray(r) ? r.join('') : String(r));
-    const flattenedDmarc = dmarcRes.data.map((r) => Array.isArray(r) ? r.join('') : String(r));
+    const flattenedTxt = txtRes.data.map((r) =>
+      Array.isArray(r) ? r.join('') : String(r),
+    );
+    const flattenedDmarc = dmarcRes.data.map((r) =>
+      Array.isArray(r) ? r.join('') : String(r),
+    );
 
     return {
       a: aRes.data,

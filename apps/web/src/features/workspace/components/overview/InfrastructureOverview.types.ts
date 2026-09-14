@@ -17,9 +17,14 @@ export interface InfrastructureOverviewProps extends HTMLAttributes<HTMLDivEleme
   readonly onViewFinding?: (findingId: string) => void;
   /** Callback fired when user navigates to view all findings */
   readonly onViewAllFindings?: () => void;
+  /** Callback fired when user navigates to changes surface */
+  readonly onNavigateToChanges?: () => void;
+  /** Callback fired when user navigates to findings surface */
+  readonly onNavigateToFindings?: () => void;
   /** Callback fired when user navigates into evidence surface */
   readonly onViewEvidence?: (evidenceId: string) => void;
   /** Custom CSS classes */
   readonly className?: string;
 }
+
 

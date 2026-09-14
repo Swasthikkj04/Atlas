@@ -55,7 +55,11 @@ export const InfrastructureFindingsSection: React.FC<InfrastructureFindingsSecti
   ...rest
 }) => {
   const findingsQuery = useFindings(domainId);
-  const findings = findingsQuery.data?.findings ?? [];
+  const rawFindings = findingsQuery.data?.findings ?? [];
+  const findings = React.useMemo(
+    () => rawFindings.filter((f) => f.status === 'ACTIVE' && f.state !== 'RESOLVED'),
+    [rawFindings]
+  );
   const isLoading = findingsQuery.isLoading;
 
   if (isLoading) {
@@ -129,21 +133,15 @@ export const InfrastructureFindingsSection: React.FC<InfrastructureFindingsSecti
               className="p-5 hover:bg-[#F7F8F6] dark:hover:bg-surface-row-hover transition-colors duration-150 ease-out space-y-3"
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${style.bg} ${style.text} ${style.border}`}
                     data-testid="finding-severity-badge"
                   >
                     {finding.severity}
                   </span>
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono text-[#5F625F] dark:text-muted-foreground border border-[#E2E2DD] dark:border-border bg-[#F4F4F1] dark:bg-surface-metadata select-none"
-                    data-testid="finding-confidence-badge"
-                  >
-                    {finding.confidence ? `${finding.confidence.toLowerCase()} observation` : 'authoritative observation'}
-                  </span>
                   {finding.category && (
-                    <span className="text-[11px] font-mono text-[#5F625F] dark:text-muted-foreground border border-[#E2E2DD] dark:border-border px-1.5 py-0.5 rounded bg-[#F4F4F1] dark:bg-surface-metadata">
+                    <span className="text-[10px] font-mono uppercase text-[#5F625F] dark:text-muted-foreground border border-[#E2E2DD] dark:border-border px-1.5 py-0.5 rounded bg-[#F4F4F1] dark:bg-surface-metadata">
                       {finding.category}
                     </span>
                   )}

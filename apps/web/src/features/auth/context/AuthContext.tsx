@@ -7,6 +7,7 @@ import React, {
 import { authService } from '../../../services/auth';
 import { apiClient } from '../../../lib/api-client';
 import { accountService } from '../../../services/account/account.service';
+import { telemetry } from '../../../services';
 import {
   THEME_STORAGE_KEY,
   THEME_CHANGE_EVENT,
@@ -92,8 +93,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     async function initAuth() {
       setIsLoading(true);
       try {
+        const isTabSessionActive =
+          typeof window !== 'undefined' &&
+          sessionStorage.getItem('nebula_session_active') === 'true';
+
+        const isOAuthCallback =
+          typeof window !== 'undefined' &&
+          (window.location.pathname.includes('/callback') ||
+            window.location.pathname.includes('/verify-email'));
+
+        if (!isTabSessionActive && !isOAuthCallback) {
+          // Tab was closed or freshly opened without active tab session.
+          // Terminate stale backend session and clear cookies so session terminates on tab close.
+          await authService.logout().catch(() => {});
+          if (isMounted) {
+            setUser(null);
+          }
+          return;
+        }
+
         const profile = await loadUser();
         if (profile) {
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('nebula_session_active', 'true');
+          }
           try {
             const prefs = await accountService.getPreferences();
             if (prefs && isMounted) {
@@ -114,6 +137,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     apiClient.setOnSessionExpired(() => {
       if (isMounted) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('nebula_session_active');
+        }
         setUser(null);
       }
     });
@@ -127,6 +153,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<User> => {
       const response = await authService.login(credentials);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('nebula_session_active', 'true');
+      }
       setUser(response.user);
       try {
         const prefs = await accountService.getPreferences();
@@ -150,7 +179,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('nebula_session_active');
+      }
       await authService.logout();
+      telemetry.track('SIGN_OUT', { surface: 'auth', status: 'SUCCESS' });
     } finally {
       setUser(null);
     }
@@ -172,6 +205,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const verifyEmail = useCallback(
     async (token: string): Promise<VerifyEmailResponse> => {
       const response = await authService.verifyEmail(token);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('nebula_session_active', 'true');
+      }
       if (response.user) {
         setUser(response.user);
       } else {
@@ -223,11 +259,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const res = await apiClaimGuestSession(sessionToken);
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('nebula_guest_claim');
+          sessionStorage.removeItem('nebula_claim_error');
         }
         return res;
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to claim guest session:', err);
-        return null;
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : 'Sorry, your domain limit has been reached.';
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('nebula_claim_error', errorMsg);
+          sessionStorage.removeItem('nebula_guest_claim');
+        }
+        throw err;
       }
     },
     []

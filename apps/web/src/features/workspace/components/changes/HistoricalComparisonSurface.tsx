@@ -6,11 +6,9 @@ import { LoadingState, UnavailableState } from '../../../../components/states';
 import { useSnapshots } from '../../../../hooks/queries/useSnapshots';
 import { useTimeline } from '../../../../hooks/queries/useTimeline';
 import { resolveHistoricalSnapshotComparison } from '../../contracts/snapshot-comparison.contract';
-import {
-  getSnapshotsArray,
-  getTimelineEventsArray,
-} from '../../contracts/changes.contract';
+import { getSnapshotsArray, getTimelineEventsArray } from '../../contracts/changes.contract';
 import { ChangeStoryCard } from './ChangeStoryCard';
+import { InfrastructureDriftForensicsVisualizer } from './InfrastructureDriftForensicsVisualizer';
 import { DomainFavicon } from '../identity';
 import type { HistoricalComparisonSurfaceProps } from './HistoricalComparisonSurface.types';
 
@@ -200,6 +198,13 @@ export const HistoricalComparisonSurface: React.FC<HistoricalComparisonSurfacePr
       {/* 3. Comparison Results Display */}
       {comparisonResult.status === 'READY' ? (
         <Stack gap="xl" className="w-full">
+          {/* Real-Time Infrastructure Drift & Change Forensics Visualizer (Move 3) */}
+          <InfrastructureDriftForensicsVisualizer
+            comparisonResult={comparisonResult}
+            onInvestigateChange={onInvestigateChange}
+            onViewEvidence={onViewEvidence}
+          />
+
           {/* Section A: Changes Detected */}
           {comparisonResult.changes.length > 0 ? (
             <Stack gap="md" className="w-full">

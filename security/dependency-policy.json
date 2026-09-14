@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nebula Production Dependency Policy",
+  "version": "1.0.0",
+  "ticketId": "S-10",
+  "status": "ENFORCED",
+  "trustedRegistries": [
+    "https://registry.npmjs.org/",
+    "https://registry.npmjs.org",
+    "https://npm.pkg.github.com/",
+    "https://npm.pkg.github.com"
+  ],
+  "internalScopes": [
+    "@nebula",
+    "@atlas"
+  ],
+  "versionPinning": {
+    "prohibitFloatingVersions": true,
+    "prohibitedPrefixes": ["*", "latest", "x"],
+    "enforceExactOrBoundedTildeCaret": true
+  },
+  "installScriptGovernance": {
+    "sandboxExecution": true,
+    "blockNetworkExfiltration": true,
+    "prohibitedPatterns": [
+      "curl.*\\|.*(sh|bash)",
+      "wget.*\\|.*(sh|bash)",
+      "process\\.env",
+      "eval\\(",
+      "rm -rf /",
+      "node -e .*http"
+    ]
+  },
+  "typosquattingDefense": {
+    "enabled": true,
+    "maxLevenshteinDistance": 2
+  }
+}

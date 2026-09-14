@@ -2,7 +2,7 @@
   "name": "atlas",
   "version": "0.2.0",
   "private": true,
-  "description": "Atlas - Infrastructure Intelligence Assistant",
+  "description": "Nebula - Infrastructure Intelligence Platform",
   "author": "Swasthik Gowda",
   "license": "MIT",
   "type": "module",
@@ -14,10 +14,15 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "format": "turbo format"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "turbo": "^2.10.4"
   },
   "devEngines": {

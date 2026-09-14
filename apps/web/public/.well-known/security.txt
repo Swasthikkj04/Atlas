@@ -1,0 +1,9 @@
+# security.txt for https://argonion.com
+# Conforms to RFC 9116 (A File Format to Aid in Security Vulnerability Disclosure)
+
+Contact: mailto:security@argonion.com
+Expires: 2027-09-12T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://argonion.com/.well-known/security.txt
+Policy: https://argonion.com/security
+Acknowledgments: https://argonion.com/security/hall-of-fame

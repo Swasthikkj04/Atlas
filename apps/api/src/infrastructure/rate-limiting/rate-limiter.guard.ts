@@ -36,11 +36,35 @@ export class RateLimiterGuard implements CanActivate {
       return true;
     }
 
+    const path = req.originalUrl || req.url || '';
+    const isAuthRoute = path.includes('/auth/');
+
     try {
-      const path = req.originalUrl || req.url || '';
       // Exempt internal health probes from rate limits
       if (path.includes('/health/live') || path.includes('/health/ready')) {
         return true;
+      }
+
+      // Check adaptive backpressure for heavy understand workloads
+      const backpressureService =
+        this.rateLimiterService.getBackpressureService();
+      if (backpressureService && path.includes('understand')) {
+        const tier = req.user?.tier || (req.user?.isGuest ? 'GUEST' : 'FREE');
+        const category = path.includes('guest')
+          ? 'GUEST_UNDERSTAND'
+          : 'USER_UNDERSTAND';
+        const bp = backpressureService.evaluateBackpressure(tier, category);
+        if (bp.shouldThrottle) {
+          throw new HttpException(
+            {
+              statusCode: HttpStatus.TOO_MANY_REQUESTS,
+              error: 'Too Many Requests',
+              code: 'BACKPRESSURE_SATURATED',
+              message: `Discovery processing capacity saturated. ${bp.reason || 'Please retry later.'}`,
+            },
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
       }
 
       const rateLimitOptions =
@@ -49,25 +73,59 @@ export class RateLimiterGuard implements CanActivate {
           context.getClass(),
         ]);
 
+      const rawForwarded = req.headers['x-forwarded-for'];
+      const rawForwardedStr = Array.isArray(rawForwarded)
+        ? rawForwarded[0]
+        : (rawForwarded as string);
       const clientIp =
-        (req.headers['x-forwarded-for'] as string) ||
+        (rawForwardedStr ? rawForwardedStr.split(',')[0].trim() : '') ||
         req.ip ||
         req.socket?.remoteAddress ||
         '127.0.0.1';
 
-      const userId = req.user?.id || 'anon';
+      const user = req.user;
+      const tier = user?.tier || (user?.isGuest ? 'GUEST' : 'FREE');
+      const userId =
+        user?.id || (user?.isGuest ? `guest:${clientIp}` : `ip:${clientIp}`);
       const routeKey = rateLimitOptions?.name || req.route?.path || path;
-      const rateLimitKey = `rate:${clientIp}:${userId}:${routeKey}`;
+      const rateLimitKey = `rate:${tier}:${userId}:${routeKey}`;
+
+      let effectiveLimit = rateLimitOptions?.limit;
+      let effectiveWindow = rateLimitOptions?.windowSeconds;
+
+      if (!effectiveLimit) {
+        if (tier === 'GUEST' && path.includes('guest/understand')) {
+          effectiveLimit = 3;
+          effectiveWindow = 3600;
+        } else if (tier === 'FREE') {
+          effectiveLimit = 100;
+          effectiveWindow = 60;
+        } else if (tier === 'PRO') {
+          effectiveLimit = 1000;
+          effectiveWindow = 60;
+        }
+      }
 
       const check = this.rateLimiterService.checkLimit(
         rateLimitKey,
-        rateLimitOptions?.limit,
-        rateLimitOptions?.windowSeconds,
+        effectiveLimit,
+        effectiveWindow,
       );
 
+      // Classic Headers
+      res.setHeader('X-Workspace-Tier', tier);
       res.setHeader('X-RateLimit-Limit', String(check.limit));
       res.setHeader('X-RateLimit-Remaining', String(check.remaining));
       res.setHeader('X-RateLimit-Reset', String(check.resetTimeSeconds));
+
+      // IETF Headers
+      res.setHeader('RateLimit-Limit', String(check.limit));
+      res.setHeader('RateLimit-Remaining', String(check.remaining));
+      res.setHeader('RateLimit-Reset', String(check.resetTimeSeconds));
+      res.setHeader(
+        'RateLimit-Policy',
+        `${check.limit};w=${effectiveWindow || 60}`,
+      );
 
       if (check.isBlocked) {
         res.setHeader('Retry-After', String(check.retryAfterSeconds));
@@ -105,7 +163,20 @@ export class RateLimiterGuard implements CanActivate {
       if (err instanceof HttpException) {
         throw err;
       }
-      // Fail-open safety
+      if (isAuthRoute) {
+        // Fail-closed security for critical authentication endpoints
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            error: 'Too Many Requests',
+            code: 'RATE_LIMIT_EXCEEDED',
+            message:
+              'Authentication rate limiter fail-closed security engaged due to storage unavailability.',
+          },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+      // Fail-open safety for standard endpoints
       this.logger.error(
         'RateLimiterGuard encountered internal error, failing open.',
         err,

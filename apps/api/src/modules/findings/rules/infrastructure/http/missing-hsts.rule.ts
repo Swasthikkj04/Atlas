@@ -18,15 +18,22 @@ export class MissingHstsRule implements FindingRule {
 
     // Invariant: NO_FAILED_LOOKUP_AS_HEADER_ABSENCE
     // Abort if HTTP discovery failed, timed out, or had network/DNS/SSL errors
-    if (!http?.reachable || (http.queryStatus && http.queryStatus !== 'SUCCESS')) {
+    if (
+      !http?.reachable ||
+      (http.queryStatus && http.queryStatus !== 'SUCCESS')
+    ) {
       return [];
     }
 
     // Invariant: HTTP_FINDING_REQUIRES_AUTHORITATIVE_RESPONSE
     // Evaluate the final authoritative response (or snapshot http baseline)
     const finalResponse = http.finalResponse;
-    const isHttps = finalResponse ? finalResponse.isHttps : http.protocol === 'https';
-    const evaluatedHeaders = finalResponse ? finalResponse.headers : http.headers;
+    const isHttps = finalResponse
+      ? finalResponse.isHttps
+      : http.protocol === 'https';
+    const evaluatedHeaders = finalResponse
+      ? finalResponse.headers
+      : http.headers;
     const evaluatedUrl = finalResponse?.url || http.finalUrl || http.url;
 
     // Invariant: HSTS_REQUIRES_HTTPS_CONTEXT
@@ -42,7 +49,8 @@ export class MissingHstsRule implements FindingRule {
       return [];
     }
 
-    const confidence = http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
+    const confidence =
+      http.confidence === 'AUTHORITATIVE' ? 'AUTHORITATIVE' : 'SUPPORTED';
 
     return [
       {

@@ -14,12 +14,12 @@ const STATUS_BADGE_CLASSES = {
 };
 
 /**
- * Sophisticated Monitored Infrastructure List (WX-1025).
+ * Authoritative Domain Investigation Selection Surface (WX-O-01 / WX-1025).
  *
- * Implements the cross-domain list view:
- * - Direct, 1-click entry into domain workspace (`View →`)
- * - Domain favicon, name, status badge, and authoritative summary note
- * - Visual distinction of what exists, what is healthy, and what changed
+ * Implements the domain selection surface:
+ * - Clear mental model: "I want to investigate this domain."
+ * - Direct 1-click drilldown into the domain's deep analytical workspace
+ * - Transparent status indicators and last understood recency
  */
 export const MonitoredInfrastructureList: React.FC<MonitoredInfrastructureListProps> = ({
   brief,
@@ -36,7 +36,7 @@ export const MonitoredInfrastructureList: React.FC<MonitoredInfrastructureListPr
             variant="muted"
             className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#5F625F] dark:text-muted-foreground font-semibold"
           >
-            MONITORED INFRASTRUCTURE
+            INVESTIGATE BY DOMAIN
           </Eyebrow>
         </Cluster>
 
@@ -106,7 +106,7 @@ export const MonitoredInfrastructureList: React.FC<MonitoredInfrastructureListPr
 
             {/* Right: 1-Click Navigation Affordance */}
             <div className="flex items-center gap-1 text-xs font-mono font-medium text-[#3568C8] group-hover:underline shrink-0 self-end sm:self-center">
-              <span>View</span>
+              <span>Inspect domain</span>
               <Icon
                 icon={ArrowRight}
                 size="small"

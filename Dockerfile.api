@@ -1,0 +1,56 @@
+# Stage 1: Build & Prune
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
+
+# Copy workspace metadata and dependency manifests
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/prisma ./apps/api/prisma/
+
+# Install full dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy API source and configs
+COPY apps/api ./apps/api
+
+# Generate Prisma Client & Build API
+RUN pnpm --filter api exec prisma generate --schema=./prisma/schema.prisma
+RUN pnpm --filter api build
+
+# Stage 2: Production Runtime
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+
+# Set production environment variables
+ENV NODE_ENV=production \
+    PORT=8080 \
+    WORKER_ENABLED=false
+
+# Install curl for container healthcheck
+RUN apk add --no-cache curl
+
+# Copy node_modules and generated Prisma client from builder stage
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder /app/package.json ./package.json
+
+# Use non-root user
+USER node
+
+# Expose production Cloud Run HTTP port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8080/api/v1/health/live || exit 1
+
+# Start NestJS API
+CMD ["node", "apps/api/dist/main.js"]

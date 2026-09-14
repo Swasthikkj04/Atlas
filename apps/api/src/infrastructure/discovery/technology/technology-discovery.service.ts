@@ -1,28 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 import { DiscoveryModule } from '../contracts/discovery-module.interface';
+import { DiscoverySnapshot } from '../contracts/discovery-snapshot.interface';
+import { createTechnologyDetectionContext } from './context/technology-detection-context.impl';
+import { TechnologyFingerprintingEngine } from './engine/technology-fingerprinting.engine';
 
-export interface DetectedTechnology {
-  name: string;
-  category: string;
-  confidence: number;
-  role?: string;
-  evidenceCount?: number;
-}
-
-export interface TechnologyDiscoveryResult {
-  technologies: DetectedTechnology[];
-}
+export type {
+  DetectedTechnology,
+  TechnologyDiscoveryResult,
+} from './contracts/technology-detection-result.interface';
+import {
+  DetectedTechnology,
+  TechnologyDiscoveryResult,
+} from './contracts/technology-detection-result.interface';
 
 @Injectable()
 export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDiscoveryResult> {
   readonly name = 'technology';
 
-  async discover(domainName: string): Promise<TechnologyDiscoveryResult> {
+  constructor(
+    @Optional() private readonly engine?: TechnologyFingerprintingEngine,
+  ) {}
+
+  async discover(
+    domainName: string,
+    existingSnapshot?: Partial<DiscoverySnapshot>,
+  ): Promise<TechnologyDiscoveryResult> {
+    if (this.engine) {
+      const context = createTechnologyDetectionContext({
+        domainName,
+        dns: existingSnapshot?.dns,
+        http: existingSnapshot?.http,
+        ssl: existingSnapshot?.ssl,
+        htmlBody:
+          (existingSnapshot as any)?.htmlBody ??
+          (existingSnapshot?.http as any)?.body ??
+          (existingSnapshot?.http as any)?.htmlBody,
+        headers: existingSnapshot?.http?.headers,
+      });
+      return this.engine.fingerprint(context);
+    }
+
     const rawUrl = domainName.startsWith('http')
       ? domainName
       : `https://${domainName}`;
-    const technologies: DetectedTechnology[] = [];
+    const technologies: any[] = [];
 
     try {
       // Try HTTPS first, fall back to HTTP if initial attempt fails
@@ -139,7 +161,11 @@ export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDis
       }
 
       // Fastly
-      if (headers.has('x-fastly-request-id') || headers.has('fastly-debug-digest') || viaHeader.includes('varnish')) {
+      if (
+        headers.has('x-fastly-request-id') ||
+        headers.has('fastly-debug-digest') ||
+        viaHeader.includes('varnish')
+      ) {
         technologies.push({
           name: 'Fastly',
           category: 'CDN / Security Gateway',
@@ -150,7 +176,12 @@ export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDis
       }
 
       // Imperva / Incapsula
-      if (headers.has('x-iinfo') || headers.has('x-cdn') || serverHeader.includes('incapsula') || setCookie.includes('incap_ses')) {
+      if (
+        headers.has('x-iinfo') ||
+        headers.has('x-cdn') ||
+        serverHeader.includes('incapsula') ||
+        setCookie.includes('incap_ses')
+      ) {
         technologies.push({
           name: 'Imperva Incapsula',
           category: 'WAF / Security Gateway',
@@ -273,7 +304,10 @@ export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDis
       }
 
       // Envoy Proxy
-      if (serverHeader.includes('envoy') || headers.has('x-envoy-upstream-service-time')) {
+      if (
+        serverHeader.includes('envoy') ||
+        headers.has('x-envoy-upstream-service-time')
+      ) {
         technologies.push({
           name: 'Envoy Proxy',
           category: 'Cloud Gateway',
@@ -339,22 +373,30 @@ export class TechnologyDiscoveryService implements DiscoveryModule<TechnologyDis
       }
 
       // Angular
-      if (html.includes('ng-version') || html.includes('ng-app') || html.includes('data-ng-')) {
+      if (
+        html.includes('ng-version') ||
+        html.includes('ng-app') ||
+        html.includes('data-ng-')
+      ) {
         technologies.push({
           name: 'Angular',
           category: 'Frontend Framework',
-          confidence: 0.90,
+          confidence: 0.9,
           role: `Enterprise web application framework for ${domainName}`,
           evidenceCount: 1,
         });
       }
 
       // Vue.js
-      if (html.includes('data-v-') || html.includes('v-bind') || html.includes('v-for')) {
+      if (
+        html.includes('data-v-') ||
+        html.includes('v-bind') ||
+        html.includes('v-for')
+      ) {
         technologies.push({
           name: 'Vue.js',
           category: 'Frontend Framework',
-          confidence: 0.90,
+          confidence: 0.9,
           role: `Progressive JavaScript UI framework for ${domainName}`,
           evidenceCount: 1,
         });

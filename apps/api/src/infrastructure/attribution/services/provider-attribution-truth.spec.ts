@@ -161,7 +161,9 @@ describe('WX-1022: Authoritative Provider Attribution Truth Audit', () => {
           },
         },
         technology: {
-          technologies: [{ name: 'Next.js', category: 'FRAMEWORK', confidence: 1.0 }],
+          technologies: [
+            { name: 'Next.js', category: 'FRAMEWORK', confidence: 1.0 },
+          ],
         },
       };
 
@@ -301,4 +303,3 @@ describe('WX-1022: Authoritative Provider Attribution Truth Audit', () => {
     });
   });
 });
-

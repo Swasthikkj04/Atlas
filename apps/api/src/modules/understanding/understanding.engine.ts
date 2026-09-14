@@ -56,7 +56,7 @@ export class UnderstandingEngine {
         const context: FindingContext = {
           domainId,
           snapshotId: existingJobSnapshot.id,
-          snapshot: existingJobSnapshot.payload as unknown as DiscoverySnapshot,
+          snapshot: existingJobSnapshot.payload as unknown,
         };
         const evaluatedFindings =
           await this.findingRuleEngine.evaluate(context);
@@ -92,13 +92,9 @@ export class UnderstandingEngine {
     let isSame = false;
     let previousDiscovery: DiscoverySnapshot | null = null;
     if (latestSnapshot && latestSnapshot.payload) {
-      previousDiscovery =
-        latestSnapshot.payload as unknown as DiscoverySnapshot;
+      previousDiscovery = latestSnapshot.payload as unknown;
 
-      isSame = this.snapshotEqualityEngine.isEqual(
-        previousDiscovery,
-        snapshot,
-      );
+      isSame = this.snapshotEqualityEngine.isEqual(previousDiscovery, snapshot);
     }
 
     // 4. Persist Authoritative Verified Snapshot for this Understanding
@@ -182,7 +178,7 @@ export class UnderstandingEngine {
     const snapshot: DiscoverySnapshot = {
       domainName,
       domain: domainName,
-    } as any;
+    };
 
     for (const module of this.discoveryRegistry.getModules()) {
       snapshot[module.name] = await module.discover(domainName);

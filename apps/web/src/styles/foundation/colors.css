@@ -46,23 +46,23 @@
   --color-status-success-dark:   #10b981;
 
   /* ── WX-1017 Premium Neutral Surface Palette ───────────────────────────── */
-  --color-surface-canvas:    #f7f7f5;
+  --color-surface-canvas:    #efefed;
   --color-surface-primary:   #ffffff;
-  --color-surface-secondary: #fafaf8;
-  --color-surface-elevated:  #fcfcfa;
-  --color-surface-metadata:  #f4f4f1;
-  --color-surface-row-hover: #f7f8f6;
-  --color-surface-row-active: #f1f6f3;
+  --color-surface-secondary: #f6f6f2;
+  --color-surface-elevated:  #ffffff;
+  --color-surface-metadata:  #e6e6e0;
+  --color-surface-row-hover: #e8e8e2;
+  --color-surface-row-active: #e4efea;
 
-  --color-border-neutral:        #e7e7e3;
-  --color-border-neutral-strong: #dcdcd7;
-  --color-border-divider:        #eeeeeb;
-  --color-border-card:           #e1e1dc;
-  --color-border-brief:          #e2e2de;
-  --color-border-metadata:       #e2e2dd;
-  --color-border-card-hover:     #dadad5;
+  --color-border-neutral:        #dcdcd6;
+  --color-border-neutral-strong: #cecece;
+  --color-border-divider:        #e4e4df;
+  --color-border-card:           #dcdcd6;
+  --color-border-brief:          #dcdcd6;
+  --color-border-metadata:       #d8d8d2;
+  --color-border-card-hover:     #cecece;
 
-  --color-text-metadata:         #5f625f;
+  --color-text-metadata:         #555555;
   --color-link-primary:          #3568c8;
 
   /* ── WX-1017 Frozen Semantic Palette ───────────────────────────────────── */

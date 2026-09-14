@@ -258,7 +258,11 @@ describe('WX-210-R2: Workspace Current Intelligence API Alignment', () => {
       const itemsWithSameTitle = [
         { id: 'fnd-1', title: 'DNS Failure', severity: 'HIGH' },
         { id: 'fnd-2', title: 'DNS Failure', severity: 'HIGH' }, // Same title, different ID -> valid distinct entities
-        { id: 'fnd-1', title: 'Completely Different Description', severity: 'HIGH' }, // Same ID -> duplicate
+        {
+          id: 'fnd-1',
+          title: 'Completely Different Description',
+          severity: 'HIGH',
+        }, // Same ID -> duplicate
       ];
 
       const deduplicated = workspaceExperienceService.deduplicateByIdentity(
@@ -286,8 +290,18 @@ describe('WX-210-R2: Workspace Current Intelligence API Alignment', () => {
       };
       prismaService.changeHistory = {
         findMany: jest.fn().mockResolvedValue([
-          { id: 'chg-1', domainId: 'dom-1', title: 'A Record Added', detectedAt: new Date() },
-          { id: 'chg-1', domainId: 'dom-1', title: 'A Record Added (Duplicate)', detectedAt: new Date() },
+          {
+            id: 'chg-1',
+            domainId: 'dom-1',
+            title: 'A Record Added',
+            detectedAt: new Date(),
+          },
+          {
+            id: 'chg-1',
+            domainId: 'dom-1',
+            title: 'A Record Added (Duplicate)',
+            detectedAt: new Date(),
+          },
         ]),
       };
       prismaService.infrastructureVerification = {
@@ -306,8 +320,12 @@ describe('WX-210-R2: Workspace Current Intelligence API Alignment', () => {
       const activity = await queryService.buildRecentActivity('usr-1');
 
       // Verify each entity type appears at most once per canonicalId
-      const changeEvents = activity.filter((a) => a.type === 'INFRASTRUCTURE_CHANGED');
-      const verifEvents = activity.filter((a) => a.type === 'EVIDENCE_COLLECTED');
+      const changeEvents = activity.filter(
+        (a) => a.type === 'INFRASTRUCTURE_CHANGED',
+      );
+      const verifEvents = activity.filter(
+        (a) => a.type === 'EVIDENCE_COLLECTED',
+      );
 
       expect(changeEvents).toHaveLength(1);
       expect(verifEvents).toHaveLength(1);

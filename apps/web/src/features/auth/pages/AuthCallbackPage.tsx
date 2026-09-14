@@ -37,22 +37,26 @@ export const AuthCallbackPage: React.FC = () => {
   const [errorCode, setErrorCode] = useState<string | null>(initialError);
   const [genericErrorMessage, setGenericErrorMessage] = useState<string | null>(null);
   const [claimedDomain, setClaimedDomain] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
-  // Read guest context from storage if present
+  // Context-Aware context representation for UI card
   const [context] = useState<GuestUnderstandingContext | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = sessionStorage.getItem('nebula_guest_claim');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return {
-          domain: parsed.domain || '',
-          understandingType: 'Infrastructure Understanding',
-          expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
-        };
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem('nebula_guest_claim');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.domain) {
+            return {
+              domain: parsed.domain,
+              understandingType: 'Infrastructure Understanding',
+              expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+            };
+          }
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
     return null;
   });
@@ -79,8 +83,17 @@ export const AuthCallbackPage: React.FC = () => {
             try {
               const parsed = JSON.parse(raw);
               if (parsed.sessionId || parsed.domain) {
-                await checkAndClaimGuestSession();
-                setClaimedDomain(parsed.domain || 'your domain');
+                try {
+                  const claimRes = await checkAndClaimGuestSession();
+                  setClaimedDomain(claimRes?.domainName || parsed.domain || 'your domain');
+                } catch (claimErr: unknown) {
+                  const claimMsg =
+                    claimErr instanceof Error
+                      ? claimErr.message
+                      : 'Sorry, your domain limit has been reached.';
+                  setClaimError(claimMsg);
+                  sessionStorage.setItem('nebula_claim_error', claimMsg);
+                }
               }
             } catch {
               // ignore
@@ -93,7 +106,7 @@ export const AuthCallbackPage: React.FC = () => {
         // Automatic redirect to workspace after brief feedback pause
         setTimeout(() => {
           window.location.href = '/workspace';
-        }, 1500);
+        }, 1800);
       } catch (err: unknown) {
         const msg =
           err instanceof Error
@@ -167,9 +180,13 @@ export const AuthCallbackPage: React.FC = () => {
 
               <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                 Your authenticated session is active.
-                {claimedDomain ? (
+                {claimedDomain && !claimError ? (
                   <span className="block mt-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                     Infrastructure understanding for {claimedDomain} has been preserved in your workspace.
+                  </span>
+                ) : claimError ? (
+                  <span className="block mt-1.5 font-medium text-amber-600 dark:text-amber-400">
+                    {claimError}
                   </span>
                 ) : (
                   ' Entering your workspace...'

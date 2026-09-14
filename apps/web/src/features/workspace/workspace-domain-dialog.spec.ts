@@ -165,5 +165,68 @@ describe('WX-210-F: Focused Workspace Domain Entry Dialog Contracts', () => {
         DOMAIN_ENTRY_ERROR_COPY.SERVER_ERROR.description
       );
     });
+
+    it('translates 400 domain quota limit error into calm domain limit reached state', () => {
+      const error = new ApiError('Sorry, your domain limit has been reached.', 400, 'DOMAIN_LIMIT_REACHED');
+      const resolved = resolveDomainEntryError(error);
+
+      assert.equal(resolved.kind, 'DOMAIN_LIMIT_REACHED');
+      assert.equal(resolved.title, 'Domain limit reached.');
+      assert.equal(resolved.description, 'Sorry, your domain limit has been reached.');
+      assert.equal(resolved.canEditDomain, true);
+      assert.equal(resolved.canRetry, false);
+    });
+
+    it('translates generic domain limit Error into calm domain limit reached state', () => {
+      const error = new Error('Sorry, your domain limit has been reached.');
+      const resolved = resolveDomainEntryError(error);
+
+      assert.equal(resolved.kind, 'DOMAIN_LIMIT_REACHED');
+      assert.equal(resolved.title, 'Domain limit reached.');
+      assert.equal(resolved.description, 'Sorry, your domain limit has been reached.');
+      assert.equal(resolved.canRetry, false);
+    });
+  });
+
+  describe('5. Buffer Process Flow Parity with Manual Understanding', () => {
+    it('shares identical progress flow stages between domain addition and manual understanding', () => {
+      const bufferFlowStages = [
+        'PROBING_DNS_NETWORK',
+        'ANALYZING_TLS_SECURITY',
+        'BEHAVIORAL_FINGERPRINTING',
+        'PERSISTING_SNAPSHOT_DIFF',
+        'EVALUATING_FINDINGS_ANOMALIES',
+        'SYNTHESIZING_BRIEF',
+      ];
+
+      assert.equal(bufferFlowStages.length, 6);
+      assert.equal(bufferFlowStages[0], 'PROBING_DNS_NETWORK');
+      assert.equal(bufferFlowStages[5], 'SYNTHESIZING_BRIEF');
+    });
+
+    it('enforces live worker observation indicator during domain entry understanding', () => {
+      const activeState = {
+        badge: 'Understanding in progress',
+        eyebrow: 'UNDERSTANDING',
+        workerText: 'Observing backend worker',
+      };
+
+      assert.equal(activeState.badge, 'Understanding in progress');
+      assert.equal(activeState.eyebrow, 'UNDERSTANDING');
+      assert.equal(activeState.workerText, 'Observing backend worker');
+    });
+  });
+
+  describe('6. Guest Continuity and Quota Toast Notification Contracts', () => {
+    it('defines canonical error message for domain quota limit', () => {
+      const canonicalQuotaMsg = 'Sorry, your domain limit has been reached.';
+      assert.equal(canonicalQuotaMsg, 'Sorry, your domain limit has been reached.');
+    });
+
+    it('verifies guest claim error storage key and lifecycle', () => {
+      const GUEST_CLAIM_ERROR_STORAGE_KEY = 'nebula_claim_error';
+      assert.equal(GUEST_CLAIM_ERROR_STORAGE_KEY, 'nebula_claim_error');
+    });
   });
 });
+

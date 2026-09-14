@@ -3,6 +3,7 @@ import * as tls from 'node:tls';
 
 import { DiscoveryModule } from '../contracts/discovery-module.interface';
 import { DiscoveryCollector } from '../collector/discovery-collector.interface';
+import { verifyDnsAndSsrfSafety } from '../../../common/security/ssrf-guard';
 
 interface SocketError extends Error {
   code?: string;
@@ -51,6 +52,16 @@ export class SslDiscoveryService
   async discover(domainName: string): Promise<SslDiscoveryResult> {
     const startedAt = Date.now();
     const timeoutMs = 10000;
+
+    const ssrfCheck = await verifyDnsAndSsrfSafety(domainName);
+    if (!ssrfCheck.isSafe) {
+      return {
+        reachable: false,
+        supported: false,
+        responseTimeMs: 0,
+        error: `SSRF_BLOCKED: Target host "${domainName}" failed security verification (${ssrfCheck.reason})`,
+      };
+    }
 
     return new Promise((resolve) => {
       let isSettled = false;

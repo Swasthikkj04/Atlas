@@ -14,7 +14,9 @@ export class ProviderAttributionService {
    * Evaluates multi-signal infrastructure attribution across DNS, HTTP, TLS, Network, and Technology.
    * Enforces: Hosting != Edge != DNS.
    */
-  attributeInfrastructure(snapshot: DiscoverySnapshot): InfrastructureAttributionMap {
+  attributeInfrastructure(
+    snapshot: DiscoverySnapshot,
+  ): InfrastructureAttributionMap {
     const dnsAttribution = this.attributeDnsProvider(snapshot);
     const edgeAttribution = this.attributeEdgeCdn(snapshot);
     const hostingAttribution = this.attributeHosting(snapshot, edgeAttribution);
@@ -32,10 +34,11 @@ export class ProviderAttributionService {
 
   private attributeHosting(
     snapshot: DiscoverySnapshot,
-    edgeAttribution: ProviderAttributionRecord
+    edgeAttribution: ProviderAttributionRecord,
   ): ProviderAttributionRecord {
     const signals: AttributionSignal[] = [];
-    const candidates: Map<string, { score: number; signals: string[] }> = new Map();
+    const candidates: Map<string, { score: number; signals: string[] }> =
+      new Map();
 
     const addScore = (provider: string, points: number, signalDesc: string) => {
       const current = candidates.get(provider) || { score: 0, signals: [] };
@@ -45,20 +48,28 @@ export class ProviderAttributionService {
     };
 
     const headers = snapshot.http?.headers || {};
-    const cnames = (snapshot.dns?.cname || []).map((c) => String(c).toLowerCase());
-    const nsRecords = (snapshot.dns?.ns || []).map((n) => String(n).toLowerCase());
+    const cnames = (snapshot.dns?.cname || []).map((c) =>
+      String(c).toLowerCase(),
+    );
+    const nsRecords = (snapshot.dns?.ns || []).map((n) =>
+      String(n).toLowerCase(),
+    );
     const aRecords = snapshot.dns?.a || [];
     const serverHeader = (headers['server'] || '').toLowerCase();
     const viaHeader = (headers['via'] || '').toLowerCase();
     const certIssuer = (snapshot.ssl?.certificate?.issuer || '').toLowerCase();
-    const certSan = (snapshot.ssl?.certificate?.subjectAltName || '').toLowerCase();
+    const certSan = (
+      snapshot.ssl?.certificate?.subjectAltName || ''
+    ).toLowerCase();
     const technologies = (snapshot.technology?.technologies || []).map((t) =>
-      (typeof t === 'string' ? t : t.name || '').toLowerCase()
+      (typeof t === 'string' ? t : t.name || '').toLowerCase(),
     );
 
     // 1. Akamai Connected Cloud / Edge Infrastructure
     if (
-      cnames.some((c) => /edgekey\.net|edgesuite\.net|akamaiedge\.net|akamai\.net/i.test(c)) ||
+      cnames.some((c) =>
+        /edgekey\.net|edgesuite\.net|akamaiedge\.net|akamai\.net/i.test(c),
+      ) ||
       serverHeader.includes('akamaighost') ||
       headers['x-akamai-transformed'] ||
       headers['akamai-grn'] ||
@@ -77,7 +88,11 @@ export class ProviderAttributionService {
 
     // 2. Microsoft Azure / Cloud
     if (
-      cnames.some((c) => /azurewebsites\.net|cloudapp\.azure\.com|trafficmanager\.net|azure-api\.net|azureedge\.net/i.test(c)) ||
+      cnames.some((c) =>
+        /azurewebsites\.net|cloudapp\.azure\.com|trafficmanager\.net|azure-api\.net|azureedge\.net/i.test(
+          c,
+        ),
+      ) ||
       headers['x-ms-request-id'] ||
       headers['x-azure-ref']
     ) {
@@ -111,7 +126,9 @@ export class ProviderAttributionService {
 
     // 4. Amazon Web Services (AWS)
     if (
-      cnames.some((c) => /amazonaws\.com|elasticbeanstalk\.com|elb\.amazonaws\.com/i.test(c)) ||
+      cnames.some((c) =>
+        /amazonaws\.com|elasticbeanstalk\.com|elb\.amazonaws\.com/i.test(c),
+      ) ||
       serverHeader.includes('amazons3') ||
       serverHeader.includes('awselb') ||
       headers['x-amzn-trace-id']
@@ -247,7 +264,10 @@ export class ProviderAttributionService {
     }
 
     // 7. Netlify Evaluation
-    if (cnames.some((c) => /netlify\.app/i.test(c)) || headers['x-nf-request-id']) {
+    if (
+      cnames.some((c) => /netlify\.app/i.test(c)) ||
+      headers['x-nf-request-id']
+    ) {
       signals.push({
         type: 'HTTP',
         source: 'Netlify Indicators',
@@ -260,7 +280,10 @@ export class ProviderAttributionService {
     }
 
     // 8. GitHub Pages Evaluation
-    if (cnames.some((c) => /github\.io/i.test(c)) || headers['x-github-request-id']) {
+    if (
+      cnames.some((c) => /github\.io/i.test(c)) ||
+      headers['x-github-request-id']
+    ) {
       signals.push({
         type: 'HTTP',
         source: 'GitHub Pages Indicators',
@@ -286,7 +309,10 @@ export class ProviderAttributionService {
     }
 
     // 10. Render Evaluation
-    if (cnames.some((c) => /onrender\.com/i.test(c)) || headers['x-render-origin-server']) {
+    if (
+      cnames.some((c) => /onrender\.com/i.test(c)) ||
+      headers['x-render-origin-server']
+    ) {
       signals.push({
         type: 'HTTP',
         source: 'Render Indicators',
@@ -301,7 +327,9 @@ export class ProviderAttributionService {
     // 11. Enterprise / Banking / Dedicated Datacenter
     // E.g. hdfc.bank.in, hdfcbank.com, sbi.co.in, icicibank.com, private enterprise nameservers
     if (
-      nsRecords.some((n) => /bank\.in|hdfc|sbi|icici|axis|corp|internal/i.test(n)) ||
+      nsRecords.some((n) =>
+        /bank\.in|hdfc|sbi|icici|axis|corp|internal/i.test(n),
+      ) ||
       cnames.some((c) => /bank\.in|hdfc|sbi|icici|corp|internal/i.test(c))
     ) {
       signals.push({
@@ -312,11 +340,19 @@ export class ProviderAttributionService {
         weight: 7,
         details: nsRecords.join(', '),
       });
-      addScore('Enterprise / Dedicated Datacenter', 7, 'Enterprise DNS Infrastructure');
+      addScore(
+        'Enterprise / Dedicated Datacenter',
+        7,
+        'Enterprise DNS Infrastructure',
+      );
     }
 
     const candidateList: CandidateProvider[] = Array.from(candidates.entries())
-      .map(([provider, data]) => ({ provider, score: data.score, signals: data.signals }))
+      .map(([provider, data]) => ({
+        provider,
+        score: data.score,
+        signals: data.signals,
+      }))
       .sort((a, b) => b.score - a.score);
 
     // Conflict Detection
@@ -325,7 +361,11 @@ export class ProviderAttributionService {
       const first = candidateList[0];
       const second = candidateList[1];
 
-      if (first.score >= 3 && second.score >= 3 && first.provider !== second.provider) {
+      if (
+        first.score >= 3 &&
+        second.score >= 3 &&
+        first.provider !== second.provider
+      ) {
         conflicts.push({
           providerA: first.provider,
           providerB: second.provider,
@@ -356,13 +396,16 @@ export class ProviderAttributionService {
         signals,
         candidateProviders: [],
         conflicts: [],
-        explanation: 'Hosting provider could not be established from available DNS, HTTP, and TLS telemetry.',
+        explanation:
+          'Hosting provider could not be established from available DNS, HTTP, and TLS telemetry.',
       };
     }
 
     const top = candidateList[0];
     const isMultiSignal = top.signals.length >= 2;
-    const hasDnsOrNetwork = top.signals.some((s) => s.includes('DNS') || s.includes('IP') || s.includes('TLS'));
+    const hasDnsOrNetwork = top.signals.some(
+      (s) => s.includes('DNS') || s.includes('IP') || s.includes('TLS'),
+    );
 
     if (top.score >= 10 || (isMultiSignal && hasDnsOrNetwork)) {
       return {
@@ -402,13 +445,21 @@ export class ProviderAttributionService {
     };
   }
 
-  private attributeEdgeCdn(snapshot: DiscoverySnapshot): ProviderAttributionRecord {
+  private attributeEdgeCdn(
+    snapshot: DiscoverySnapshot,
+  ): ProviderAttributionRecord {
     const headers = snapshot.http?.headers || {};
-    const cnames = (snapshot.dns?.cname || []).map((c) => String(c).toLowerCase());
+    const cnames = (snapshot.dns?.cname || []).map((c) =>
+      String(c).toLowerCase(),
+    );
     const signals: AttributionSignal[] = [];
 
     // Cloudflare Edge
-    if (headers['cf-ray'] || headers['cf-cache-status'] || (headers['server'] || '').toLowerCase() === 'cloudflare') {
+    if (
+      headers['cf-ray'] ||
+      headers['cf-cache-status'] ||
+      (headers['server'] || '').toLowerCase() === 'cloudflare'
+    ) {
       signals.push({
         type: 'HTTP',
         source: 'Cloudflare Headers',
@@ -422,7 +473,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Cloudflare', score: 8, signals: ['CF-Ray header', 'Cloudflare Edge'] }],
+        candidateProviders: [
+          {
+            provider: 'Cloudflare',
+            score: 8,
+            signals: ['CF-Ray header', 'Cloudflare Edge'],
+          },
+        ],
         conflicts: [],
         explanation: 'Cloudflare Edge reverse proxy active and verified.',
       };
@@ -430,7 +487,9 @@ export class ProviderAttributionService {
 
     // Akamai Edge
     if (
-      cnames.some((c) => /edgekey\.net|edgesuite\.net|akamaiedge\.net|akamai\.net/i.test(c)) ||
+      cnames.some((c) =>
+        /edgekey\.net|edgesuite\.net|akamaiedge\.net|akamai\.net/i.test(c),
+      ) ||
       (headers['server'] || '').toLowerCase().includes('akamaighost') ||
       headers['x-akamai-transformed'] ||
       headers['akamai-grn']
@@ -448,14 +507,25 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Akamai Edge Network', score: 8, signals: ['Akamai Edge Network'] }],
+        candidateProviders: [
+          {
+            provider: 'Akamai Edge Network',
+            score: 8,
+            signals: ['Akamai Edge Network'],
+          },
+        ],
         conflicts: [],
-        explanation: 'Akamai Intelligent Edge distribution and security active.',
+        explanation:
+          'Akamai Intelligent Edge distribution and security active.',
       };
     }
 
     // AWS CloudFront
-    if (cnames.some((c) => c.includes('cloudfront.net')) || headers['x-amz-cf-id'] || headers['x-amz-cf-pop']) {
+    if (
+      cnames.some((c) => c.includes('cloudfront.net')) ||
+      headers['x-amz-cf-id'] ||
+      headers['x-amz-cf-pop']
+    ) {
       signals.push({
         type: 'HTTP',
         source: 'CloudFront Headers',
@@ -469,7 +539,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'AWS CloudFront', score: 8, signals: ['CloudFront Edge'] }],
+        candidateProviders: [
+          {
+            provider: 'AWS CloudFront',
+            score: 8,
+            signals: ['CloudFront Edge'],
+          },
+        ],
         conflicts: [],
         explanation: 'AWS CloudFront CDN edge proxy active.',
       };
@@ -490,7 +566,9 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Fastly', score: 8, signals: ['Fastly Edge'] }],
+        candidateProviders: [
+          { provider: 'Fastly', score: 8, signals: ['Fastly Edge'] },
+        ],
         conflicts: [],
         explanation: 'Fastly Edge CDN verified.',
       };
@@ -511,7 +589,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Vercel Edge Network', score: 6, signals: ['Vercel Edge'] }],
+        candidateProviders: [
+          {
+            provider: 'Vercel Edge Network',
+            score: 6,
+            signals: ['Vercel Edge'],
+          },
+        ],
         conflicts: [],
         explanation: 'Vercel Edge Network proxy active.',
       };
@@ -529,7 +613,9 @@ export class ProviderAttributionService {
     };
   }
 
-  private attributeDnsProvider(snapshot: DiscoverySnapshot): ProviderAttributionRecord {
+  private attributeDnsProvider(
+    snapshot: DiscoverySnapshot,
+  ): ProviderAttributionRecord {
     const ns = (snapshot.dns?.ns || []).map((n) => String(n).toLowerCase());
     const signals: AttributionSignal[] = [];
 
@@ -547,7 +633,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Cloudflare', score: 8, signals: ['Cloudflare Nameservers'] }],
+        candidateProviders: [
+          {
+            provider: 'Cloudflare',
+            score: 8,
+            signals: ['Cloudflare Nameservers'],
+          },
+        ],
         conflicts: [],
         explanation: 'Authoritative DNS hosted on Cloudflare nameservers.',
       };
@@ -567,7 +659,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'AWS Route53', score: 8, signals: ['AWS Route53 Nameservers'] }],
+        candidateProviders: [
+          {
+            provider: 'AWS Route53',
+            score: 8,
+            signals: ['AWS Route53 Nameservers'],
+          },
+        ],
         conflicts: [],
         explanation: 'Authoritative DNS hosted on AWS Route 53.',
       };
@@ -580,7 +678,13 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals: [],
-        candidateProviders: [{ provider: 'Akamai Edge DNS', score: 8, signals: ['Akamai Nameservers'] }],
+        candidateProviders: [
+          {
+            provider: 'Akamai Edge DNS',
+            score: 8,
+            signals: ['Akamai Nameservers'],
+          },
+        ],
         conflicts: [],
         explanation: 'Authoritative DNS hosted on Akamai Edge DNS.',
       };
@@ -600,22 +704,57 @@ export class ProviderAttributionService {
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals,
-        candidateProviders: [{ provider: 'Vercel DNS', score: 8, signals: ['Vercel DNS Nameservers'] }],
+        candidateProviders: [
+          {
+            provider: 'Vercel DNS',
+            score: 8,
+            signals: ['Vercel DNS Nameservers'],
+          },
+        ],
         conflicts: [],
         explanation: 'Authoritative DNS hosted on Vercel DNS.',
       };
     }
 
-    if (ns.some((n) => n.includes('googledomains.com') || n.includes('google.com'))) {
+    if (
+      ns.some(
+        (n) => n.includes('googledomains.com') || n.includes('google.com'),
+      )
+    ) {
       return {
         role: 'DNS',
         provider: 'Google Cloud DNS',
         decision: 'CONFIRMED',
         confidence: 'HIGH',
         signals: [],
-        candidateProviders: [{ provider: 'Google Cloud DNS', score: 8, signals: ['Google Nameservers'] }],
+        candidateProviders: [
+          {
+            provider: 'Google Cloud DNS',
+            score: 8,
+            signals: ['Google Nameservers'],
+          },
+        ],
         conflicts: [],
         explanation: 'Authoritative DNS hosted on Google Cloud DNS.',
+      };
+    }
+
+    if (ns.some((n) => n.includes('azure-dns'))) {
+      return {
+        role: 'DNS',
+        provider: 'Azure DNS',
+        decision: 'CONFIRMED',
+        confidence: 'HIGH',
+        signals: [],
+        candidateProviders: [
+          {
+            provider: 'Azure DNS',
+            score: 8,
+            signals: ['Azure Nameservers'],
+          },
+        ],
+        conflicts: [],
+        explanation: 'Authoritative DNS hosted on Azure DNS.',
       };
     }
 
@@ -644,13 +783,17 @@ export class ProviderAttributionService {
     };
   }
 
-  private attributeWebServer(snapshot: DiscoverySnapshot): ProviderAttributionRecord {
+  private attributeWebServer(
+    snapshot: DiscoverySnapshot,
+  ): ProviderAttributionRecord {
     const serverHeader = snapshot.http?.headers?.['server'];
-    const xPoweredBy = (snapshot.http?.headers?.['x-powered-by'] || '').toLowerCase();
+    const xPoweredBy = (
+      snapshot.http?.headers?.['x-powered-by'] || ''
+    ).toLowerCase();
     const viaHeader = (snapshot.http?.headers?.['via'] || '').toLowerCase();
     const rawHeaders = snapshot.http?.headers || {};
     const techs = (snapshot.technology?.technologies || []).map((t: any) =>
-      typeof t === 'string' ? t : t.name
+      typeof t === 'string' ? t : t.name,
     );
 
     // 1. Direct Server Header
@@ -669,7 +812,13 @@ export class ProviderAttributionService {
             weight: 8,
           },
         ],
-        candidateProviders: [{ provider: serverHeader, score: 8, signals: [`Server: ${serverHeader}`] }],
+        candidateProviders: [
+          {
+            provider: serverHeader,
+            score: 8,
+            signals: [`Server: ${serverHeader}`],
+          },
+        ],
         conflicts: [],
         explanation: `Observed HTTP Server response header: '${serverHeader}'.`,
       };
@@ -677,7 +826,9 @@ export class ProviderAttributionService {
 
     // 2. Correlate with detected web server technologies
     const detectedServer = techs.find((t) =>
-      /iis|nginx|apache|akamai|litespeed|openresty|caddy|envoy|big-ip|tomcat|jetty/i.test(t)
+      /iis|nginx|apache|akamai|litespeed|openresty|caddy|envoy|big-ip|tomcat|jetty/i.test(
+        t,
+      ),
     );
     if (detectedServer) {
       return {
@@ -694,14 +845,20 @@ export class ProviderAttributionService {
             weight: 7,
           },
         ],
-        candidateProviders: [{ provider: detectedServer, score: 7, signals: [detectedServer] }],
+        candidateProviders: [
+          { provider: detectedServer, score: 7, signals: [detectedServer] },
+        ],
         conflicts: [],
         explanation: `Identified web server from correlated infrastructure fingerprint: ${detectedServer}.`,
       };
     }
 
     // 3. Correlate with headers / X-Powered-By
-    if (xPoweredBy.includes('asp.net') || rawHeaders['x-aspnet-version'] || rawHeaders['x-aspnetmvc-version']) {
+    if (
+      xPoweredBy.includes('asp.net') ||
+      rawHeaders['x-aspnet-version'] ||
+      rawHeaders['x-aspnetmvc-version']
+    ) {
       return {
         role: 'WEB_SERVER',
         provider: 'Microsoft IIS',
@@ -716,13 +873,20 @@ export class ProviderAttributionService {
             weight: 7,
           },
         ],
-        candidateProviders: [{ provider: 'Microsoft IIS', score: 7, signals: ['ASP.NET Runtime'] }],
+        candidateProviders: [
+          { provider: 'Microsoft IIS', score: 7, signals: ['ASP.NET Runtime'] },
+        ],
         conflicts: [],
-        explanation: 'Identified Microsoft IIS web server from active ASP.NET response headers.',
+        explanation:
+          'Identified Microsoft IIS web server from active ASP.NET response headers.',
       };
     }
 
-    if (viaHeader.includes('akamai') || rawHeaders['x-akamai-transformed'] || rawHeaders['akamai-grn']) {
+    if (
+      viaHeader.includes('akamai') ||
+      rawHeaders['x-akamai-transformed'] ||
+      rawHeaders['akamai-grn']
+    ) {
       return {
         role: 'WEB_SERVER',
         provider: 'Akamai Edge Server',
@@ -737,9 +901,16 @@ export class ProviderAttributionService {
             weight: 7,
           },
         ],
-        candidateProviders: [{ provider: 'Akamai Edge Server', score: 7, signals: ['Akamai Edge'] }],
+        candidateProviders: [
+          {
+            provider: 'Akamai Edge Server',
+            score: 7,
+            signals: ['Akamai Edge'],
+          },
+        ],
         conflicts: [],
-        explanation: 'Identified Akamai edge server from active routing headers.',
+        explanation:
+          'Identified Akamai edge server from active routing headers.',
       };
     }
 
@@ -759,9 +930,16 @@ export class ProviderAttributionService {
             weight: 6,
           },
         ],
-        candidateProviders: [{ provider: 'Custom / Hardened Web Server', score: 6, signals: ['Suppressed Banner'] }],
+        candidateProviders: [
+          {
+            provider: 'Custom / Hardened Web Server',
+            score: 6,
+            signals: ['Suppressed Banner'],
+          },
+        ],
         conflicts: [],
-        explanation: 'Web server banner is intentionally suppressed for security hardening.',
+        explanation:
+          'Web server banner is intentionally suppressed for security hardening.',
       };
     }
 
@@ -777,12 +955,16 @@ export class ProviderAttributionService {
     };
   }
 
-  private attributeApplication(snapshot: DiscoverySnapshot): ProviderAttributionRecord {
+  private attributeApplication(
+    snapshot: DiscoverySnapshot,
+  ): ProviderAttributionRecord {
     const techs = (snapshot.technology?.technologies || []).map((t: any) =>
-      typeof t === 'string' ? t : t.name
+      typeof t === 'string' ? t : t.name,
     );
     const appFramework = techs.find((t: string) =>
-      /next\.js|react|vue|angular|asp\.net|php|django|rails|laravel|wordpress|svelte|remix|gatsby|java enterprise/i.test(t)
+      /next\.js|react|vue|angular|asp\.net|php|django|rails|laravel|wordpress|svelte|remix|gatsby|java enterprise/i.test(
+        t,
+      ),
     );
 
     if (appFramework) {
@@ -800,7 +982,9 @@ export class ProviderAttributionService {
             weight: 8,
           },
         ],
-        candidateProviders: [{ provider: appFramework, score: 8, signals: [appFramework] }],
+        candidateProviders: [
+          { provider: appFramework, score: 8, signals: [appFramework] },
+        ],
         conflicts: [],
         explanation: `Application framework identified: ${appFramework}.`,
       };
@@ -823,7 +1007,9 @@ export class ProviderAttributionService {
             weight: 8,
           },
         ],
-        candidateProviders: [{ provider: xPoweredBy, score: 8, signals: [xPoweredBy] }],
+        candidateProviders: [
+          { provider: xPoweredBy, score: 8, signals: [xPoweredBy] },
+        ],
         conflicts: [],
         explanation: `Application runtime identified from X-Powered-By: ${xPoweredBy}.`,
       };

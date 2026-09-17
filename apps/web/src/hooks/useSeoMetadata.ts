@@ -27,6 +27,9 @@ export function useSeoMetadata({
   keywords = [],
   structuredData,
 }: SeoMetadataOptions): void {
+  const keywordsSerialized = JSON.stringify(keywords);
+  const structuredDataSerialized = JSON.stringify(structuredData);
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -49,7 +52,7 @@ export function useSeoMetadata({
     setMetaTag('name', 'title', title);
     setMetaTag('name', 'description', description);
     setMetaTag('name', 'robots', robots);
-    if (keywords.length > 0) {
+    if (keywords && keywords.length > 0) {
       setMetaTag('name', 'keywords', keywords.join(', '));
     }
 
@@ -87,7 +90,7 @@ export function useSeoMetadata({
         scriptTag.type = 'application/ld+json';
         document.head.appendChild(scriptTag);
       }
-      scriptTag.textContent = JSON.stringify(structuredData);
+      scriptTag.textContent = structuredDataSerialized;
     }
 
     return () => {
@@ -96,6 +99,16 @@ export function useSeoMetadata({
         scriptTag.parentNode.removeChild(scriptTag);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, canonicalUrl, robots, ogType, ogImage, JSON.stringify(keywords), JSON.stringify(structuredData)]);
+  }, [
+    title,
+    description,
+    canonicalUrl,
+    robots,
+    ogType,
+    ogImage,
+    keywords,
+    keywordsSerialized,
+    structuredData,
+    structuredDataSerialized,
+  ]);
 }

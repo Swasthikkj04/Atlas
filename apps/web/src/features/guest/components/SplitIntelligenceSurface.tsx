@@ -235,9 +235,11 @@ export function SplitIntelligenceSurface({
   const [expandedFindingKeys, setExpandedFindingKeys] = useState<Record<string, boolean>>({});
 
   const paragraphs = data.brief?.paragraphs ?? [];
-  const observations = useMemo(() => data.observations ?? [], [data.observations]);
+  const rawObservations = data.observations;
+  const observations = useMemo(() => rawObservations ?? [], [rawObservations]);
   const technologies = data.technologies ?? [];
-  const evidenceList = useMemo(() => data.evidence ?? [], [data.evidence]);
+  const rawEvidence = data.evidence;
+  const evidenceList = useMemo(() => rawEvidence ?? [], [rawEvidence]);
 
   // Severity counts
   const criticalCount = observations.filter(

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import {
   Globe,
   Eye,
@@ -31,7 +31,7 @@ export const AdminVisitorsView: React.FC = () => {
   const [surfaceTab, setSurfaceTab] = useState<'gx' | 'landing' | 'docs' | 'all'>('gx');
   const [, startTransition] = useTransition();
 
-  const loadData = useCallback(async (selectedPeriod = period, selectedDomain = domainFilter) => {
+  const loadData = useCallback(async (selectedPeriod: VisitorPeriod = period, selectedDomain: string = domainFilter) => {
     setLoading(true);
     setError(null);
     try {
@@ -86,7 +86,7 @@ export const AdminVisitorsView: React.FC = () => {
         <div className="text-rose-400 font-medium text-sm">Failed to retrieve visitor traffic analytics</div>
         <div className="text-xs text-[var(--color-text-secondary,#94A3B8)] font-mono">{error}</div>
         <button
-          onClick={() => loadData()}
+          onClick={() => loadData(period, domainFilter)}
           className="px-3 py-1.5 rounded bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition-colors"
         >
           Retry
@@ -154,7 +154,7 @@ export const AdminVisitorsView: React.FC = () => {
 
           {/* Refresh Button */}
           <button
-            onClick={() => loadData()}
+            onClick={() => loadData(period, domainFilter)}
             disabled={loading}
             className="p-2 rounded-lg bg-[var(--color-bg-surface,#111726)] border border-[var(--color-border-hairline,rgba(255,255,255,0.1))] text-[var(--color-text-secondary,#94A3B8)] hover:text-white hover:bg-[var(--color-bg-elevated,#1E293B)] transition-colors"
             title="Refresh visitor metrics"

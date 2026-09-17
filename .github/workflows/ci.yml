@@ -35,10 +35,10 @@ jobs:
         with:
           version: 11.13.0
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install Monorepo Dependencies
@@ -87,10 +87,10 @@ jobs:
         with:
           version: 11.13.0
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install Monorepo Dependencies
@@ -120,10 +120,10 @@ jobs:
         with:
           version: 11.13.0
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install Monorepo Dependencies
@@ -158,10 +158,10 @@ jobs:
         with:
           version: 11.13.0
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
 
       - name: Verify Lockfile Integrity

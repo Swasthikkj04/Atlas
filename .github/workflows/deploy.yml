@@ -39,6 +39,7 @@ env:
   DB_INSTANCE_NAME: ${{ vars.DB_INSTANCE_NAME || 'nebula-prod-postgres' }}
   VPC_CONNECTOR: ${{ vars.VPC_CONNECTOR || 'nebula-vpc-conn' }}
   FRONTEND_DOMAIN: ${{ vars.FRONTEND_DOMAIN || 'https://app.argonion.com' }}
+  DEPLOYER_SA_NAME: 'nebula-prod-deployer-sa'
   CI: 'true'
   TURBO_TELEMETRY_DISABLED: '1'
 
@@ -150,8 +151,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || format('nebula-prod-deployer-sa@{0}.iam.gserviceaccount.com', env.GCP_PROJECT_ID) }}
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
         continue-on-error: true
 
       - name: Configure Docker for GCP Artifact Registry
@@ -255,8 +255,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || format('nebula-prod-deployer-sa@{0}.iam.gserviceaccount.com', env.GCP_PROJECT_ID) }}
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
         continue-on-error: true
 
       - name: Run Prisma Production Migrations
@@ -303,8 +302,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || format('nebula-prod-deployer-sa@{0}.iam.gserviceaccount.com', env.GCP_PROJECT_ID) }}
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
         continue-on-error: true
 
       - name: Capture Previous Active Cloud Run Revisions (Rollback Safety)
@@ -511,8 +509,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || format('nebula-prod-deployer-sa@{0}.iam.gserviceaccount.com', env.GCP_PROJECT_ID) }}
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
         continue-on-error: true
 
       - name: Roll Back Cloud Run Traffic to Previous Healthy Revisions
